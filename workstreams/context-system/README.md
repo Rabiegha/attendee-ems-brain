@@ -31,9 +31,9 @@ Deux problèmes nord-étoile (tout le reste en découle) :
 | Script `check-context-freshness.js` | ✅ livré (rapport + `--fix`) |
 | Script `get-context.js` | ✅ existe (scope → bundle) |
 | Raccourcis npm `context` / `context:check` | ✅ sur les 6 repos |
-| **Fraîcheur visible DANS le bundle IA** | ❌ pas encore |
-| **Doc onboarding 1 page** | ❌ pas encore |
-| **Modes/flags d'usage** | ⚠️ partiels (bundle/list seulement) |
+| **Fraîcheur visible DANS le bundle IA** | ✅ livré (`--annotate`, `--fresh-only`, `--max-age`) |
+| **Doc onboarding 1 page** | ✅ livré (`hub/README.md`) |
+| **Modes/flags d'usage** | ✅ livré (annotate / fresh-only) |
 
 ---
 
@@ -41,15 +41,15 @@ Deux problèmes nord-étoile (tout le reste en découle) :
 
 | Partie | Sujet | Status |
 |---|---|---|
-| [01](01-modes-flags.md) | Modes d'usage & flags (full / partiel / fresh-only / feed-only) | 📋 À faire |
-| [02](02-freshness.md) | Garantir la fraîcheur — boucle de mise à jour + fraîcheur dans le bundle | 📋 À faire |
-| [03](03-onboarding.md) | Onboarding & adoption — doc 1 page + rituel d'équipe | 📋 À faire |
+| [01](01-modes-flags.md) | Modes d'usage & flags (full / partiel / fresh-only / feed-only) | ✅ `--annotate` + `--fresh-only` + `--max-age` livrés |
+| [02](02-freshness.md) | Garantir la fraîcheur — boucle de mise à jour + fraîcheur dans le bundle | ✅ fraîcheur inline livrée ; reste rituel d'équipe |
+| [03](03-onboarding.md) | Onboarding & adoption — doc 1 page + rituel d'équipe | 🔄 doc 1 page livrée ; reste démo + copilot-instructions |
 
 ---
 
 ## Prochaine action
 
-➡️ Décider du jeu de flags minimal (partie 01) avant de coder quoi que ce soit, pour ne pas sur-construire.
+➡️ Diffuser : ajouter le pitch + 3 commandes dans le `.github/copilot-instructions.md` de chaque repo, puis démo 5 min à l'équipe (voir [03](03-onboarding.md)).
 
 ---
 
