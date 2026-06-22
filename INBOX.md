@@ -9,6 +9,8 @@
 - [bug] mobile : éjection quand on ouvre l'écran de scan → workstream mobile-stabilization/02
 - [archi] vérifier si un PersistGate entoure bien la navigation avant lecture de l'auth state
 - [learn] appVersionSource = remote → ne pas se fier au versionCode local (cf mémoire repo)
+- [idea] context : implémenter `--annotate` sur get-context.js (fraîcheur inline dans le bundle IA) → workstream context-system/01
+- [idea] context : écrire la doc 1 page hub/README.md (pitch « IA qui connaît le projet ») → workstream context-system/03
 
 ## Trié (archive courte)
 
