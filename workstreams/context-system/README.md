@@ -34,6 +34,7 @@ Deux problèmes nord-étoile (tout le reste en découle) :
 | **Fraîcheur visible DANS le bundle IA** | ✅ livré (`--annotate`, `--fresh-only`, `--max-age`) |
 | **Doc onboarding 1 page** | ✅ livré (`hub/README.md`) |
 | **Modes/flags d'usage** | ✅ livré (annotate / fresh-only) |
+| **`copilot-instructions.md` protocole AVANT/PENDANT/APRÈS** | ✅ livré sur les 7 repos (2026-06-22) |
 
 ---
 
@@ -43,13 +44,13 @@ Deux problèmes nord-étoile (tout le reste en découle) :
 |---|---|---|
 | [01](01-modes-flags.md) | Modes d'usage & flags (full / partiel / fresh-only / feed-only) | ✅ `--annotate` + `--fresh-only` + `--max-age` livrés |
 | [02](02-freshness.md) | Garantir la fraîcheur — boucle de mise à jour + fraîcheur dans le bundle | ✅ fraîcheur inline livrée ; reste rituel d'équipe |
-| [03](03-onboarding.md) | Onboarding & adoption — doc 1 page + rituel d'équipe | 🔄 doc 1 page livrée ; reste démo + copilot-instructions |
+| [03](03-onboarding.md) | Onboarding & adoption — doc 1 page + rituel d'équipe | ✅ doc 1 page livrée + copilot-instructions déployé sur 7 repos |
 
 ---
 
 ## Prochaine action
 
-➡️ Diffuser : ajouter le pitch + 3 commandes dans le `.github/copilot-instructions.md` de chaque repo, puis démo 5 min à l'équipe (voir [03](03-onboarding.md)).
+➡️ Démo 5 min à l'équipe (voir [03](03-onboarding.md)) + remplir `context/` mobile/print-client (par repo, en lisant le vrai code).
 
 ---
 
