@@ -1,0 +1,104 @@
+# Backlog technique — chantiers à faire plus tard
+
+> Ne rien implémenter d'ici sans le passer d'abord par [NOW.md](../NOW.md).
+> Dernière mise à jour : 2026-06-18 (FAIT : socket résilient + delta-sync, retry 409 STALE silencieux, détection hors-ligne rapide, crash écran gris ConflictsBanner, neutralisation mutations opposées, fix build EAS runtimeVersion. Voir [workstreams/mobile-stabilization/03](../workstreams/mobile-stabilization/03-socket-resilient-delta-sync.md) section 8)
+
+---
+
+## FAIT récemment
+
+| Quand | Quoi | App | Détail |
+|-------|------|-----|--------|
+| 2026-06-18 | **Socket résilient + delta-sync à la reconnexion** | `attendee-ems-mobile` | Reconnexions infinies + backoff, transports websocket+polling, delta-sync auto à chaque reconnexion, indicateur d'état socket (Redux + bandeau). Voir [workstreams/mobile-stabilization/03 §8.1](../workstreams/mobile-stabilization/03-socket-resilient-delta-sync.md) |
+| 2026-06-18 | **Retry silencieux 409 STALE_CLIENT_STATE** | `attendee-ems-mobile` | Plus de message rouge sur cache en retard : merge de la version fraîche + retry 1×. `ALREADY_CHECKED_IN` garde son message rouge FR. [§8.2](../workstreams/mobile-stabilization/03-socket-resilient-delta-sync.md) |
+| 2026-06-18 | **Détection hors-ligne rapide (~4-6s vs ~30-48s)** | `attendee-ems-mobile` | Polling adaptatif (2s/10s), sonde immédiate sur échec HTTP / disconnect socket, timeout mutations 12s. [§8.2](../workstreams/mobile-stabilization/03-socket-resilient-delta-sync.md) |
+| 2026-06-18 | **Bug crash écran gris (Rules of Hooks)** | `attendee-ems-mobile` | `ConflictsBanner.tsx` : `useCallback` après un `return null` → crash à l'apparition d'un conflit. Hook déplacé avant le retour. [§8.3](../workstreams/mobile-stabilization/03-socket-resilient-delta-sync.md) |
+| 2026-06-18 | **Bug action + action inverse offline** | `attendee-ems-mobile` | `mutationQueue.ts` : neutralisation des mutations opposées (check-in + undo-check-in = no-op) → plus de faux conflit STALE ni d'état incohérent au rejeu. [§8.3](../workstreams/mobile-stabilization/03-socket-resilient-delta-sync.md) |
+| 2026-06-18 | **Fix build EAS (Configure expo-updates)** | `attendee-ems-mobile` | `runtimeVersion` fingerprint sans `@expo/fingerprint` → retour statique `"1.1.9"`. Décision OTA de fond toujours en backlog 🟠. |
+
+---
+
+## 🔄 EN COURS — commencé mais pas terminé
+
+| Quoi | Fichier(s) concerné(s) | Note |
+|------|------------------------|------|
+| **Cron backup automatique DB** — fréquence à décider, script + cron pas encore déployés sur le VPS | `local-files/README-dump-restore.md` (doc manuelle ok, section auto manquante) | Fréquence envisagée : 1×/jour à 3h, retention 7 jours |
+| **Load test Phase 6** — impression EMS Client (`POST /print-queue/add`) — script écrit mais jamais lancé | `local-files/load_test_event.sh` | Jobs partiront en OFFLINE (pas de print-client), cleanup auto prévu |
+
+---
+
+## 🟠 À FAIRE — urgent (avant prochain gros event)
+
+| Quoi | App | Fichier(s) concerné(s) | Note |
+|------|-----|------------------------|------|
+| **Faux succès scan session — attendee déjà scanné** — quand un attendee est déjà enregistré dans une session, l'app affiche un message de **succès** au lieu de "déjà scanné". L'hôtesse ne sait pas que c'est un doublon. Fix 1 : détecter le code de retour "déjà enregistré" et afficher une confirmation explicite : *"Déjà enregistré à [heure] — souhaitez-vous le ré-enregistrer ?"* avec action volontaire. | `attendee-ems-mobile` | `src/store/registrations.slice.ts` (ou slice session scan), `src/hooks/useCheckIn.ts` (ou équivalent session) | Lié au fix 2 ci-dessous. Côté serveur le scan est idempotent, côté mobile l'état local ne l'est pas. |
+| **Faux scans enregistrés en local (idempotence locale manquante)** — les faux succès de scan session (voir ligne ci-dessus) sont persistés dans le store local → la liste des scans se retrouve polluée par des entrées fantômes → il faut refresher manuellement pour les nettoyer. Le serveur est idempotent mais pas le store mobile. Fix 2 : (a) si le Fix 1 est en place, le faux scan ne se produit plus (confirmation explicite = pas d'écriture locale silencieuse) ; (b) ajouter quand même une réconciliation locale : si le serveur répond "déjà enregistré", ne pas écrire/dupliquer dans le store local, ou écraser l'entrée existante avec les données fraîches du serveur. | `attendee-ems-mobile` | `src/store/registrations.slice.ts`, `src/store/offlineCheckIn.ts` | Fix 1 → résout la majorité des cas. Fix 2 = filet de sécurité si un faux scan local existe déjà (sessions longues, reconnexion). Les deux sont à faire. |
+| **Faux positif impression COMPLETED** quand imprimante offline (macOS : webContents.print = success dès spool CUPS, même si rien n'est imprimé) | `attendee-ems-print-client` | `main-native.js` | Fix : lpstat sanity-check avant PATCH /complete |
+| **Clé PrintNode en clair dans le repo** (4 profils eas.json + .env) → rotate la clé + déplacer dans EAS Secrets | `attendee-ems-mobile` | `eas.json`, `.env`, `.env.local-backup` | Rotate d'abord, PUIS déplacer |
+| **OTA bloqué en prod** — la stratégie `runtimeVersion` a été basculée en `{ policy: "fingerprint" }` mais le package `@expo/fingerprint` n'est pas installé → le build EAS échouait à l'étape « Configure expo-updates ». **Mitigation 2026-06-18** : retour à une version statique `"1.1.9"` dans `app.json` pour débloquer le build. **Reste à faire** : choisir UNE stratégie définitive (statique alignée sur la version OU fingerprint avec la dépendance installée) + rebuild store depuis HEAD pour que les OTA atteignent enfin les users | `attendee-ems-mobile` | `app.json`, `eas.json`, `package.json` (`@expo/fingerprint` si fingerprint) | Fix temporaire fait ; décision de fond encore à prendre |
+
+---
+
+## 🟡 IMPORTANT — ça marche mais fragile
+
+| Quoi | App | Fichier(s) concerné(s) | Note |
+|------|-----|------------------------|------|
+| **Bug isRoot → 403 sur /events/:id/stats** — root bypass le guard mais la couche service l'ignore (role undefined) | `attendee-ems-back` | `src/common/utils/resolve-event-scope.util.ts`, `resolve-event-write-scope.util.ts`, `resolve-registration-scope.util.ts` | Fix : `if (user.isRoot) return 'any'` en tête des 3 utils |
+| **Sync/pagination mobile fragile** — offset pagination + dataset live qui mute = trous/doublons, 4 patches bricolés | `attendee-ems-mobile` | `src/store/registrations.slice.ts` | Refacto : pagination par curseur (keyset) ou sync delta (updated_at). Workstream dédié. |
+| **Redis + BullMQ — gestion des jobs print (et emails)** — aujourd'hui les print jobs sont traités de façon synchrone / via WebSocket direct, sans queue persistante. Risque : perte de job si le process tombe, pas de retry, pas de monitoring. Plan : (1) migrer les `POST /print-queue/add` vers une queue BullMQ (Redis), retry automatique, dead-letter queue pour les jobs échoués ; (2) même chose pour les emails (déjà partiellement async ?). Les print jobs sont **les plus critiques** (event live, hôtesse qui attend). Préparer l'architecture pour une migration event-driven à terme (chaque job = event consommé par le bon worker). | `attendee-ems-back` | `src/modules/print-queue/`, `src/modules/notifications/`, `docker-compose.prod.yml` (ajouter service Redis BullMQ dédié ou réutiliser l'existant) | Print jobs = critique. Emails = important mais moins urgent. Ne pas déployer pendant un event. |
+| **CASL front — aligner l'UI avec les permissions back** — aujourd'hui CASL est présent sur le front mais le lien avec la matrice de permissions back (`scope`, `action`, `subject`) n'est pas clair / pas complet. Il faut : (1) comprendre comment CASL est bootstrappé et quelles abilities sont injectées, (2) vérifier que les composants masqués/désactivés correspondent bien aux vraies permissions back, (3) aligner avec la logique métier (ex: un partner ne doit pas voir les stats d'une autre org). | `attendee-ems-front` | `src/utils/permission-mapper.ts`, `src/providers/CaslProvider.tsx` (ou équivalent), `src/platform/authz/` | À faire en parallèle de la refonte permissions back. |
+| **Refonte complète permissions/rôles** — la matrice des permissions est incohérente : scope `org` vs `:any`, classement des rôles non formalisé, 23 permissions `scope='org'` en doublon, isRoot traité à part sans logique unifiée. Reprendre de zéro : (1) formaliser la matrice rôles × actions × ressources (spreadsheet), (2) nettoyer les scopes en DB, (3) aligner guard back + CASL front + logique métier. Blocker pour la suite (plans, multi-clients). | `attendee-ems-back` + `attendee-ems-front` | `src/platform/authz/authorization.service.ts`, migration SQL permissions, `src/utils/permission-mapper.ts` | Lié à la dette Authz V1. Workstream dédié, dump DB obligatoire avant migration. |
+| **Recherche participants lente (14-16s) — saturation du process Node mono-worker** — diagnostic monitoring 2026-06-15 : la recherche "search-as-you-type" sur la liste des inscriptions (page EventDetails) envoyait **une requête par caractère** (`GET /registrations?search=v,va,van…`). Sur le process Node unique (1 worker), une rafale de ~28 requêtes se met en file et la dernière attend **14-16s** (mesuré dans les logs nginx prod). Ce n'est PAS la grosse liste qui est lente (`limit=10000` = 0.3s), c'est la **rafale + mono-process** qui sature. ✅ **Mitigation front déjà faite** : debounce 300ms sur la valeur envoyée au serveur (input reste réactif). **Reste à faire** côté infra/DB : (1) index DB sur les champs de recherche (nom/prénom/email) pour réduire le coût unitaire, (2) passer l'API en multi-process (voir "Scaling API check-in" 🟢). Risque réel le jour d'un event : la recherche partage le même worker que les check-ins → une recherche intensive peut retarder les check-ins. | `attendee-ems-back` + `attendee-ems-front` | `src/modules/registrations/registrations.service.ts` (query search), migration index Prisma, `docker-compose.prod.yml` (multi-worker). Front : `src/pages/EventDetails/index.tsx` (debounce ✅) | Lié à "Scaling API check-in" 🟢. Le debounce seul suffit pour 1 poste ; index + multi-worker nécessaires pour plusieurs postes en recherche simultanée. |
+| **Metadata participants refetch à chaque frappe** — `useGetRegistrationsMetadataQuery` (page EventDetails) se relançait à chaque caractère tapé dans la recherche, en plus de la requête de liste. ✅ Couvert par le même debounce 300ms que la liste (2026-06-15). À surveiller : vérifier qu'aucun autre déclencheur ne refetch la metadata inutilement (changement d'onglet, polling). | `attendee-ems-front` | `src/pages/EventDetails/index.tsx` (`useGetRegistrationsMetadataQuery`) | Résolu en pratique par le debounce ; entrée gardée comme point de vigilance. |
+
+---
+
+## 🟢 PAS URGENT — après les events (amélioration perf/dette)
+
+| Quoi | App | Fichier(s) concerné(s) | Note |
+|------|-----|------------------------|------|
+| **Scaling API check-in** — 1 seul process Node (1/8 cores), 200ms/req, ~155 check-ins/sec théorique. Plan : cluster 4 workers (~60/s) → DB optim (~200/s) → pgBouncer (~400/s) | `attendee-ems-back` | `docker-compose.prod.yml`, `src/modules/registrations/registrations.service.ts`, `src/modules/event-tables/event-tables.service.ts` | Marge actuelle x30 vs besoin réel. Ne PAS déployer avant un event. Lié à la recherche lente 🟡 (même cause : mono-worker). |
+| **Requête export `limit=10000` chargée à chaque ouverture d'EventDetails** — la page EventDetails déclenche un `allRegistrationsForExport` (`useGetRegistrationsQuery` avec `limit: 10000`) à chaque chargement, même si l'utilisateur n'exporte pas. Mesuré rapide en prod (~0.3s) donc PAS la cause des lenteurs, mais c'est du gaspillage (charge DB + réseau + RAM front inutile la plupart du temps). Fix : ne charger l'export qu'au clic sur "Exporter" (lazy / `skipToken` tant que l'export n'est pas demandé), ou via un endpoint dédié de streaming. | `attendee-ems-front` | `src/pages/EventDetails/index.tsx` (`allRegistrationsForExport`) | Optimisation, pas un bug. À faire après les events. |
+| **Remplacer Puppeteer par une lib plus performante** — Puppeteer lance un Chromium complet par invocation, RAM élevée (~300MB/instance) et démarrage lent (~1-2s). Candidats : **Playwright** (même API, meilleur pool + IPC), **`@sparticuz/chromium` + Puppeteer-core** (Chromium minimal), ou **`pdf-lib` / `html-pdf-node`** pour les cas PDF purs. Priorité : évaluer si le chemin chaud `generateBadge()` (PDF mode bulk/PrintNode) peut basculer sans Chromium, et si oui, supprimer la dépendance lourde. | `attendee-ems-back` | `src/modules/badges/badge.service.ts` (`generateBadge()`), `package.json` | Puppeteer n'est PAS sur le chemin EMS Client (badge HTML = interpolation template). Impact ciblé : génération PDF bulk + export. |
+| **Migration architecture hexagonale — finir ce qui est commencé** — la migration vers l'archi hexagonale (domain / application / infrastructure) est partielle : certains modules sont refactorisés, d'autres gardent l'ancienne structure (service NestJS monolithique direct Prisma). Cartographier l'état actuel module par module, identifier ce qui reste à migrer, finir proprement. | `attendee-ems-back` | `src/modules/*/` | Ne pas démarrer sans cartographie préalable. Risque de régression si fait à moitié. |
+| **Context mesh — activer et utiliser les fichiers de contexte** — des fichiers de contexte domain existent dans `attendee-context-hub/context/` mais ne sont pas encore actifs / utilisés systématiquement. Les rendre exploitables : convention de nommage, intégration dans les workflows de dev, éviter qu'ils ne soient juste de la doc statique. | `attendee-context-hub` | `context/` | À cadrer avec une convention simple avant d'aller plus loin. |
+| **Gating quantitatif + plans (Starter, Pro…) + multi-clients** — préparer la brique de limitation et monétisation : (1) **Gating quantitatif** : plafonds par org (ex: 100 events, 1000 attendees) configurables en DB — blocker pour vendre des plans ; (2) **Plans** : modèle `Plan` + `OrgSubscription`, logique de vérification des limites à chaque création (event, registration) ; (3) **Multi-clients** : une org = une instance, mais une agence peut avoir plusieurs clients (sous-orgs ou orgs liées) — modèle à définir (tenant hiérarchique ? org parent/enfant ?) ; (4) **Dashboard admin** : gérer les plans, subscriptions, quotas par org. À repenser avec le cahier des charges produit. | `attendee-ems-back` + `attendee-ems-front` | Nouveau module `src/modules/billing/` ou `src/modules/plans/`, `prisma/schema.prisma`, front admin | Blocker pour la croissance commerciale. Dépend de la refonte permissions (rôles bien définis avant d'ajouter les plans). |
+| **Cahier des charges — séparer cœur SaaS et services spéciaux** — relire le cahier des charges existant et distinguer clairement : (1) ce qui appartient au **cœur du SaaS** (tout client peut en bénéficier, dans les plans), (2) les **services spéciaux** contractuels pour un client donné (développements one-shot, intégrations custom). Évite que des fonctionnalités one-client polluent l'archi principale. | Tous | `attendee-context-hub/doc/` (ou équivalent cahier des charges) | Travail produit + archi. À faire avant de recruter des clients agence. |
+| **Dette Authz V1** — 23 permissions `scope='org'` encore en DB (doublon de `:any`), workarounds en place | `attendee-ems-back` + `attendee-ems-front` | Migration SQL + `src/platform/authz/` + `src/utils/permission-mapper.ts` | Migration SQL = dump avant obligatoire |
+| **UX Print Client** — double notification contradictoire mobile (UX-1), FAILED absent de l'historique (UX-2), sélection granulaire jobs OFFLINE (UX-3) | `attendee-ems-print-client` + `attendee-ems-mobile` | `main-native.js`, `src/hooks/useCheckIn.ts` | Post Print Client V2 Phase 2 |
+| **Messages d'erreur explicites sur les formulaires** — aujourd'hui les erreurs de validation/API remontent des messages génériques. Il faut afficher le bon message selon le cas réel : email invalide → *"Adresse email incorrecte"*, email déjà utilisé → *"Ce compte existe déjà"*, champ manquant → indiquer lequel, etc. S'applique a minima aux formulaires d'ajout/inscription ET à la page de connexion. Inventorier tous les points d'entrée utilisateur et mapper chaque code d'erreur back vers un message lisible par l'hôtesse ou l'admin. | `attendee-ems-mobile` + `attendee-ems-front` | Formulaires d'ajout participant, `src/screens/LoginScreen.tsx` (ou équivalent), `src/store/auth.slice.ts` | Chantier UX pur, risque zéro, mais impact direct sur l'expérience hôtesse et admin. |
+| **Amélioration expérience connexion — "Se souvenir de moi"** — la session expire et l'utilisateur doit se reconnecter sans indication claire. Pistes : (1) option "Se souvenir de moi" (refresh token longue durée ou persist du token en stockage sécurisé), (2) redirection automatique vers la dernière page après reconnexion, (3) message explicite quand la session expire plutôt qu'une erreur 401 muette. | `attendee-ems-mobile` + `attendee-ems-front` | `src/store/auth.slice.ts`, `src/screens/LoginScreen.tsx`, back `src/auth/auth.service.ts` (refresh token) | À coupler avec la revue des messages d'erreur ci-dessus. |
+| **Flash écran login au démarrage après mise à jour** — après une mise à jour de l'app, l'écran de login s'affiche ~1s avant que la session persistée soit rechargée et que l'utilisateur soit redirigé vers la liste des events. Cause probable : la rehydratation du store Redux (persist) est async, et le router rend la stack avant que `isAuthenticated` soit connu. Fix : afficher un splash/loader neutre pendant la rehydratation, ne rendre le router qu'une fois l'état auth résolu (`_hasHydrated`). | `attendee-ems-mobile` | `src/store/store.ts` (redux-persist config), `App.tsx` ou `src/navigation/RootNavigator.tsx` | UX pur, aucun risque fonctionnel. |
+| **Données de l'ancien user visibles 1s après logout + re-login** — après logout de user1 et login de user2, les events/données de user1 flashent ~1s avant d'être remplacés par ceux de user2. Cause : le store Redux n'est pas purgé au moment du logout (ou la purge est async et le rendu précède). Fix : (1) appeler `persistor.purge()` + reset explicite de tous les slices concernés (`registrations`, `events`, `org`…) dans le thunk logout, de façon synchrone avant toute navigation ; (2) ne naviguer vers la liste des events qu'après confirmation que le store est vide/rehydraté avec les données du nouvel user. | `attendee-ems-mobile` | `src/store/auth.slice.ts` (thunk logout), `src/store/store.ts` (persistor), tous les slices avec données user | Lié au flash login ci-dessus. Risque sécurité mineur (données d'une org visibles à un autre user pendant 1s). |
+
+---
+
+## 📅 HORIZON — après octobre 2026
+
+| Quoi | Note |
+|------|------|
+| **Point app Attendee (mobile)** — faire un bilan complet de l'app : stabilité, OTA, dette technique accumulée, expérience hôtesse. Point de départ pour décider de la v2. | Après le cycle d'events de l'été/automne. |
+| **Onboarding simple avec plans** — parcours d'inscription avec choix de plan, activation automatique des quotas/gating, email de bienvenue. | Dépend du module billing/plans ci-dessus. |
+| **Dashboard de gestion abonnements** — interface admin pour gérer les plans, subscriptions, quotas par org, vue usage (events créés / attendees). | Simple d'abord : tableau + actions CRUD. |
+
+---
+
+## ⚠️ Rappels sécurité
+
+- **Mot de passe SSH VPS** `Choyou2025@` a été tapé en clair dans le terminal → **à changer** (`ssh debian@51.75.252.74` puis `passwd`)
+- **Clé PrintNode** en clair dans `eas.json` et `.env` → voir ligne 🟠 ci-dessus
+
+---
+
+## Références / docs associées
+
+| Doc | Emplacement |
+|-----|-------------|
+| **Dettes techniques/sécurité (S-01, T-01)** | `ems-brain/DEBTS.md` ← créé dans cette session, à consulter aussi |
+| Analyse capacité serveur complète | `attendee-context-hub/analyse/GOOGLE_SUMMIT_LOAD_ANALYSIS.md` |
+| Notes builds EAS / OTA / sécurité mobile | `/memories/repo/mobile-eas-notes.md` |
+| Workstream Print Client V2 | `/memories/repo/print-client-v2-workstream.md` |
+| Dette Authz V1 plan B | `/memories/repo/authz-v1-debt.md` |
+| Refacto sync/pagination mobile | `/memories/repo/mobile-sync-pagination-refactor.md` |
+| Scaling check-in détail chiffré | `/memories/repo/checkin-scaling-backlog.md` |
+| Doc dump/restore manuel | `local-files/README-dump-restore.md` |
