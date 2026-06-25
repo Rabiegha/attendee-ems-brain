@@ -17,6 +17,17 @@ Dettes connues à ne pas oublier. Ne **pas** corriger sans ticket explicite.
 
 ---
 
+## Technique — Back / Scaling (LFD 2026)
+
+| # | Dette | App | Sévérité | À faire |
+|---|---|---|---|---|
+| T-10 | **Plafond inscription ≈ 33–37 reg/s** = sérialisation sur la transaction d'écriture (`registerToEvent`), notamment le `registration.count(...)` de capacité in-transaction. Prouvé : 4 cœurs = même débit que 2 (367 % CPU). | back | 🟠 Haute | Sortir le COUNT du chemin chaud (compteur dénormalisé / verrou ciblé) + raccourcir la transaction au strict `create`. Préserver l'anti-surbooking. Détail : `attendee-ems-back/docs/infra/lfd-2026-load-test-results.md` §5. |
+| T-11 | **Cluster API (Voie B) interdit en prod** : multi-instances casse l'impression temps réel **silencieusement** (registres présence/imprimantes en mémoire de process). | back/infra | 🔴 Critique | Pré-requis avant tout cluster prod : `@socket.io/redis-adapter` + sticky sessions + présence externalisée Redis. Voir workstream `api-scaling-clustering`. NE PAS ajouter de replicas à `docker-compose.prod.yml`. |
+| T-12 | Doc `lfd-2026-executive-summary.md` dit « badge **PDF** dans l'email » — faux, c'est un **QR code** (le PDF est généré à l'impression). | back/docs | 🟡 Basse | Corriger avant transmission client. |
+| T-13 | Correctif **pgBouncer prod** (`LISTEN_PORT 6432`) non déployé. Containers `ems-api`/`ems-staging-api` affichés `unhealthy` mais renvoient `200` (faux-positif healthcheck). | back/infra | 🟡 Moyenne | Déployer le correctif pgBouncer prod ; ajuster le healthcheck. |
+
+---
+
 ## Technique — Back / Authz
 
 | # | Dette | App | Sévérité | À faire |

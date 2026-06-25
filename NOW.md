@@ -16,6 +16,28 @@ Priority:   High
 
 ---
 
+## ⚡ Travail parallèle en cours — Scaling API LFD 2026 (contrat MEAE)
+
+```
+Workstream: Scaling API & charge LFD 2026
+App:        attendee-ems-back
+Status:     Diagnostic terminé, optimisations partielles livrées
+Priority:   High (contrat client, 4–5 sept 2026)
+Session:    2026-06-25
+```
+
+**Reprise → lire d'abord** : [attendee-ems-back/docs/infra/lfd-2026-session-handoff-2026-06-25.md](../attendee-ems-back/docs/infra/lfd-2026-session-handoff-2026-06-25.md)
+et le workstream [api-scaling-lfd2026](workstreams/api-scaling-lfd2026/README.md).
+
+- ✅ Diagnostic prouvé : plafond ≈ **33–37 inscriptions/s** = **sérialisation écriture DB**
+  (ni CPU, ni pool, ni nb de process). Couvre le besoin contractuel (3000 en ~90 s).
+- ✅ Livré : pool DB, email→BullMQ, transaction allégée, worker séparable (`PROCESS_ROLE`).
+- ✅ 3 rapports écrits (résultats / reproduction / client).
+- ➡️ **Prochain levier** : optimiser la transaction d'écriture (sortir le COUNT capacité).
+- 🚨 **Cluster (Voie B) JAMAIS en prod** sans le workstream clustering.
+
+---
+
 ## Fait récemment (2026-06-18)
 
 - ✅ **Socket résilient + delta-sync à la reconnexion** livré ([workstreams/mobile-stabilization/03](workstreams/mobile-stabilization/03-socket-resilient-delta-sync.md) §8) : reconnexions infinies, delta-sync auto, indicateur d'état socket.
