@@ -226,6 +226,16 @@ Mesures prévues :
 
 En cas de défaillance de l'instance primaire, la procédure de reprise consiste à basculer le service sur le réplica, puis à vérifier l'intégrité des inscriptions et des jauges. En cas de corruption logique des données, la reprise s'appuie sur l'archivage WAL et la restauration point-in-time à partir de la dernière sauvegarde de base.
 
+### Reprise chirurgicale en cours d'événement (corruption logique ciblée)
+
+Pendant un événement en cours, une restauration globale de la base à un instant antérieur effacerait également les inscriptions légitimes saisies depuis cet instant. Pour éviter cette perte, la corruption logique ciblée (suppression ou écrasement accidentel d'un sous-ensemble de données) est traitée par une reprise chirurgicale, sans interruption du service de production :
+
+1. **Restaurer le PITR sur une base à côté (side database)** à l'instant précédant l'incident (ex. T-15 min), sans toucher à la base de production.
+2. **Extraire et réparer uniquement les lignes touchées** depuis cette base restaurée (les enregistrements supprimés ou corrompus).
+3. **Réinjecter ces lignes dans la production**, sans modifier le reste des données ni perdre les inscriptions légitimes saisies entre-temps.
+
+Cette approche permet de revenir en arrière sur les seules données affectées tout en préservant l'activité légitime continue de l'événement.
+
 ---
 
 ## 11. Monitoring et alerting

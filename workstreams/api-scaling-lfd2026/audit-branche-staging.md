@@ -5,9 +5,11 @@
 > leviers, leurs exécutions et résultats réels, puis poser un **plan d'annulation +
 > refonte propre** en workstreams.
 > **Date de l'audit :** 26 juin 2026
+> **Dernière mise à jour :** 29 juin 2026 (ajout §9 — déploiement du front staging sur `staging.attendee.fr`)
 > **Branches concernées :** `attendee-ems-back@staging`, `attendee-ems-brain@staging`
 > **Règle absolue rappelée :** ❌ ne jamais toucher la production. Toutes les opérations ont
-> été menées sur la stack isolée `ems-staging`.
+> été menées sur la stack isolée `ems-staging` (⚠️ exception maîtrisée le 29/06 : le conteneur
+> nginx **prod** `ems-nginx` a été étendu pour servir le front staging — voir §9).
 
 ---
 
@@ -26,6 +28,9 @@
   CPU »).
 - **1 incident prod** survenu et corrigé pendant la session (collision de nom de projet Docker
   → 502 prod), à documenter comme post-mortem.
+- **[MAJ 29/06]** Mise en ligne d'un **front staging dédié** sur `https://staging.attendee.fr`
+  (sous-domaine + certificat Let's Encrypt), servi via le nginx **prod** `ems-nginx` qui proxie
+  vers `ems-staging-api`. Prod vérifiée **intègre** (attendee.fr + api.attendee.fr = 200). Voir §9.
 
 ---
 
@@ -45,6 +50,7 @@
 | 11:35 | `d3f3421` | **feat(scaling) : email async BullMQ + worker `PROCESS_ROLE` + transaction allégée + 3 rapports & handoff** |
 | 11:38 | `98a678e` | session handoff |
 | 18:07 | `1d2978b` | rapport |
+| **29/06** | `3f0a69d` | **infra : front staging sur `staging.attendee.fr` (vhost nginx dédié + redirect `/staging` + nginx prod sur `ems-staging-network`)** |
 
 ### `attendee-ems-brain` (branche `staging`)
 
@@ -123,10 +129,12 @@
 | L12 | **`synchronous_commit=off`** | runtime Postgres | (hors git) | testé → **abandonné** (aucun gain, remis `on`) | ✅ documenté |
 | L13 | **Cluster Node multi-worker** (Voie B) | runtime staging | (hors git) | testé staging | ❌ **interdit prod** sans workstream clustering |
 | L14 | **Scripts k6** (baseline, stress, crash, endurance, spike) | `scripts/k6/*` | plusieurs | staging | ✅ propres |
+| L15 | **Front staging dédié** sur `staging.attendee.fr` (vhost nginx + cert Let's Encrypt, proxy `/api` → `ems-staging-api`) | `nginx/conf.d/*`, `docker-compose.prod.yml` | `3f0a69d` (29/06) | **prod nginx** (`ems-nginx` étendu) | ✅ propre (commit isolé, prod validée) |
 
 **Récapitulatif d'état :**
 - Déployés sur **staging uniquement** : L1–L11.
-- Déployés en **prod** : **aucun**.
+- Déployés en **prod** : **L15 uniquement** (extension additive du nginx prod, voir §9) — aucun
+  levier de capacité/code prod.
 - **Testés puis abandonnés** : L12 (`synchronous_commit`).
 - **Interdits en prod** tant que le workstream clustering n'est pas livré : L13 (Voie B).
 
@@ -192,6 +200,11 @@ détection, correctif `name=ems-staging`, garde-fou).
 La branche contient des modifications du compose **prod** (+52). À **ne pas déployer** tant
 qu'elles ne sont pas isolées et revues séparément.
 
+> **[MAJ 29/06]** Attention : le commit `3f0a69d` (L15) ajoute **une autre** modification à
+> `docker-compose.prod.yml` (nginx prod rattaché à `ems-staging-network`), celle-là **déployée
+> et validée**. Ne pas confondre les deux jeux de changements : le +52 historique (non revu)
+> reste à isoler ; l'ajout du 29/06 est minimal, additif et vérifié. Voir §9.
+
 ---
 
 ## 7. Plan d'annulation + refonte propre
@@ -245,3 +258,51 @@ qu'elles ne sont pas isolées et revues séparément.
 - Vérifier `curl -sk https://127.0.0.1/api/health` (= 200) après chaque manip.
 - Ne **pas** faire de `git checkout` du répertoire partagé `/opt/ems-attendee/backend` (prod).
 - **Aucun** chiffre falsifié dans les rapports : seules les mesures réelles font foi.
+
+---
+
+## 9. Mise à jour 29/06 2026 — Front staging sur `staging.attendee.fr`
+
+> **Objet :** disposer d'un **frontend de staging** accessible publiquement, branché sur l'API
+> staging (`ems-staging-api`), sans dupliquer un nouveau reverse-proxy.
+
+### 9.1 Ce qui a été fait
+- Création d'un **sous-domaine dédié** `staging.attendee.fr` (DNS + certificat Let's Encrypt,
+  expiration **2026-09-27**, renouvellement auto).
+- **Nouveau vhost nginx** `nginx/conf.d/staging.attendee.fr.conf` :
+  - HTTP→HTTPS (301) + challenge ACME ;
+  - `root /usr/share/nginx/html/staging` (build front staging) ;
+  - `location /api/` → `proxy_pass http://ems-staging-api:3000/api/` ;
+  - `location /events` → upgrade websocket vers `ems-staging-api:3000/events` ;
+  - `location /` → `try_files ... /index.html` (SPA).
+- **`nginx/conf.d/attendee.fr.conf`** : ajout d'un `location /staging { return 301
+  https://staging.attendee.fr$request_uri; }` (l'ancien chemin `attendee.fr/staging` redirige
+  désormais vers le sous-domaine).
+- **`docker-compose.prod.yml`** : le service nginx (`ems-nginx`) rejoint aussi
+  `ems-staging-network` (déclaré `external`), pour pouvoir résoudre/joindre `ems-staging-api`.
+- Build front (Vite) déposé dans `/opt/ems-attendee/frontend/dist/staging` côté serveur.
+- Tout regroupé dans **un seul commit** `3f0a69d` (3 fichiers), poussé sur
+  `attendee-ems-back@staging`.
+
+### 9.2 Validation
+- `https://staging.attendee.fr` : front **200**, assets servis, `/api/health` **200** (proxy
+  vers `ems-staging-api`), HTTP→HTTPS 301 OK.
+- **Prod intègre** : `https://attendee.fr` **200** et `https://api.attendee.fr` **200** tout du
+  long. Aucune coupure.
+- Ancien `attendee.fr/staging` → **301** vers le sous-domaine.
+
+### 9.3 Pourquoi c'est acceptable malgré la règle « ne pas toucher la prod »
+- Le changement est **additif** : nouveau vhost + rattachement réseau, **sans modifier** le
+  comportement des vhosts prod existants (`attendee.fr`, `api.attendee.fr`).
+- Le front staging n'utilise **que** la stack `ems-staging` pour la donnée (proxy API/events
+  vers `ems-staging-api`) ; la prod ne sert que les **fichiers statiques** via son nginx.
+- Reverse-proxy mutualisé volontaire (un seul nginx) plutôt qu'un second proxy → moins de
+  surface, certificats centralisés.
+
+### 9.4 Points de vigilance / dette
+- Le nginx **prod** dépend maintenant de la présence du réseau `ems-staging-network`
+  (`external: true`). Si la stack staging est supprimée, recréer le réseau ou retirer le
+  rattachement avant un `up` du compose prod.
+- À terme, envisager un **nginx dédié staging** si l'on veut un découplage total prod/staging.
+- Le build `dist/staging` (~380 Mo avec sourcemaps) occupe de l'espace disque côté serveur :
+  à nettoyer/optimiser si besoin.
