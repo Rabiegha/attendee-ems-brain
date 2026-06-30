@@ -81,13 +81,17 @@ Avant de comparer, il faut **séparer deux flux** qui n'ont pas le même profil 
 
 ## 4. Recommandation pour LFD 2026 (1 mois / 2 devs)
 
-1. **Jour-J = Option A.** Garder Puppeteer, **l'isoler dans le worker badge dédié**, borner la
-   concurrence, garantir `page.close()`, activer le **cache R2**. **C'est ce qui tient les 3 000
-   concurrents sans risque de régression visuelle.** → **dans le périmètre du mois** (~1 j).
+> ✅ **DÉCISION ACTÉE : Option D — Gotenberg sur Cloud Run** (rendu déporté hors VPS). L'analyse
+> ci-dessous garde les 4 options pour la traçabilité ; l'Option A est conservée comme **fallback**
+> tant que Cloud Run n'est pas validé en prod.
+
+1. **Option A = fallback.** Le Puppeteer local **reste en place** (worker dédié, `page.close()`,
+   cache R2) tant que le rendu Cloud Run n'est pas validé pixel-à-pixel. Filet de sécurité, pas la
+   cible.
 2. **Playwright (B) = 🔵 reporté** (workstream séparé, post-event). Même moteur → gain surtout en
    stabilité, **revalidation pixel-à-pixel obligatoire** : trop de risque pour le faire dans le mois.
 3. **pdf-lib/pdfkit (C) = ❌ écarté** tant que les templates badge sont du HTML/CSS libre.
-4. **Service externe (D) = � option crédible, même avant la migration GCP.** Cloud Run est un
+4. **✅ Service externe (D) = RETENU, même avant la migration GCP.** Cloud Run est un
    **service managé autonome** : on peut y déployer l'image **Gotenberg** seule et l'appeler en
    HTTP depuis le back, **sans migrer toute l'app**.
    - **Coût :** Gotenberg = **0 € de licence** (open source MIT). Cloud Run = **pay-per-use**
@@ -97,8 +101,7 @@ Avant de comparer, il faut **séparer deux flux** qui n'ont pas le même profil 
    - ⚠️ **Intégration** : auth service-to-service (IAM/clé), egress VPS→GCP, ~2–3 j de dev/setup.
    - **Avantage décisif :** déporte **toute** la charge de rendu **hors du VPS** (le goulot actuel),
      sans toucher à la fidélité visuelle (même moteur Chromium).
-   - **Arbitrage event :** reste **derrière l'Option A** pour le mois (A = ~1 j, zéro infra), mais
-     **D devient un vrai plan B** si le load test S4 montre que le VPS sature même avec le worker isolé.
+   - **Bascule prod :** activer D quand le rendu est validé pixel-à-pixel ; sinon, le fallback A tient.
 
 > **Garde-fou :** changement de lib **jamais en même temps** que le passage BullMQ / l'isolation
 > worker (sinon impossible d'attribuer une régression). Toute bascule = **comparaison visuelle
@@ -186,7 +189,7 @@ Deux régimes, parce que **le pic d'inscription ne dure que ~90 s** :
 
 | Décision | Statut |
 | --- | --- |
-| Option retenue pour l'event | **A — Puppeteer durci + worker dédié** (reco) — *à confirmer* |
-| Plan B si VPS sature au load test | **D — Gotenberg sur Cloud Run** (faisable sans migration GCP, ~2–3 j, ~qq €) |
-| Validation par load test (3 000 concurrents simulés) | ⏳ à planifier (S4) |
+| **Option retenue pour l'event** | ✅ **D — Gotenberg sur Cloud Run** (rendu déporté hors VPS, faisable sans migration GCP, ~2–3 j, ~< 1–12 €) |
+| Fallback conservé | **A — Puppeteer local** maintenu tant que Cloud Run n'est pas validé (bascule après comparaison pixel-à-pixel) |
+| Validation par load test (3 000 concurrents simulés) | ⏳ à planifier (S4) — **inclure un scénario badge** |
 | Évaluation Playwright (B) | 🔵 reporté post-event |

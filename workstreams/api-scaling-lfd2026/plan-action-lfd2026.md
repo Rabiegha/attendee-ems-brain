@@ -25,7 +25,7 @@
 | **0-CI** | CI/CD **minimaliste** (build+test PR + deploy staging) | 🔴 Haute | ❌ À créer | §P0 |
 | **E** | Sauvegarde DB automatique (cron + offsite + restore testé) | 🔴 Haute | Brief prêt | §3-E |
 | **D** | Sécurité QR (signature HMAC + durcir route publique) | 🔸 Moyenne | **Gardé** (simple) | §3-D |
-| **B** | Chaîne email → billet PDF (joindre PDF + lien secours) | 🟠 Selon besoin client | À planifier | §3-B |
+| **B** | Chaîne email → billet PDF (rendu **Gotenberg/Cloud Run**, hors VPS) | 🔴 Haute | ✅ Moteur tranché (D) | §3-B |
 | **F** | Continuité — **HA réplication** | 🔵 **Reporté → migration GCP** | HA/PITR natifs Cloud SQL | §3-F |
 | **G** | Wallet Apple + Google | ⚪ V2 | Hors périmètre event | §3-G |
 
@@ -225,27 +225,34 @@ levier dans son propre commit, diff minimal, mesure avant/après.
 
 ### Chantier B — Chaîne email → billet PDF  🔴 Haute
 > Réf : [diagnostic-email-billet-wallet.md](./diagnostic-email-billet-wallet.md) §2.2 / §3
+> · [comparatif-lib-pdf-badge.md](./comparatif-lib-pdf-badge.md) (choix moteur)
 
 Aujourd'hui le PDF du billet est généré (Puppeteer→R2) **mais n'est pas joint à l'email**.
 
+**Décision moteur PDF : 🟢 Option D — rendu déporté sur un service externe (Gotenberg sur Cloud Run).**
+On sort **totalement** le rendu PDF du VPS (le goulot CPU mesuré) → charge jour-J neutralisée, fidélité
+préservée (même moteur Chromium), **faisable sans attendre la migration GCP**.
+
 | Action | Temps estimé |
 | --- | --- |
+| **Déployer Gotenberg sur Cloud Run** (image + config min-instances) | ~½ j |
+| **Auth service-to-service** (IAM / clé) + egress VPS→GCP sécurisé | ~½ j |
+| Brancher le back sur le service de rendu (remplacer l'appel Puppeteer local pour le billet) | ~½ – 1 j |
 | Générer (ou réutiliser le cache R2) le PDF à la confirmation + brancher dans le flux | ~1 h 30 |
 | Joindre le PDF à l'email + **lien de secours** (URL R2 signée) | ~1 h |
 | Séquencer : email envoyé **seulement quand le billet est prêt** (billet → email) | ~1 h |
-| Tests (idempotence, échec génération, fallback lien) | ~30 min |
-| **Sous-total B** | **~4 h** |
+| Tests (idempotence, échec génération, fallback lien, cold-start) | ~1 h |
+| **Sous-total B** | **~2 – 3 jours** |
 
-**Effort : ~moyen** (orchestration file, pas de nouvelle infra).
+**Effort : ~moyen-élevé** (nouveau service managé à exploiter, mais charge VPS éliminée).
 
-> ⚠️ **Impact charge — choix du moteur PDF.** Joindre le PDF à l'email de confirmation fait **entrer
-> le rendu PDF dans le flux d'inscription** (pic ~3 000 concurrents), alors qu'aujourd'hui il n'est
-> déclenché qu'à l'impression. Le moteur de rendu (Puppeteer/Chromium) devient donc un **facteur de
-> charge jour-J** → arbitrage des 4 options (A Puppeteer durci / B Playwright / C pdf-lib / D service
-> externe), avec **temps dev + tenue de charge 3 000 concurrents**, dans le comparatif dédié :
-> **[comparatif-lib-pdf-badge.md](./comparatif-lib-pdf-badge.md)**.
-> **Reco event : Option A** (garder Puppeteer, **l'isoler en worker dédié** + cache R2 + concurrence
-> bornée) ; Playwright (B) **🔵 reporté post-event**. C'est l'option A qui est chiffrée ci-dessus.
+> 💰 **Coût Cloud Run :** Gotenberg = 0 € de licence (open source). Compute pay-per-use ≈ **< 1 €**
+> en scale-to-zero, **~5-12 €** si on garde 1-2 instances chaudes sur les 2 jours d'event (anti
+> cold-start). Chiffrage détaillé : comparatif §6.
+>
+> ⚠️ **Garde-fou conservé :** le Puppeteer local **reste en place** comme fallback tant que le rendu
+> Cloud Run n'est pas validé. Comparaison visuelle **pixel-à-pixel** avant de basculer en prod.
+> Le **load test S4** doit inclure un scénario badge (le ~1,5 s/badge est encore une hypothèse).
 
 ### Chantier C — Migration ESP (délivrabilité)  🔴 Haute · ⏳ choix à trancher
 > Réf : diagnostic §1 (ligne « Stack email »)
@@ -346,15 +353,15 @@ file/R2 + tests), **hors délais comptes/certifs** (validation Apple = calendair
 | **A** — Refonte propre §7 *(priorité n°1)* | **~1 – 2 jours** *(prudent)* | — |
 | **0-CI** — CI/CD **minimal** | **~2 jours** | — |
 | **0-MON** — Monitoring **minimal** | **~2 jours** | comptes outils (uptime/Sentry) |
-| **B** — Email → billet PDF *(si requis)* | **~1 – 2 jours** | — |
+| **B** — Email → billet PDF (**Gotenberg/Cloud Run**) | **~2 – 3 jours** | service Cloud Run (~< 1 – 12 €) |
 | **C** — Migration ESP | **~2 – 3 jours** | propagation DNS + **warm-up (1-2 sem)** |
 | **D** — Sécurité QR HMAC | **~1 – 2 jours** | — (coordination 2 repos clients) |
 | **E** — Backup auto (MVP) + PITR léger | **~1,5 – 2 jours** | — |
 | **F** — HA réplication complète | 🔵 **reporté** | → migration GCP |
 | **G** — Wallet (V2) | ~1 semaine *(hors event)* | validation Apple |
-| **Total périmètre event (mois)** | **~11 – 15 jours-dev** | DNS + warm-up ESP |
+| **Total périmètre event (mois)** | **~12 – 16 jours-dev** | DNS + warm-up ESP + Cloud Run |
 
-> **⚡ Lecture capacité :** ~11-15 jours-dev sur **2 devs × ~20 j ouvrés = ~40 j-dev de capacité**
+> **⚡ Lecture capacité :** ~12-16 jours-dev sur **2 devs × ~20 j ouvrés = ~40 j-dev de capacité**
 > → **ça rentre, avec du buffer** (≈ moitié de la capacité), à condition de **tenir le descope**
 > (HA → GCP, CD complet → post-event, wallet → V2). Voir le **planning daté** ci-dessous.
 
@@ -391,8 +398,8 @@ file/R2 + tests), **hors délais comptes/certifs** (validation Apple = calendair
 |---|---|---|
 | **S1** | **A — Refonte propre** (rejouer les leviers, redéployer proprement) · lancer setup ESP (DNS) | **0-CI minimal** (build+test sur PR + deploy staging) · **0-MON** uptime + alerte |
 | **S2** | **E — Backup MVP** + **PITR léger** · monitoring back (Sentry + métriques CPU) | **D — QR HMAC** (back + mobile + print-client) · finaliser CI minimal |
-| **S3** | **C — Intégration ESP** derrière nodemailer + test envoi en masse | **B — Email → billet PDF** (joindre PDF + lien secours + séquencement) |
-| **S4** | **Load test de validation** sur prod réelle · checklist event · **buffer** | Tests bout-en-bout (scan QR signé, email+PDF) · runbook event · **buffer** |
+| **S3** | **C — Intégration ESP** derrière nodemailer + test envoi en masse | **B — Email → billet PDF** : déployer **Gotenberg sur Cloud Run** + brancher le rendu + joindre PDF + lien secours |
+| **S4** | **Load test de validation** sur prod réelle (**+ scénario badge / Cloud Run**) · checklist event · **buffer** | Tests bout-en-bout (scan QR signé, email+PDF, fallback Puppeteer) · runbook event · **buffer** |
 
 **Livré au client à l'échéance (1 mois) :**
 - ✅ Base de code propre et redéployée (refonte A)
@@ -400,7 +407,7 @@ file/R2 + tests), **hors délais comptes/certifs** (validation Apple = calendair
 - ✅ Monitoring + alerting (uptime, erreurs, CPU)
 - ✅ Sauvegarde DB automatique testée + PITR léger
 - ✅ QR signé (HMAC) sécurisé
-- ✅ Email avec billet PDF *(si retenu)* + ESP en délivrabilité maîtrisée
+- ✅ Email avec billet PDF (rendu **Gotenberg/Cloud Run**, hors VPS) + ESP en délivrabilité maîtrisée
 
 **Explicitement reporté (à présenter comme V2 / post-GCP) :**
 - 🔵 Haute dispo (réplication streaming) → **arrive avec la migration GCP**
