@@ -15,7 +15,7 @@ Attendee a vocation à être un SaaS payant avec plusieurs plans (Free, Trial, p
 
 ## 2. Current understanding
 
-- Le modèle `Plan` / `Subscription` (ou équivalent) doit appartenir à `Organization`, **pas à User** (décision actée, voir [../steering/DECISIONS.md](../steering/DECISIONS.md#plan-ownership)).
+- Le modèle `Plan` / `Subscription` (ou équivalent) doit appartenir à `Organization`, **pas à User** (décision actée, voir [../steering/DECISIONS.md](../../../attendee-ems-back/docs/steering/DECISIONS.md#plan-ownership)).
 - Aucune intégration paiement n'est en place aujourd'hui.
 - Les limites (events, registrations, prints, etc.) ne sont pas formalisées de façon centralisée.
 - Une règle Free plan existe (voir DECISIONS).
@@ -25,7 +25,7 @@ Attendee a vocation à être un SaaS payant avec plusieurs plans (Free, Trial, p
 - **Plan ownership = Organization** (pas User).
 - Vérification des limites sur `currentOrgId`.
 - Free plan rule : une seule org Free active créée par User.
-- Stripe complet **maintenant** est un rabbit hole — voir [../rabbit-holes/full-stripe-billing.md](../rabbit-holes/full-stripe-billing.md).
+- Stripe complet **maintenant** est un rabbit hole — voir [../rabbit-holes/full-stripe-billing.md](../../rabbit-holes/a-faire/full-stripe-billing.md).
 
 ## 4. What is not decided yet
 
@@ -38,7 +38,7 @@ Attendee a vocation à être un SaaS payant avec plusieurs plans (Free, Trial, p
 
 ## 5. Why not now
 
-- Focus actuel = Async Architecture (voir [../steering/NOW.md](../steering/NOW.md)).
+- Focus actuel = Async Architecture (voir [../steering/NOW.md](../../../attendee-ems-back/docs/steering/NOW.md)).
 - Implémentation Stripe complète est un rabbit hole (lourd, à part).
 - Sans onboarding multi-tenant cadré, billing n'a pas de surface UI cohérente où atterrir.
 
@@ -50,11 +50,11 @@ Attendee a vocation à être un SaaS payant avec plusieurs plans (Free, Trial, p
 
 ## 7. Related docs
 
-- [../architecture/organization-plan-subscription-model.md](../architecture/organization-plan-subscription-model.md)
-- [../product/saas-foundation-onboarding-billing.md](../product/saas-foundation-onboarding-billing.md)
-- [../roadmap/saas-foundation-epics.md](../roadmap/saas-foundation-epics.md)
-- [../workstreams/onboarding-billing-management/README.md](../workstreams/async-architecture/README.md)
-- [../rabbit-holes/full-stripe-billing.md](../rabbit-holes/full-stripe-billing.md)
+- [../architecture/organization-plan-subscription-model.md](../../architecture/organization-plan-subscription-model.md)
+- [../product/saas-foundation-onboarding-billing.md](../../product/saas-foundation-onboarding-billing.md)
+- [../roadmap/saas-foundation-epics.md](saas-foundation-epics.md)
+- [../workstreams/onboarding-billing-management/README.md](../../workstreams/en-cours/async-architecture/README.md)
+- [../rabbit-holes/full-stripe-billing.md](../../rabbit-holes/a-faire/full-stripe-billing.md)
 
 ## 8. Possible future epics
 
@@ -65,6 +65,6 @@ Attendee a vocation à être un SaaS payant avec plusieurs plans (Free, Trial, p
 
 ## 9. Notes for Copilot
 
-- **Ne pas câbler Stripe** depuis ce backlog. Toute proposition Stripe doit pointer vers [../rabbit-holes/full-stripe-billing.md](../rabbit-holes/full-stripe-billing.md).
+- **Ne pas câbler Stripe** depuis ce backlog. Toute proposition Stripe doit pointer vers [../rabbit-holes/full-stripe-billing.md](../../rabbit-holes/a-faire/full-stripe-billing.md).
 - **Ne pas créer** de modèle Prisma `Plan` / `Subscription` sans ticket et sans décision sur les plans.
 - Si une vérif de limite est ajoutée ailleurs (ex : import bulk), la documenter ici pour rester cohérent.

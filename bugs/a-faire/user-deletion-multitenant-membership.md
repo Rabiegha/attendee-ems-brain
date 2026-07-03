@@ -14,7 +14,7 @@
 Aujourd'hui, l'architecture est tenant-first :
 
 - `User` = identité globale réutilisable.
-- `OrgUser` = **membership** (lien `user_id × org_id`) qui matérialise l'accès du user à une organisation. Cf. [prisma/schema.prisma](../../prisma/schema.prisma#L90-L108).
+- `OrgUser` = **membership** (lien `user_id × org_id`) qui matérialise l'accès du user à une organisation. Cf. [prisma/schema.prisma](../../../attendee-ems-back/prisma/schema.prisma#L90-L108).
 - Un user peut appartenir à **plusieurs organisations** simultanément.
 - Les données métier (events, registrations, badges, invitations…) appartiennent à une **organisation**, pas au user.
 
@@ -32,7 +32,7 @@ C'est donc un sujet **multi-tenant** qui doit agir sur la **membership** (`OrgUs
 
 ### 2.1 Modèle `User`
 
-[prisma/schema.prisma](../../prisma/schema.prisma#L44-L76)
+[prisma/schema.prisma](../../../attendee-ems-back/prisma/schema.prisma#L44-L76)
 
 - Champs liés à la désactivation : **`is_active: Boolean @default(true)`**.
 - **Pas de `deletedAt`**.
@@ -42,7 +42,7 @@ C'est donc un sujet **multi-tenant** qui doit agir sur la **membership** (`OrgUs
 
 ### 2.2 Modèle de membership : `OrgUser`
 
-[prisma/schema.prisma](../../prisma/schema.prisma#L90-L108)
+[prisma/schema.prisma](../../../attendee-ems-back/prisma/schema.prisma#L90-L108)
 
 - PK composite `[user_id, org_id]`.
 - FK `user_id` → `User` avec `onDelete: Cascade`.
@@ -56,7 +56,7 @@ C'est donc un sujet **multi-tenant** qui doit agir sur la **membership** (`OrgUs
 
 ### 2.3 Controller `users`
 
-[src/modules/users/users.controller.ts](../../src/modules/users/users.controller.ts)
+[src/modules/users/users.controller.ts](../../../attendee-ems-back/src/modules/users/users.controller.ts)
 
 Endpoints de suppression :
 
@@ -69,7 +69,7 @@ Endpoints de suppression :
 
 ### 2.4 Service `users` — méthodes de suppression
 
-[src/modules/users/users.service.ts](../../src/modules/users/users.service.ts)
+[src/modules/users/users.service.ts](../../../attendee-ems-back/src/modules/users/users.service.ts)
 
 **`softDelete(userId, orgId)`** (lignes 413-429) :
 
@@ -107,7 +107,7 @@ await this.prisma.user.updateMany({
 
 ### 2.5 Contexte tenant `currentOrgId`
 
-[src/auth/interfaces/jwt-payload.interface.ts](../../src/auth/interfaces/jwt-payload.interface.ts#L13-L20)
+[src/auth/interfaces/jwt-payload.interface.ts](../../../attendee-ems-back/src/auth/interfaces/jwt-payload.interface.ts#L13-L20)
 
 - `currentOrgId` est dans le **payload JWT**, défini à la génération du token (`auth.service.ts → generateJwtForOrg()`).
 - Récupéré dans les controllers via `req.user.currentOrgId`.
@@ -179,7 +179,7 @@ Sur `permanentDelete` (uniquement après désactivation) : hard delete `User`, c
 
 Preuves dans le code :
 
-- `softDelete()` agit sur `User.is_active` (champ global), pas sur la membership. Cf. [users.service.ts#L420-L428](../../src/modules/users/users.service.ts#L420-L428).
+- `softDelete()` agit sur `User.is_active` (champ global), pas sur la membership. Cf. [users.service.ts#L420-L428](../../../attendee-ems-back/src/modules/users/users.service.ts#L420-L428).
 - La vérification `findOne(userId, orgId)` est utilisée comme **gate d'autorisation** (l'admin doit avoir accès au user dans son org), mais l'**action** mutée est globale.
 - `bulkDelete()` filtre via `orgMemberships.some({ org_id: orgId })`, mais la mutation `updateMany` touche `User.is_active`. Idem : autorisation scope-org, effet global.
 - `permanentDelete()` : même schéma, et le hard delete cascade sur **toutes** les memberships, pas seulement celle de l'org appelante.
@@ -435,11 +435,11 @@ Un wording séparé devra exister pour le cas B (super admin) et le cas C (suppr
 ## 14. Références
 
 - Code backend :
-  - [src/modules/users/users.controller.ts](../../src/modules/users/users.controller.ts)
-  - [src/modules/users/users.service.ts](../../src/modules/users/users.service.ts#L413-L530)
-  - [src/auth/auth.service.ts](../../src/auth/auth.service.ts#L339-L344)
-  - [src/auth/interfaces/jwt-payload.interface.ts](../../src/auth/interfaces/jwt-payload.interface.ts#L13-L20)
-  - [prisma/schema.prisma](../../prisma/schema.prisma#L44-L108)
+  - [src/modules/users/users.controller.ts](../../../attendee-ems-back/src/modules/users/users.controller.ts)
+  - [src/modules/users/users.service.ts](../../../attendee-ems-back/src/modules/users/users.service.ts#L413-L530)
+  - [src/auth/auth.service.ts](../../../attendee-ems-back/src/auth/auth.service.ts#L339-L344)
+  - [src/auth/interfaces/jwt-payload.interface.ts](../../../attendee-ems-back/src/auth/interfaces/jwt-payload.interface.ts#L13-L20)
+  - [prisma/schema.prisma](../../../attendee-ems-back/prisma/schema.prisma#L44-L108)
 - Frontend (lecture seule) :
   - [attendee-ems-front/src/features/users/ui/DeleteUserModal.tsx](../../../attendee-ems-front/src/features/users/ui/DeleteUserModal.tsx)
   - [attendee-ems-front/src/features/users/ui/PermanentDeleteUserModal.tsx](../../../attendee-ems-front/src/features/users/ui/PermanentDeleteUserModal.tsx)

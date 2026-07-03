@@ -2,7 +2,7 @@
 
 ## 1. Sentry — `FOUND_IN_CODE`
 
-- Fichier : [src/instrument.ts](../../../../src/instrument.ts) (importé en **premier** dans `main.ts` avant tout autre import).
+- Fichier : [src/instrument.ts](../../../../../attendee-ems-back/src/instrument.ts) (importé en **premier** dans `main.ts` avant tout autre import).
 - Initialisation **conditionnelle** : seulement si `@sentry/node` est installé **et** `SENTRY_DSN` est défini.
 - Environnement : `SENTRY_ENVIRONMENT` ou fallback `NODE_ENV`.
 - Sampling :
@@ -10,13 +10,13 @@
   - Profiling : 10 % (`profilesSampleRate: 0.1`).
 - Integrations : `nodeProfilingIntegration()` (`@sentry/profiling-node`).
 - `defaultIntegrations: false` (évite que Sentry n'intercepte le body parser) + `skipOpenTelemetrySetup: true` + `sendDefaultPii: false`.
-- Wrapper : [src/common/logger/sentry-logger.ts](../../../../src/common/logger/sentry-logger.ts) (`SentryLogger.info/warn/error/debug`).
+- Wrapper : [src/common/logger/sentry-logger.ts](../../../../../attendee-ems-back/src/common/logger/sentry-logger.ts) (`SentryLogger.info/warn/error/debug`).
 
 ## 2. Logger structuré — `INFERRED_FROM_CODE`
 
 - Utilisation du `Logger` NestJS dans la majorité des services (`new Logger(loggerContext)` dans `BaseProcessor`).
 - Format JSON structuré : **non** explicite (sortie texte par défaut NestJS). À évaluer si on veut Cloud Logging propre (Pino JSON ou wrapper).
-- `RequestLoggerMiddleware` ([src/common/middleware/request-logger.middleware.ts](../../../../src/common/middleware/request-logger.middleware.ts)) appliqué sur toutes les routes (cf. `AppModule.configure`).
+- `RequestLoggerMiddleware` ([src/common/middleware/request-logger.middleware.ts](../../../../../attendee-ems-back/src/common/middleware/request-logger.middleware.ts)) appliqué sur toutes les routes (cf. `AppModule.configure`).
 
 ## 3. Logs spécifiques jobs
 
@@ -26,8 +26,8 @@
 
 ## 4. Tests existants — `FOUND_IN_CODE`
 
-- Config : [package.json](../../../../package.json) (`test`, `test:watch`, `test:e2e`, `test:cov`).
-- Dossier : [test/](../../../../test/) — config jest-e2e.
+- Config : [package.json](../../../../../attendee-ems-back/package.json) (`test`, `test:watch`, `test:e2e`, `test:cov`).
+- Dossier : [test/](../../../../../attendee-ems-back/test) — config jest-e2e.
 - Suites repérées : par convention `*.spec.ts` au niveau modules (à compter par `find src -name "*.spec.ts" | wc -l` — non exécuté ici).
 - E2E : config présente mais étendue à vérifier.
 - Pas de tests visibles spécifiques aux processors BullMQ (`exports.processor.spec.ts` ? à vérifier).

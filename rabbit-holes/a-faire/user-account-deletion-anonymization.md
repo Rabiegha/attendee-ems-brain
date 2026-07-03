@@ -8,7 +8,7 @@ Risk level: High
 
 - Conformité RGPD (« droit à l'oubli »).
 - Demande probable d'un futur client enterprise.
-- Le bug review [../bugs/user-deletion-multitenant-membership.md](../bugs/user-deletion-multitenant-membership.md) attire déjà l'attention sur le sujet.
+- Le bug review [../bugs/user-deletion-multitenant-membership.md](../../bugs/a-faire/user-deletion-multitenant-membership.md) attire déjà l'attention sur le sujet.
 - Tentation de « faire vite » une suppression cascade pour clôturer le bug.
 
 ## 2. Why it is dangerous now
@@ -35,7 +35,7 @@ Très élevé :
 ## 4. Current decision
 
 - **Pas de suppression / anonymisation globale maintenant.**
-- Le **bug review** [../bugs/user-deletion-multitenant-membership.md](../bugs/user-deletion-multitenant-membership.md) reste **une analyse**, pas un ordre de correction.
+- Le **bug review** [../bugs/user-deletion-multitenant-membership.md](../../bugs/a-faire/user-deletion-multitenant-membership.md) reste **une analyse**, pas un ordre de correction.
 - Aucune action de cascade ou de soft-delete cross-tenant à ajouter sans ticket explicite et décision produit/légale.
 
 ## 5. When to revisit
@@ -46,10 +46,10 @@ Très élevé :
 
 ## 6. Related docs
 
-- [../bugs/user-deletion-multitenant-membership.md](../bugs/user-deletion-multitenant-membership.md)
-- [../backlog/onboarding-multi-tenant.md](../backlog/onboarding-multi-tenant.md)
-- [../async-architecture/QandA/13-information-gaps.md](../workstreams/async-architecture/QandA/13-information-gaps.md)
-- [../steering/DECISIONS.md](../steering/DECISIONS.md#bug-handling-rule)
+- [../bugs/user-deletion-multitenant-membership.md](../../bugs/a-faire/user-deletion-multitenant-membership.md)
+- [../backlog/onboarding-multi-tenant.md](../../backlog/a-faire/onboarding-multi-tenant.md)
+- [../async-architecture/QandA/13-information-gaps.md](../../workstreams/en-cours/async-architecture/QandA/13-information-gaps.md)
+- [../steering/DECISIONS.md](../../../attendee-ems-back/docs/steering/DECISIONS.md#bug-handling-rule)
 
 ## 7. Rule for Copilot
 

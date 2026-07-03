@@ -14,10 +14,10 @@ Légende des colonnes :
 ## A. Impressions de badges
 
 ### A.1 Print d'un badge unitaire — `FOUND_IN_CODE`
-- Endpoint : `POST /print-queue/add` ([src/print-queue/print-queue.controller.ts](../../../../src/print-queue/print-queue.controller.ts))
+- Endpoint : `POST /print-queue/add` ([src/print-queue/print-queue.controller.ts](../../../../../attendee-ems-back/src/print-queue/print-queue.controller.ts))
 - Controller : `PrintQueueController.addJob()`
 - Service : `PrintQueueService.addJob()`
-- Modèles : `PrintJob` (Prisma, [schema.prisma#L1097](../../../../prisma/schema.prisma))
+- Modèles : `PrintJob` (Prisma, [schema.prisma#L1097](../../../../../attendee-ems-back/prisma/schema.prisma))
 - Sync/Async : **Hybride** — endpoint sync qui crée un `PrintJob` en DB et **émet via WebSocket** au Print Client connecté.
 - WS : oui (`printers:updated`, et probablement push du job au Print Client cible).
 - Email : non. Fichier : badge image/PDF généré côté `BadgeGenerationService` (URL stockée dans `Registration.badge_image_url`/`badge_pdf_url`).
@@ -28,7 +28,7 @@ Légende des colonnes :
 - Confiance : **élevée** sur la persistance, **moyenne** sur le flux de dispatch (la méthode `addJob` du service mériterait relecture détaillée pour le call WS exact).
 
 ### A.2 Print en masse / génération badges pour tout un event
-- Endpoint : `POST /events/:eventId/registrations/generate-badges` et `.../generate-badges-bulk` ([src/modules/events/events.controller.ts](../../../../src/modules/events/events.controller.ts))
+- Endpoint : `POST /events/:eventId/registrations/generate-badges` et `.../generate-badges-bulk` ([src/modules/events/events.controller.ts](../../../../../attendee-ems-back/src/modules/events/events.controller.ts))
 - Controller : `EventsController` → délègue à `RegistrationsService.generateBadgesForEvent()` / `generateBadgesBulk()` (registrations.service.ts, méthodes ~L2628, 2705, 2826) → `BadgeGenerationService.generateBulk()` (badge-generation.service.ts L935–1015).
 - Sync/Async : **Sync, séquentiel** par registration (Puppeteer).
 - WS : non documenté explicitement pour cette voie. Email : non. Fichier : N PDF uploadés R2.
@@ -56,8 +56,8 @@ Légende des colonnes :
 ## C. Imports
 
 ### C.1 Import registrations XLSX — `FOUND_IN_CODE`
-- Endpoint : `POST /events/:eventId/registrations/bulk-import` (multipart `file`, query `autoApprove`, `replaceExisting`) — [events.controller.ts](../../../../src/modules/events/events.controller.ts) ~L340-370
-- Lib : `xlsx` ([registrations.service.ts L20](../../../../src/modules/registrations/registrations.service.ts))
+- Endpoint : `POST /events/:eventId/registrations/bulk-import` (multipart `file`, query `autoApprove`, `replaceExisting`) — [events.controller.ts](../../../../../attendee-ems-back/src/modules/events/events.controller.ts) ~L340-370
+- Lib : `xlsx` ([registrations.service.ts L20](../../../../../attendee-ems-back/src/modules/registrations/registrations.service.ts))
 - Service : `RegistrationsService.bulkImport()` L1430–2131 (~700 lignes)
 - Sync/Async : **Sync. Une transaction Prisma par ligne (O(N))**.
 - WS : non confirmé pendant l'import (probablement émissions par-ligne via `emitRegistrationCreated`/`Updated`).
@@ -77,7 +77,7 @@ Légende des colonnes :
 
 ### D.1 Export attendees / registrations — DÉJÀ async (BullMQ) — `FOUND_IN_CODE`
 - Endpoints : `POST /exports/attendees`, `POST /exports/registrations`, `POST /exports/*/estimate`, `GET /exports/:id`, `PATCH /exports/:id/notify`
-- Service : `ExportsService` ([exports.service.ts](../../../../src/modules/exports/exports.service.ts))
+- Service : `ExportsService` ([exports.service.ts](../../../../../attendee-ems-back/src/modules/exports/exports.service.ts))
 - Processors : `ExportAttendeesProcessor`, `ExportRegistrationsProcessor` extending `BaseProcessor`.
 - Modèle : `ExportJob` (schema.prisma L1179) — status, progress 0-100, eta_seconds, file_url, file_key, file_size, row_count, error_message, email.
 - Tech : `csv-stringify` ou `exceljs`, streaming `PassThrough` → R2 `uploadStream` (multipart). Email `ExportReadyEmailTemplate` envoyé si `email` renseigné. Lien signé 72 h.

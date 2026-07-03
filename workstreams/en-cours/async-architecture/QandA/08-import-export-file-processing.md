@@ -4,10 +4,10 @@
 
 ### A.1 Import registrations XLSX — `FOUND_IN_CODE`
 
-- **Endpoint** : `POST /events/:eventId/registrations/bulk-import` ([src/modules/events/events.controller.ts](../../../../src/modules/events/events.controller.ts) ~L340-370)
+- **Endpoint** : `POST /events/:eventId/registrations/bulk-import` ([src/modules/events/events.controller.ts](../../../../../attendee-ems-back/src/modules/events/events.controller.ts) ~L340-370)
 - **Multipart** : `FileInterceptor('file')`
 - **Query params** : `autoApprove` (boolean), `replaceExisting` (boolean)
-- **Service** : `RegistrationsService.bulkImport()` ([src/modules/registrations/registrations.service.ts](../../../../src/modules/registrations/registrations.service.ts) L1430-2131, **~700 lignes**)
+- **Service** : `RegistrationsService.bulkImport()` ([src/modules/registrations/registrations.service.ts](../../../../../attendee-ems-back/src/modules/registrations/registrations.service.ts) L1430-2131, **~700 lignes**)
 - **Librairies** : `xlsx` (parsing) — `import * as XLSX from 'xlsx'` (L20)
 - **Pipeline (en mémoire)** : `XLSX.read(buffer)` → `XLSX.utils.sheet_to_json()` → boucle sur les lignes → par ligne : validation + `prisma.$transaction` (upsert attendee + create/update registration + table/session choices).
 - **Mapping colonnes** : géré par alias dans la méthode (first_name/firstname/prenom…). Pas de configuration externe.
@@ -35,7 +35,7 @@
 
 ### B.1 Module `Exports` — async BullMQ — `FOUND_IN_CODE`
 
-- Chemins : [src/modules/exports/](../../../../src/modules/exports/)
+- Chemins : [src/modules/exports/](../../../../../attendee-ems-back/src/modules/exports)
 - **Endpoints** :
   - `POST /exports/attendees/estimate` — estimation
   - `POST /exports/attendees` — création job

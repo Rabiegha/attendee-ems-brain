@@ -4,41 +4,41 @@
 
 ### Dossiers inspectés (backend)
 
-- [src/app.module.ts](../../../../src/app.module.ts)
-- [src/main.ts](../../../../src/main.ts) — bootstrap, body parser, Sentry
-- [src/instrument.ts](../../../../src/instrument.ts) — init Sentry conditionnelle
-- [src/infra/queue/](../../../../src/infra/queue/) — `queue.module.ts`, `queue-names.ts`, `base.processor.ts`, `bull-board.module.ts`, `index.ts`
-- [src/infra/storage/](../../../../src/infra/storage/) — `r2.service.ts`, `storage.controller.ts`, `storage.module.ts`
-- [src/infra/db/](../../../../src/infra/db/) — `prisma.service.ts`, `prisma.module.ts`
-- [src/websocket/](../../../../src/websocket/) — `websocket.gateway.ts`, `websocket.module.ts`
-- [src/print-queue/](../../../../src/print-queue/) — `print-queue.controller.ts`, `print-queue.service.ts`, `print-queue.module.ts`
-- [src/modules/exports/](../../../../src/modules/exports/) — controller, service, deux processors, where-builders, email attachment
-- [src/modules/email/](../../../../src/modules/email/) — `email.service.ts`, templates, controller
-- [src/modules/email-templates/](../../../../src/modules/email-templates/)
-- [src/modules/registrations/](../../../../src/modules/registrations/) — 4113 lignes
-- [src/modules/events/](../../../../src/modules/events/) — 2447 lignes + cron auto-complete + cron purge
-- [src/modules/attendees/](../../../../src/modules/attendees/) — 1533 lignes + scoring + affinity
-- [src/modules/badge-generation/](../../../../src/modules/badge-generation/) — 2228 lignes (Puppeteer)
-- [src/modules/badges/](../../../../src/modules/badges/), [src/modules/badge-templates/](../../../../src/modules/badge-templates/)
-- [src/modules/partner-scans/](../../../../src/modules/partner-scans/)
-- [src/modules/sessions/](../../../../src/modules/sessions/)
-- [src/modules/event-tables/](../../../../src/modules/event-tables/)
-- [src/modules/invitations/](../../../../src/modules/invitations/)
-- [src/modules/n8n/](../../../../src/modules/n8n/) — service, webhook service, controller (API Key)
-- [src/modules/companies/](../../../../src/modules/companies/)
-- [src/modules/attendee-types/](../../../../src/modules/attendee-types/)
-- [src/modules/tags/](../../../../src/modules/tags/)
-- [src/modules/organizations/](../../../../src/modules/organizations/)
-- [src/modules/users/](../../../../src/modules/users/)
-- [src/modules/roles/](../../../../src/modules/roles/), [src/modules/permissions/](../../../../src/modules/permissions/)
-- [src/modules/public/](../../../../src/modules/public/)
-- [src/platform/authz/](../../../../src/platform/authz/)
-- [src/auth/](../../../../src/auth/)
-- [src/common/](../../../../src/common/) — guards, logger, middleware, decorators
-- [src/config/](../../../../src/config/) — `config.service.ts`, validation Zod
-- [prisma/schema.prisma](../../../../prisma/schema.prisma) — 1217 lignes
-- [prisma/migrations/](../../../../prisma/migrations/) — historique (palier 3a/3b, exports, print-queue…)
-- [package.json](../../../../package.json) — dépendances
+- [src/app.module.ts](../../../../../attendee-ems-back/src/app.module.ts)
+- [src/main.ts](../../../../../attendee-ems-back/src/main.ts) — bootstrap, body parser, Sentry
+- [src/instrument.ts](../../../../../attendee-ems-back/src/instrument.ts) — init Sentry conditionnelle
+- [src/infra/queue/](../../../../../attendee-ems-back/src/infra/queue) — `queue.module.ts`, `queue-names.ts`, `base.processor.ts`, `bull-board.module.ts`, `index.ts`
+- [src/infra/storage/](../../../../../attendee-ems-back/src/infra/storage) — `r2.service.ts`, `storage.controller.ts`, `storage.module.ts`
+- [src/infra/db/](../../../../../attendee-ems-back/src/infra/db) — `prisma.service.ts`, `prisma.module.ts`
+- [src/websocket/](../../../../../attendee-ems-back/src/websocket) — `websocket.gateway.ts`, `websocket.module.ts`
+- [src/print-queue/](../../../../../attendee-ems-back/src/print-queue) — `print-queue.controller.ts`, `print-queue.service.ts`, `print-queue.module.ts`
+- [src/modules/exports/](../../../../../attendee-ems-back/src/modules/exports) — controller, service, deux processors, where-builders, email attachment
+- [src/modules/email/](../../../../../attendee-ems-back/src/modules/email) — `email.service.ts`, templates, controller
+- [src/modules/email-templates/](../../../../../attendee-ems-back/src/modules/email-templates)
+- [src/modules/registrations/](../../../../../attendee-ems-back/src/modules/registrations) — 4113 lignes
+- [src/modules/events/](../../../../../attendee-ems-back/src/modules/events) — 2447 lignes + cron auto-complete + cron purge
+- [src/modules/attendees/](../../../../../attendee-ems-back/src/modules/attendees) — 1533 lignes + scoring + affinity
+- [src/modules/badge-generation/](../../../../../attendee-ems-back/src/modules/badge-generation) — 2228 lignes (Puppeteer)
+- [src/modules/badges/](../../../../../attendee-ems-back/src/modules/badges), [src/modules/badge-templates/](../../../../../attendee-ems-back/src/modules/badge-templates)
+- [src/modules/partner-scans/](../../../../../attendee-ems-back/src/modules/partner-scans)
+- [src/modules/sessions/](../../../../../attendee-ems-back/src/modules/sessions)
+- [src/modules/event-tables/](../../../../../attendee-ems-back/src/modules/event-tables)
+- [src/modules/invitations/](../../../../../attendee-ems-back/src/modules/invitations)
+- [src/modules/n8n/](../../../../../attendee-ems-back/src/modules/n8n) — service, webhook service, controller (API Key)
+- [src/modules/companies/](../../../../../attendee-ems-back/src/modules/companies)
+- [src/modules/attendee-types/](../../../../../attendee-ems-back/src/modules/attendee-types)
+- [src/modules/tags/](../../../../../attendee-ems-back/src/modules/tags)
+- [src/modules/organizations/](../../../../../attendee-ems-back/src/modules/organizations)
+- [src/modules/users/](../../../../../attendee-ems-back/src/modules/users)
+- [src/modules/roles/](../../../../../attendee-ems-back/src/modules/roles), [src/modules/permissions/](../../../../../attendee-ems-back/src/modules/permissions)
+- [src/modules/public/](../../../../../attendee-ems-back/src/modules/public)
+- [src/platform/authz/](../../../../../attendee-ems-back/src/platform/authz)
+- [src/auth/](../../../../../attendee-ems-back/src/auth)
+- [src/common/](../../../../../attendee-ems-back/src/common) — guards, logger, middleware, decorators
+- [src/config/](../../../../../attendee-ems-back/src/config) — `config.service.ts`, validation Zod
+- [prisma/schema.prisma](../../../../../attendee-ems-back/prisma/schema.prisma) — 1217 lignes
+- [prisma/migrations/](../../../../../attendee-ems-back/prisma/migrations) — historique (palier 3a/3b, exports, print-queue…)
+- [package.json](../../../../../attendee-ems-back/package.json) — dépendances
 
 ### Hors backend (référencé mais non analysé en profondeur)
 

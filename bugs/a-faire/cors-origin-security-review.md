@@ -3,7 +3,7 @@
 > **Statut** : Analyse / Proposition. **Aucun code modifié.**
 > **Auteur** : audit interne — `feat/authz-m1-audit-service`
 > **Scope** : `attendee-ems-back` — politique CORS HTTP + WebSocket
-> **Référence code** : [src/main.ts](../../src/main.ts#L45-L77)
+> **Référence code** : [src/main.ts](../../../attendee-ems-back/src/main.ts#L45-L77)
 
 ---
 
@@ -11,7 +11,7 @@
 
 ### 1.1 Configuration HTTP (`main.ts`)
 
-Extrait de [src/main.ts](../../src/main.ts#L45-L77) :
+Extrait de [src/main.ts](../../../attendee-ems-back/src/main.ts#L45-L77) :
 
 ```ts
 const allowedOrigins = configService.apiCorsOrigin.split(',').map(o => o.trim());
@@ -46,16 +46,16 @@ app.enableCors({
 
 | Variable | Défaut | Fichier | Note |
 |---|---|---|---|
-| `API_CORS_ORIGIN` | `http://localhost:3001` | [src/config/validation.ts](../../src/config/validation.ts#L23) | Liste séparée par virgules |
-| Dev (`.env`) | `http://localhost:5173,http://localhost:3000` | [.env](../../.env#L22) | Front Vite + autre |
-| Docker (`.env.docker`) | `http://localhost:5173,http://localhost:3000` | [.env.docker](../../.env.docker#L22) | |
+| `API_CORS_ORIGIN` | `http://localhost:3001` | [src/config/validation.ts](../../../attendee-ems-back/src/config/validation.ts#L23) | Liste séparée par virgules |
+| Dev (`.env`) | `http://localhost:5173,http://localhost:3000` | [.env](../../../attendee-ems-back/.env#L22) | Front Vite + autre |
+| Docker (`.env.docker`) | `http://localhost:5173,http://localhost:3000` | [.env.docker](../../../Public-Form-Logger/.env.docker#L22) | |
 | Prod | `https://yourdomain.com,https://www.yourdomain.com` | [README.md](../../README.md#L989) | Exemple |
 
 Une seule variable existe. Pas de distinction `dev/staging/prod` au niveau du nom.
 
 ### 1.3 WebSocket (Socket.io)
 
-[src/websocket/websocket.gateway.ts](../../src/websocket/websocket.gateway.ts#L14-L19) :
+[src/websocket/websocket.gateway.ts](../../../attendee-ems-back/src/websocket/websocket.gateway.ts#L14-L19) :
 
 ```ts
 @WebSocketGateway({ cors: { origin: '*', credentials: true } })
@@ -67,18 +67,18 @@ Une seule variable existe. Pas de distinction `dev/staging/prod` au niveau du no
 
 | Route | Fichier | Besoin CORS externe ? |
 |---|---|---|
-| `GET /api/public/events/:token` | [public.controller.ts](../../src/modules/public/public.controller.ts) | Oui (page d'inscription externe) |
+| `GET /api/public/events/:token` | [public.controller.ts](../../../attendee-ems-back/src/modules/public/public.controller.ts) | Oui (page d'inscription externe) |
 | `GET /api/public/events/:token/attendee-types` | idem | Oui |
 | `GET /api/public/events/:token/tables` | idem | Oui |
 | `GET /api/public/events/:token/live-stats` | idem (L44-L48) | **Oui** — `Access-Control-Allow-Origin: *` posé manuellement |
 | `POST /api/public/events/:token/register` | idem | Oui (formulaire public) |
-| `POST /api/public/events/:token/login` | [attendee-access.controller.ts](../../src/modules/public/attendee-access/attendee-access.controller.ts) | Oui (webinaire) |
+| `POST /api/public/events/:token/login` | [attendee-access.controller.ts](../../../attendee-ems-back/src/modules/public/attendee-access/attendee-access.controller.ts) | Oui (webinaire) |
 | `GET/POST /api/public/events/:token/me\|logout\|checkin\|online-stats` | idem | Oui (webinaire intégré) |
-| `GET /api/badges/:id/pdf` (`@Public()`) | [badges.controller.ts](../../src/modules/badges/badges.controller.ts#L115) | Plutôt non (téléchargement direct, pas XHR cross-origin) |
+| `GET /api/badges/:id/pdf` (`@Public()`) | [badges.controller.ts](../../../attendee-ems-back/src/modules/badges/badges.controller.ts#L115) | Plutôt non (téléchargement direct, pas XHR cross-origin) |
 | `GET /api/badges/:id/image` (`@Public()`) | idem L155 | Idem |
-| `GET /api/qrcode/:registrationId` | [qrcode.controller.ts](../../src/modules/email/qrcode.controller.ts) | Non (image dans email — pas de preflight) |
-| `POST /api/auth/login`, `POST /api/auth/password-reset` | [auth.controller.ts](../../src/auth/auth.controller.ts) | Uniquement depuis front EMS |
-| `GET /api/health` | [health.controller.ts](../../src/health/health.controller.ts) | Non |
+| `GET /api/qrcode/:registrationId` | [qrcode.controller.ts](../../../attendee-ems-back/src/modules/email/qrcode.controller.ts) | Non (image dans email — pas de preflight) |
+| `POST /api/auth/login`, `POST /api/auth/password-reset` | [auth.controller.ts](../../../attendee-ems-back/src/auth/auth.controller.ts) | Uniquement depuis front EMS |
+| `GET /api/health` | [health.controller.ts](../../../attendee-ems-back/src/health/health.controller.ts) | Non |
 
 ### 1.5 Consommateurs de l'API
 
@@ -366,4 +366,4 @@ export class AllowedOriginCache {
 - OWASP A05:2021 — Security Misconfiguration
 - MDN — [HTTP access control (CORS)](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS)
 - NestJS — [Enabling CORS](https://docs.nestjs.com/security/cors)
-- Code source actuel : [src/main.ts](../../src/main.ts#L45-L77), [src/websocket/websocket.gateway.ts](../../src/websocket/websocket.gateway.ts#L14-L19), [src/config/validation.ts](../../src/config/validation.ts#L23)
+- Code source actuel : [src/main.ts](../../../attendee-ems-back/src/main.ts#L45-L77), [src/websocket/websocket.gateway.ts](../../../attendee-ems-back/src/websocket/websocket.gateway.ts#L14-L19), [src/config/validation.ts](../../../attendee-ems-back/src/config/validation.ts#L23)

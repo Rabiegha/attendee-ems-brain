@@ -9,7 +9,7 @@ Risk level: High
 - Le RBAC actuel a des coins difficiles (scopes `any/org/assigned/none/own`).
 - Le projet utilise `@casl/ability` + une couche hexagonale `platform/authz/` → tentation de tout repenser pour être « plus pur ».
 - Un travail de refonte RBAC est en cours sur d'autres repos (branches `Refactore-authorization-v1`, `feat/authz-m1-audit-service`, `feat/authz-m5-drift-detection`) → on peut être tenté de tout aligner d'un coup.
-- Plusieurs analyses existent (voir [../../analyse/AUTHZ_V1_DIAGNOSTIC_FINAL.md](../../../attendee-context-hub/analyse/AUTHZ_V1_DIAGNOSTIC_FINAL.md), [docs/Refactore-autorization/](../other/migrations%20and%20refactoring/Refactore-autorization/)).
+- Plusieurs analyses existent (voir [../../analyse/AUTHZ_V1_DIAGNOSTIC_FINAL.md](../../../attendee-context-hub/analyse/AUTHZ_V1_DIAGNOSTIC_FINAL.md), [docs/Refactore-autorization/](../../backlog/a-faire/other/migrations and refactoring/Refactore-autorization)).
 
 ## 2. Why it is dangerous now
 
@@ -42,11 +42,11 @@ Très élevé :
 
 ## 6. Related docs
 
-- [docs/Refactore-autorization/](../other/migrations%20and%20refactoring/Refactore-autorization/)
+- [docs/Refactore-autorization/](../../backlog/a-faire/other/migrations and refactoring/Refactore-autorization)
 - [attendee-context-hub/analyse/AUTHZ_V1_DIAGNOSTIC_FINAL.md](../../../attendee-context-hub/analyse/AUTHZ_V1_DIAGNOSTIC_FINAL.md)
 - [attendee-context-hub/analyse/AUTHZ_V1_DRIFT_DETECTION.md](../../../attendee-context-hub/analyse/AUTHZ_V1_DRIFT_DETECTION.md)
 - [attendee-context-hub/analyse/AUTHZ_V1_SMOKE_TESTS.md](../../../attendee-context-hub/analyse/AUTHZ_V1_SMOKE_TESTS.md)
-- [../async-architecture/QandA/09-security-multitenancy.md](../workstreams/async-architecture/QandA/09-security-multitenancy.md)
+- [../async-architecture/QandA/09-security-multitenancy.md](../../workstreams/en-cours/async-architecture/QandA/09-security-multitenancy.md)
 
 ## 7. Rule for Copilot
 

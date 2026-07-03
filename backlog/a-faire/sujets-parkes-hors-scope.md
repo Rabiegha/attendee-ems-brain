@@ -37,7 +37,7 @@ quand il existe déjà ailleurs — ne pas dupliquer, compléter la source.
 - **Quoi :** sortir les secrets en clair de `eas.json` / `.env*`, faire tourner la clé
   PrintNode compromise, migrer vers EAS Secrets.
 - **Pourquoi parké ici :** déjà formalisé en **dette**, ce n'est pas un chantier backlog neuf.
-- **Détail (source de vérité) :** [DEBTS.md — S-01](../../DEBTS.md) + mémoire repo
+- **Détail (source de vérité) :** [DEBTS.md — S-01](../../debts/DEBTS.md) + mémoire repo
   `mobile-eas-notes.md` (§ Sécurité — DETTE). **Ne pas dupliquer ici.**
 - **Quand reprendre :** dès qu'une fenêtre le permet (dette Haute, clé exposée sur GitHub).
 

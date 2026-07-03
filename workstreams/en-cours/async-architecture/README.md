@@ -16,6 +16,6 @@ Le dossier `QandA/` contient l'analyse complète :
 
 ## Liens connexes
 
-- [Control Center](../../00-CONTROL-CENTER.md)
-- [Rabbit hole — full event-driven migration](../../rabbit-holes/full-event-driven-migration.md)
-- [Migration GCP](../../other/migrations%20and%20refactoring/migration-GCP/)
+- [Control Center](../../../../attendee-ems-back/docs/00-CONTROL-CENTER.md)
+- [Rabbit hole — full event-driven migration](../../../rabbit-holes/a-faire/full-event-driven-migration.md)
+- [Migration GCP](../../../backlog/a-faire/other/migrations and refactoring/migration-GCP)

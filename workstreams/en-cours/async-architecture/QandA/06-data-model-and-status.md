@@ -1,6 +1,6 @@
 # 06 — Modèle de données & suivi de statut
 
-Source : [prisma/schema.prisma](../../../../prisma/schema.prisma) (1217 lignes), [prisma/migrations/](../../../../prisma/migrations/).
+Source : [prisma/schema.prisma](../../../../../attendee-ems-back/prisma/schema.prisma) (1217 lignes), [prisma/migrations/](../../../../../attendee-ems-back/prisma/migrations).
 
 ## Tableau récapitulatif des modèles « jobs / suivi »
 

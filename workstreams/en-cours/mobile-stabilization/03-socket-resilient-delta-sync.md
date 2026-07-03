@@ -50,7 +50,7 @@ Une fois les 5 tentatives épuisées, le socket reste **mort définitivement** t
 
 ### 2.2 — Le delta-sync ne se déclenche pas sur les coupures courtes
 
-Le delta-sync de rattrapage ([`useNetworkMonitor.ts#L48`](../../../../../attendee-ems-mobile/src/hooks/useNetworkMonitor.ts)) est verrouillé derrière une condition :
+Le delta-sync de rattrapage ([`useNetworkMonitor.ts#L48`](../../../../attendee-ems-mobile/src/hooks/useNetworkMonitor.ts)) est verrouillé derrière une condition :
 
 ```ts
 if (wasOfflineRef.current) {
@@ -58,7 +58,7 @@ if (wasOfflineRef.current) {
 }
 ```
 
-Or « passer hors-ligne » exige **3 pings ratés d'affilée ≈ 30 secondes** ([`useNetworkMonitor.ts#L22`](../../../../../attendee-ems-mobile/src/hooks/useNetworkMonitor.ts)).
+Or « passer hors-ligne » exige **3 pings ratés d'affilée ≈ 30 secondes** ([`useNetworkMonitor.ts#L22`](../../../../attendee-ems-mobile/src/hooks/useNetworkMonitor.ts)).
 
 **La fenêtre piège :**
 

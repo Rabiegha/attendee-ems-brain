@@ -2,9 +2,9 @@
 
 > **Statut** : Roadmap / Cadrage. **Aucun code modifié.**
 > **Documents liés** :
-> - [product/saas-foundation-onboarding-billing.md](../../../attendee-ems-back/docs/product/saas-foundation-onboarding-billing.md)
-> - [architecture/platform-admin-access-model.md](../../../attendee-ems-back/docs/architecture/platform-admin-access-model.md)
-> - [architecture/organization-plan-subscription-model.md](../../../attendee-ems-back/docs/architecture/organization-plan-subscription-model.md)
+> - [product/saas-foundation-onboarding-billing.md](../../product/saas-foundation-onboarding-billing.md)
+> - [architecture/platform-admin-access-model.md](../../architecture/platform-admin-access-model.md)
+> - [architecture/organization-plan-subscription-model.md](../../architecture/organization-plan-subscription-model.md)
 > - [bugs/user-deletion-multitenant-membership.md](../../bugs/a-faire/user-deletion-multitenant-membership.md)
 > - [bugs/cors-origin-security-review.md](../../bugs/a-faire/cors-origin-security-review.md)
 

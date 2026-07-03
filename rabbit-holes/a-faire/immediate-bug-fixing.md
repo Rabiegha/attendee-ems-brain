@@ -6,17 +6,17 @@ Risk level: Medium-High
 
 ## 1. Why it is tempting
 
-- Les bugs documentés dans [../bugs/](../bugs/) sont **visibles**, **détaillés**, **prêts à corriger en apparence**.
+- Les bugs documentés dans [../bugs/](../../bugs) sont **visibles**, **détaillés**, **prêts à corriger en apparence**.
 - L'instinct développeur dit « corrigeons tant qu'on a le contexte en tête ».
 - Copilot peut être tenté, dès qu'il lit un bug review, de proposer un patch immédiat.
 - Les analyses contiennent souvent une section « Recommandation » qui ressemble à un plan d'action prêt à coder.
 
 ## 2. Why it is dangerous now
 
-- Un **bug review = analyse**, pas un mandat (voir [../steering/DECISIONS.md](../steering/DECISIONS.md#bug-handling-rule)).
+- Un **bug review = analyse**, pas un mandat (voir [../steering/DECISIONS.md](../../../attendee-ems-back/docs/steering/DECISIONS.md#bug-handling-rule)).
 - Plusieurs bugs documentés touchent des zones structurantes :
-  - [../bugs/cors-origin-security-review.md](../bugs/cors-origin-security-review.md) → touche tous les endpoints, le WebSocket, et la prod immédiatement.
-  - [../bugs/user-deletion-multitenant-membership.md](../bugs/user-deletion-multitenant-membership.md) → multi-tenant, RGPD, cascade — voir rabbit hole [user-account-deletion-anonymization.md](user-account-deletion-anonymization.md).
+  - [../bugs/cors-origin-security-review.md](../../bugs/a-faire/cors-origin-security-review.md) → touche tous les endpoints, le WebSocket, et la prod immédiatement.
+  - [../bugs/user-deletion-multitenant-membership.md](../../bugs/a-faire/user-deletion-multitenant-membership.md) → multi-tenant, RGPD, cascade — voir rabbit hole [user-account-deletion-anonymization.md](user-account-deletion-anonymization.md).
 - Sans tests dédiés, un fix peut casser plus qu'il ne corrige.
 - Sans ticket et sans owner, un fix passe sous le radar (pas de QA, pas de communication).
 - Le focus actuel est **Async Architecture** ; corriger des bugs en parallèle disperse l'attention.
@@ -34,9 +34,9 @@ Risk level: Medium-High
 - **Pas de correction automatique** des bugs documentés.
 - Chaque bug fix exige : (a) un ticket explicite, (b) un scope défini, (c) des tests, (d) un déploiement planifié.
 - Les bugs restent **visibles** dans :
-  - [../00-CONTROL-CENTER.md](../00-CONTROL-CENTER.md) (section 5).
-  - [../steering/NOW.md](../steering/NOW.md) (section 2).
-  - [../steering/BACKLOG.md](../steering/BACKLOG.md).
+  - [../00-CONTROL-CENTER.md](../../../attendee-ems-back/docs/00-CONTROL-CENTER.md) (section 5).
+  - [../steering/NOW.md](../../../attendee-ems-back/docs/steering/NOW.md) (section 2).
+  - [le backlog](../../backlog/README.md).
 
 ## 5. When to revisit
 
@@ -46,10 +46,10 @@ Risk level: Medium-High
 
 ## 6. Related docs
 
-- [../bugs/](../bugs/)
-- [../bugs/cors-origin-security-review.md](../bugs/cors-origin-security-review.md)
-- [../bugs/user-deletion-multitenant-membership.md](../bugs/user-deletion-multitenant-membership.md)
-- [../steering/DECISIONS.md](../steering/DECISIONS.md#bug-handling-rule)
+- [../bugs/](../../bugs)
+- [../bugs/cors-origin-security-review.md](../../bugs/a-faire/cors-origin-security-review.md)
+- [../bugs/user-deletion-multitenant-membership.md](../../bugs/a-faire/user-deletion-multitenant-membership.md)
+- [../steering/DECISIONS.md](../../../attendee-ems-back/docs/steering/DECISIONS.md#bug-handling-rule)
 - [user-account-deletion-anonymization.md](user-account-deletion-anonymization.md)
 
 ## 7. Rule for Copilot

@@ -7,8 +7,8 @@
 
 | Élément | Source | Statut |
 |---|---|---|
-| Containerisé | [Dockerfile](../../../../Dockerfile), [Dockerfile.dev](../../../../Dockerfile.dev), [docker-compose.prod.yml](../../../../docker-compose.prod.yml), [docker-compose.dev.yml](../../../../docker-compose.dev.yml) | `FOUND_IN_CODE` |
-| Dossier dédié migration | [docs/migration-GCP/](../../../other/migrations%20and%20refactoring/migration-GCP/) | `FOUND_IN_CODE` (à relire si pertinent) |
+| Containerisé | [Dockerfile](../../../../../attendee-ems-back/Dockerfile), [Dockerfile.dev](../../../../../attendee-ems-back/Dockerfile.dev), [docker-compose.prod.yml](../../../../../attendee-ems-back/docker-compose.prod.yml), [docker-compose.dev.yml](../../../../../attendee-ems-back/docker-compose.dev.yml) | `FOUND_IN_CODE` |
+| Dossier dédié migration | [docs/migration-GCP/](../../../../backlog/a-faire/other/migrations and refactoring/migration-GCP) | `FOUND_IN_CODE` (à relire si pertinent) |
 | Variables Redis (`REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`, `REDIS_DB`, `QUEUE_KEY_PREFIX`) | `src/config/config.service.ts` | `FOUND_IN_CODE` |
 | Variables R2 (`R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_PUBLIC_URL`) | idem | `FOUND_IN_CODE` |
 | SMTP (`SMTP_HOST/PORT/USER/PASSWORD/SECURE/FROM`) | idem | `FOUND_IN_CODE` |

@@ -17,7 +17,7 @@ Risk level: High
 - Aucun **enforcement** des limites côté backend.
 - Aucun **AuditLog** pour tracer les changements de plan / facturation.
 - Aucun **EmailLog** pour prouver l'envoi des emails Stripe-déclenchés.
-- L'**onboarding multi-tenant** n'est pas cadré ([../backlog/onboarding-multi-tenant.md](../backlog/onboarding-multi-tenant.md)) → où poser l'UI billing ?
+- L'**onboarding multi-tenant** n'est pas cadré ([../backlog/onboarding-multi-tenant.md](../../backlog/a-faire/onboarding-multi-tenant.md)) → où poser l'UI billing ?
 - Stripe **complet** = checkout + portal + webhooks + retry + dunning + tax + invoices + refunds + plan changes + proration. Énorme surface.
 - Une intégration mal câblée = vraie perte d'argent / litige client.
 - Aucun besoin commercial urgent identifié.
@@ -35,7 +35,7 @@ Très élevé :
 ## 4. Current decision
 
 - **Pas maintenant.**
-- Le **backlog billing** ([../backlog/billing-plan-management.md](../backlog/billing-plan-management.md)) ne contient **pas** d'épic Stripe complet.
+- Le **backlog billing** ([../backlog/billing-plan-management.md](../../backlog/a-faire/billing-plan-management.md)) ne contient **pas** d'épic Stripe complet.
 - Si un premier client payant arrive, démarrer par une **intégration Stripe minimale** (checkout + 1 webhook + statut de subscription read-only) — surtout pas l'intégration full.
 
 ## 5. When to revisit
@@ -46,14 +46,14 @@ Très élevé :
 
 ## 6. Related docs
 
-- [../backlog/billing-plan-management.md](../backlog/billing-plan-management.md)
-- [../architecture/organization-plan-subscription-model.md](../architecture/organization-plan-subscription-model.md)
-- [../product/saas-foundation-onboarding-billing.md](../product/saas-foundation-onboarding-billing.md)
-- [../roadmap/saas-foundation-epics.md](../roadmap/saas-foundation-epics.md)
-- [../steering/DECISIONS.md](../steering/DECISIONS.md#plan-ownership)
+- [../backlog/billing-plan-management.md](../../backlog/a-faire/billing-plan-management.md)
+- [../architecture/organization-plan-subscription-model.md](../../architecture/organization-plan-subscription-model.md)
+- [../product/saas-foundation-onboarding-billing.md](../../product/saas-foundation-onboarding-billing.md)
+- [../roadmap/saas-foundation-epics.md](../../backlog/a-faire/saas-foundation-epics.md)
+- [../steering/DECISIONS.md](../../../attendee-ems-back/docs/steering/DECISIONS.md#plan-ownership)
 
 ## 7. Rule for Copilot
 
 - Si une proposition contient « intégrer Stripe », « ajouter checkout », « ajouter webhooks billing » → **stop**, pointer vers ce document.
-- Autorisé : documenter dans [../backlog/billing-plan-management.md](../backlog/billing-plan-management.md) ce qu'il faudra prévoir.
+- Autorisé : documenter dans [../backlog/billing-plan-management.md](../../backlog/a-faire/billing-plan-management.md) ce qu'il faudra prévoir.
 - Interdit : créer un module `BillingModule`, ajouter des routes `/stripe/*`, installer `stripe` en dépendance, créer des migrations Prisma sur `Subscription`, sans ticket explicite et sans décision actée sur les plans.

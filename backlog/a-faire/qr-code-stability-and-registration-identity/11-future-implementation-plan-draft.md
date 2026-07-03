@@ -201,7 +201,7 @@
 - Toute affirmation sur le code doit être sourcée ou marquée `NEEDS_CONFIRMATION`.
 - Préparer les futures tâches mais ne pas les exécuter.
 - Garder la DB comme source de vérité.
-- Garder la solution compatible avec BullMQ/Redis et future event-driven (cf. workstream [async-architecture](../../workstreams/async-architecture/README.md)).
+- Garder la solution compatible avec BullMQ/Redis et future event-driven (cf. workstream [async-architecture](../../../workstreams/en-cours/async-architecture/README.md)).
 - Toute évolution de schéma fait l'objet d'une ADR séparée avant migration.
 
 ## Dépendances entre phases

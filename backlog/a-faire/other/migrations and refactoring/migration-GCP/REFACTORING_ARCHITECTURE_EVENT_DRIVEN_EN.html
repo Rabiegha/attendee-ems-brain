@@ -1,0 +1,1382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Event-Driven Architecture Refactoring — Attendee EMS</title>
+  <style>
+    :root {
+      --bg: #0d1117; --surface: #161b22; --border: #30363d;
+      --text: #c9d1d9; --muted: #8b949e; --link: #58a6ff;
+      --heading: #f0f6fc; --code-bg: #1f2428; --code-text: #e6edf3;
+    }
+    html { scroll-behavior: smooth; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      background: var(--bg); color: var(--text); line-height: 1.6; font-size: 15px; }
+    .page-wrapper { display: flex; min-height: 100vh; }
+
+    /* Sidebar */
+    .sidebar {
+      width: 260px; flex-shrink: 0; position: sticky; top: 0; height: 100vh;
+      overflow-y: auto; background: var(--surface); border-right: 1px solid var(--border);
+      padding: 24px 16px;
+    }
+    .sidebar h3 {
+      font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--muted); margin-bottom: 12px; padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .sidebar ul { list-style: none; }
+    .sidebar ul li { margin: 2px 0; }
+    .sidebar ul li a {
+      display: block; padding: 5px 8px; color: var(--muted); text-decoration: none;
+      font-size: 13px; border-radius: 6px; transition: all 0.15s; line-height: 1.4;
+    }
+    .sidebar ul li a:hover { color: var(--text); background: rgba(255,255,255,0.06); }
+    .sidebar ul li.sub a { padding-left: 20px; font-size: 12px; }
+    .sidebar ul li a.active { color: var(--link); background: rgba(88,166,255,0.08); }
+
+    /* Main */
+    .main-content { flex: 1; max-width: 900px; margin: 0 auto; padding: 48px 48px 96px; }
+
+    /* Header banner */
+    .doc-header {
+      background: linear-gradient(135deg, #161b22 0%, #1f2428 100%);
+      border: 1px solid var(--border); border-radius: 12px; padding: 32px 36px; margin-bottom: 40px;
+    }
+    .doc-header h1 { font-size: 26px; font-weight: 700; color: var(--heading); margin-bottom: 16px; line-height: 1.3; }
+    .doc-meta { display: flex; flex-wrap: wrap; gap: 10px; }
+    .doc-meta span {
+      background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+      border-radius: 20px; padding: 4px 12px; font-size: 13px; color: var(--muted);
+    }
+    .doc-meta span strong { color: var(--text); }
+
+    /* Headings */
+    h1, h2, h3, h4 { color: var(--heading); font-weight: 600; line-height: 1.3; }
+    h2 { font-size: 22px; margin: 48px 0 20px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+    h3 { font-size: 17px; margin: 32px 0 14px; color: #cdd9e5; }
+    h4 { font-size: 15px; margin: 24px 0 10px; color: var(--muted); }
+
+    /* Scroll offset for sticky header (if any) */
+    h2, h3, h4 { scroll-margin-top: 24px; }
+
+    p { margin: 10px 0; }
+    ul, ol { margin: 10px 0 10px 24px; }
+    li { margin: 4px 0; } li p { margin: 0; }
+    strong { color: var(--heading); font-weight: 600; }
+
+    blockquote {
+      background: var(--surface); border-left: 3px solid var(--link);
+      border-radius: 0 8px 8px 0; padding: 14px 18px; margin: 16px 0; color: var(--muted);
+    }
+    blockquote p { margin: 4px 0; } blockquote strong { color: var(--text); }
+
+    code {
+      background: var(--code-bg); color: #79c0ff; padding: 2px 6px; border-radius: 4px;
+      font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+      font-size: 13px; border: 1px solid #30363d;
+    }
+    pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px;
+      padding: 18px 20px; overflow-x: auto; margin: 16px 0; }
+    pre code { background: none; border: none; color: var(--code-text); padding: 0; font-size: 13px; line-height: 1.6; }
+
+    table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px;
+      border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    thead tr { background: #21262d; }
+    th { text-align: left; padding: 10px 14px; font-weight: 600; color: var(--heading);
+      font-size: 13px; border-bottom: 1px solid var(--border); }
+    td { padding: 9px 14px; border-bottom: 1px solid #21262d; vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: rgba(255,255,255,0.025); }
+
+    hr { border: none; border-top: 1px solid var(--border); margin: 36px 0; }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+
+    @media (max-width: 768px) { .sidebar { display: none; } .main-content { padding: 24px 20px 60px; } }
+    @media print {
+      .sidebar { display: none; } body { background: white; color: #1f2328; }
+      .doc-header { background: #f6f8fa; border-color: #d0d7de; }
+      h1, h2, h3, strong { color: #1f2328; }
+      code { background: #f6f8fa; color: #0550ae; border-color: #d0d7de; }
+      pre { background: #f6f8fa; border-color: #d0d7de; } pre code { color: #1f2328; }
+    }
+  </style>
+</head>
+<body>
+<div class="page-wrapper">
+
+  <nav class="sidebar">
+    <h3>Contents</h3>
+    <ul>
+      <li><a href="#table-of-contents">Table of Contents</a></li>
+      <li><a href="#1-current-architecture">1. Current Architecture</a></li>
+      <li class="sub"><a href="#11-overview">1.1 Overview</a></li>
+      <li class="sub"><a href="#12-current-tech-stack">1.2 Current Tech Stack</a></li>
+      <li class="sub"><a href="#13-current-prismaservice">1.3 Current PrismaService</a></li>
+      <li class="sub"><a href="#14-current-check-in-flow-most-critical-operation">1.4 Current Check-in Flow (most critical operation)</a></li>
+      <li class="sub"><a href="#15-complete-inventory-of-fire-and-forget-operations">1.5 Complete Inventory of Fire-and-Forget Operations</a></li>
+      <li class="sub"><a href="#16-scoringaffinities-state">1.6 Scoring/Affinities State</a></li>
+      <li class="sub"><a href="#17-table-auto-assignment-state-check-in">1.7 Table Auto-Assignment State (check-in)</a></li>
+      <li class="sub"><a href="#18-email-state">1.8 Email State</a></li>
+      <li class="sub"><a href="#19-print-queue-state">1.9 Print Queue State</a></li>
+      <li><a href="#2-identified-problems">2. Identified Problems</a></li>
+      <li class="sub"><a href="#21-problem-summary-by-criticality">2.1 Problem Summary by Criticality</a></li>
+      <li class="sub"><a href="#22-the-disaster-scenario-current">2.2 The Disaster Scenario (current)</a></li>
+      <li><a href="#3-target-architecture">3. Target Architecture</a></li>
+      <li class="sub"><a href="#31-overview">3.1 Overview</a></li>
+      <li class="sub"><a href="#32-target-check-in-flow">3.2 Target Check-in Flow</a></li>
+      <li class="sub"><a href="#33-target-bulk-import-flow">3.3 Target Bulk Import Flow</a></li>
+      <li class="sub"><a href="#34-target-tech-stack">3.4 Target Tech Stack</a></li>
+      <li class="sub"><a href="#35-bullmq-queues-to-create">3.5 BullMQ Queues to Create</a></li>
+      <li><a href="#4-phased-refactoring-plan">4. Phased Refactoring Plan</a></li>
+      <li class="sub"><a href="#phase-0-redis-infrastructure-gcp-agency">Phase 0 — Redis Infrastructure (GCP agency)</a></li>
+      <li class="sub"><a href="#phase-1-separate-db-pool-pgbouncer-sidecar-developer">Phase 1 — Separate DB Pool + pgBouncer Sidecar (developer)</a></li>
+      <li class="sub"><a href="#phase-2-bullmq-event-driven-queues-developer">Phase 2 — BullMQ + Event-Driven Queues (developer)</a></li>
+      <li class="sub"><a href="#phase-3-socketio-redis-adapter-printer-registry-developer">Phase 3 — Socket.IO Redis Adapter + Printer Registry (developer)</a></li>
+      <li class="sub"><a href="#phase-4-monitoring-bull-board-developer">Phase 4 — Monitoring + Bull Board (developer)</a></li>
+      <li><a href="#5-effort-estimation">5. Effort Estimation</a></li>
+      <li class="sub"><a href="#summary-by-phase">Summary by Phase</a></li>
+      <li class="sub"><a href="#recommended-schedule">Recommended Schedule</a></li>
+      <li class="sub"><a href="#phase-dependencies">Phase Dependencies</a></li>
+      <li class="sub"><a href="#priority-order-if-time-is-limited">Priority Order if Time is Limited</a></li>
+      <li><a href="#6-discussion-points-with-gcp-agency">6. Discussion Points with GCP Agency</a></li>
+      <li class="sub"><a href="#what-concerns-the-agency-infrastructure">What Concerns the Agency (infrastructure)</a></li>
+      <li class="sub"><a href="#what-concerns-the-developer-code">What Concerns the Developer (code)</a></li>
+      <li class="sub"><a href="#what-can-be-done-in-parallel">What Can Be Done in Parallel</a></li>
+      <li class="sub"><a href="#questions-for-the-agency">Questions for the Agency</a></li>
+      <li><a href="#appendix-estimated-additional-cost">Appendix: Estimated Additional Cost</a></li>
+    </ul>
+  </nav>
+
+  <main class="main-content">
+    <div class="doc-header">
+      <h1>Event-Driven Architecture Refactoring<br><span style="color:#58a6ff">Attendee EMS</span></h1>
+      <div class="doc-meta">
+        <span>📅 <strong>April 17, 2026</strong></span>
+        <span>🔀 <strong>OVH → GCP migration</strong></span>
+        <span>🏷 <strong>Redis + BullMQ + pgBouncer (sidecar)</strong></span>
+      </div>
+    </div>
+    <h1 id="event-driven-architecture-refactoring-attendee-ems">Event-Driven Architecture Refactoring — Attendee EMS</h1>
+<blockquote>
+<p><strong>Date:</strong> April 17, 2026
+<strong>Context:</strong> OVH → GCP migration, agency call preparation
+<strong>Goal:</strong> Make async operations event-driven with Redis + BullMQ, deploy a pgBouncer sidecar (dev-owned), and separate DB pools</p>
+</blockquote>
+<hr>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ol>
+<li><a href="#1-current-architecture">Current Architecture — Overview</a></li>
+<li><a href="#2-identified-problems">Identified Problems</a></li>
+<li><a href="#3-target-architecture">Target Architecture</a></li>
+<li><a href="#4-phased-refactoring-plan">Phased Refactoring Plan</a></li>
+<li><a href="#5-effort-estimation">Effort Estimation</a></li>
+<li><a href="#6-discussion-points-with-gcp-agency">Discussion Points with GCP Agency</a></li>
+</ol>
+<hr>
+<h2 id="1-current-architecture">1. Current Architecture</h2>
+<h3 id="11-overview">1.1 Overview</h3>
+<pre><code>┌─────────────────────────────────────────────────────────┐
+│                    VM (Docker Compose)                  │
+│                                                         │
+│  ┌──────────┐     ┌──────────────────────────────────┐  │
+│  │  Nginx   │────▶│         NestJS API               │  │
+│  │          │     │                                  │  │
+│  │ - Reverse│     │  ┌─── Single Thread (Event Loop) │  │
+│  │   proxy  │     │  │                               │  │
+│  │ - Static │     │  │  Check-in ──────────────┐     │  │
+│  │   front  │     │  │  Import Excel ──────────┤     │  │
+│  │ - Rate   │     │  │  Badge Gen ─────────────┤     │  │
+│  │   limit  │     │  │  Email ─────────────────┤     │  │
+│  └──────────┘     │  │  Scoring ───────────────┤     │  │
+│                   │  │  Webhook n8n ───────────┤     │  │
+│                   │  │  WebSocket emit ────────┘     │  │
+│                   │  │                               │  │
+│                   │  │  EVERYTHING on the same thread│  │
+│                   │  │  NO queue                     │  │
+│                   │  │  NO Redis                     │  │
+│                   │  └───────────────────────────────│  │
+│                   │                                  │  │
+│                   │  Puppeteer/Chromium (process)    │  │
+│                   │  └─ PDF export only              │  │
+│                   └──────────┬───────────────────────┘  │
+│                              │                          │
+│  ┌───────────────────────────▼─────────────────────┐    │
+│  │    PostgreSQL 16 (currently on the VM)          │    │
+│  │    Prisma pool: ~10 connections (default)       │    │
+│  │    NO pgBouncer                                 │    │
+│  │    NO separate pool                             │    │
+│  └─────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────┘
+
+       Local machines                    Mobile devices
+  ┌───────────────────┐         ┌──────────────────┐
+  │ EMS Print Client  │◀── WS ──│   Mobile App     │
+  │ (Electron)        │         │   (Expo/RN)      │
+  │ Polling + print   │         │   QR scan        │
+  └───────────────────┘         └──────────────────┘
+</code></pre>
+<h3 id="12-current-tech-stack">1.2 Current Tech Stack</h3>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Technology</th>
+<th>Version</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Backend</td>
+<td>NestJS</td>
+<td>10.x</td>
+</tr>
+<tr>
+<td>ORM</td>
+<td>Prisma</td>
+<td>6.17</td>
+</tr>
+<tr>
+<td>Database</td>
+<td>PostgreSQL</td>
+<td>16</td>
+</tr>
+<tr>
+<td>Real-time</td>
+<td>Socket.IO</td>
+<td>4.x</td>
+</tr>
+<tr>
+<td>Email</td>
+<td>Nodemailer (SMTP)</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Badge PDF</td>
+<td>Puppeteer/Chromium</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Badge printing</td>
+<td>HTML direct (via Print Client)</td>
+<td>—</td>
+</tr>
+<tr>
+<td>File storage</td>
+<td>Cloudflare R2</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Queue system</td>
+<td><strong>NONE</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Cache</td>
+<td><strong>NONE</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Connection pooler</td>
+<td><strong>NONE</strong></td>
+<td>—</td>
+</tr>
+</tbody></table>
+<h3 id="13-current-prismaservice">1.3 Current PrismaService</h3>
+<pre><code class="language-typescript">// src/infra/db/prisma.service.ts
+@Injectable()
+export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
+  constructor(private configService: ConfigService) {
+    super({
+      datasources: {
+        db: { url: configService.databaseUrl },
+      },
+    });
+  }
+}
+</code></pre>
+<p><strong>Issues:</strong></p>
+<ul>
+<li>Single instance, single pool (~10 connections by default)</li>
+<li>No separation between critical and bulk operations</li>
+<li><code>connection_limit</code> not configured</li>
+<li>No explicit <code>pool_timeout</code></li>
+</ul>
+<h3 id="14-current-check-in-flow-most-critical-operation">1.4 Current Check-in Flow (most critical operation)</h3>
+<pre><code>POST /registrations/{id}/check-in
+│
+├─ AWAIT  prisma.registration.findFirst()                    ~5ms DB
+├─ AWAIT  prisma.registration.update({ checked_in_at })      ~3ms DB
+├─ AWAIT  eventTablesService.autoAssignOnCheckIn()            ~10ms DB (3-4 queries, NO transaction ⚠️)
+├─ AWAIT  prisma.registration.findUnique() (if table)        ~3ms DB
+├─ SYNC   websocketGateway.emitRegistrationCheckedIn()        ~0.1ms
+├─ FIRE   n8nWebhookService.notifyCheckIn().catch(() =&gt; {})   5s timeout, no retry, errors swallowed
+└─ FIRE   recalculateAttendeeMetrics().catch(() =&gt; {})        complex SQL query + transaction, errors swallowed
+    │
+    ▼
+HTTP response sent (~25ms)
+The 2 fire-and-forget operations continue in background on the same thread
+</code></pre>
+<h3 id="15-complete-inventory-of-fire-and-forget-operations">1.5 Complete Inventory of Fire-and-Forget Operations</h3>
+<p><strong>18 occurrences in <code>registrations.service.ts</code>:</strong></p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Operation</th>
+<th>Trigger</th>
+<th>Pattern</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td><code>recalculateAttendeeMetrics()</code></td>
+<td>updateStatus</td>
+<td><code>.catch(() =&gt; {})</code></td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>recalculateAttendeeMetrics()</code></td>
+<td>create</td>
+<td><code>.catch(() =&gt; {})</code></td>
+</tr>
+<tr>
+<td>3-4</td>
+<td><code>recalculateAttendeeMetrics()</code> ×2</td>
+<td>update (new + old attendee)</td>
+<td><code>.catch(() =&gt; {})</code></td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>recalculateAttendeeMetrics()</code></td>
+<td>merge</td>
+<td><code>.catch(() =&gt; {})</code></td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>recalculateAttendeeMetrics()</code></td>
+<td>restore</td>
+<td><code>.catch(() =&gt; {})</code></td>
+</tr>
+<tr>
+<td>7</td>
+<td><code>recalculateAttendeeMetrics()</code></td>
+<td>permanentDelete</td>
+<td><code>.catch(() =&gt; {})</code></td>
+</tr>
+<tr>
+<td>8-9</td>
+<td><code>recalculateAttendeeMetrics()</code> ×N</td>
+<td><strong>bulkImport forEach</strong></td>
+<td><code>.catch(() =&gt; {})</code> in loop</td>
+</tr>
+<tr>
+<td>10</td>
+<td><code>n8nWebhookService.notifyCheckIn()</code></td>
+<td><strong>check-in</strong></td>
+<td><code>.catch(() =&gt; {})</code></td>
+</tr>
+<tr>
+<td>11</td>
+<td><code>recalculateAttendeeMetrics()</code></td>
+<td><strong>check-in</strong></td>
+<td><code>.catch(() =&gt; {})</code></td>
+</tr>
+<tr>
+<td>12</td>
+<td><code>recalculateAttendeeMetrics()</code></td>
+<td>undoCheckIn</td>
+<td><code>.catch(() =&gt; {})</code></td>
+</tr>
+<tr>
+<td>13</td>
+<td><code>recalculateAttendeeMetrics()</code></td>
+<td>checkOut</td>
+<td><code>.catch(() =&gt; {})</code></td>
+</tr>
+<tr>
+<td>14</td>
+<td><code>recalculateAttendeeMetrics()</code></td>
+<td>undoCheckOut</td>
+<td><code>.catch(() =&gt; {})</code></td>
+</tr>
+<tr>
+<td>15-16</td>
+<td><code>recalculateAttendeeMetrics()</code> ×N</td>
+<td><strong>bulkCheckIn forEach</strong></td>
+<td><code>.catch(() =&gt; {})</code> in loop</td>
+</tr>
+<tr>
+<td>17-18</td>
+<td><code>recalculateAttendeeMetrics()</code> ×N</td>
+<td>bulkDelete forEach</td>
+<td><code>.catch(() =&gt; {})</code> in loop</td>
+</tr>
+</tbody></table>
+<p><strong>Common issues:</strong></p>
+<ul>
+<li>All errors are <strong>silently swallowed</strong> (<code>.catch(() =&gt; {})</code>)</li>
+<li><code>forEach</code> loops launch N recalculations in uncontrolled parallel (import of 3000 rows = 3000 simultaneous recalculations)</li>
+<li>No retry, no tracking, no visibility</li>
+<li>Massive DB pressure during bulk operations</li>
+</ul>
+<h3 id="16-scoringaffinities-state">1.6 Scoring/Affinities State</h3>
+<p><code>recalculateAttendeeMetrics()</code> actually performs <strong>2 heavy operations</strong>:</p>
+<p><strong>Scoring</strong> (<code>attendee-scoring.service.ts</code>):</p>
+<ul>
+<li>1 complex SQL query with LATERAL joins (participant stats)</li>
+<li>1 attendee read</li>
+<li>1 score computation</li>
+<li>1 attendee UPDATE</li>
+<li><strong>~4 queries per call</strong></li>
+</ul>
+<p><strong>Affinities</strong> (<code>attendee-affinity.service.ts</code>):</p>
+<ul>
+<li>1 massive raw SQL with LATERAL joins (affinities by tag)</li>
+<li>1 <code>deleteMany</code> (deletes all existing affinities)</li>
+<li>N <code>create</code> (recreates new affinities)</li>
+<li>All within a <strong>transaction</strong></li>
+<li><strong>~3-10 queries per call depending on tag count</strong></li>
+</ul>
+<p><strong>Impact of a 1000-row import:</strong> 1000 × (4 + 3-10) = <strong>7,000 to 14,000 fire-and-forget queries launched in parallel on the same DB pool</strong> 💥</p>
+<h3 id="17-table-auto-assignment-state-check-in">1.7 Table Auto-Assignment State (check-in)</h3>
+<pre><code class="language-typescript">// event-tables.service.ts — autoAssignOnCheckIn()
+// 3-4 SEPARATE queries, NOT in a transaction ⚠️
+1. prisma.registration.findUnique()       // Read table preferences
+2. prisma.eventSetting.findUnique()       // Read fill mode
+3. prisma.eventTable.findFirst()          // Find available table (×N if multiple)
+4. prisma.registration.update()           // Assign the table
+</code></pre>
+<p><strong>Race condition issue:</strong> If 2 check-ins arrive simultaneously for the same table, both can read the same available capacity and assign beyond the limit.</p>
+<h3 id="18-email-state">1.8 Email State</h3>
+<ul>
+<li>Nodemailer via synchronous SMTP (3-5s per email)</li>
+<li>Called in a blocking manner within approval/rejection flows</li>
+<li>No retry, no queue</li>
+<li>If SMTP timeout → the client waits</li>
+</ul>
+<h3 id="19-print-queue-state">1.9 Print Queue State</h3>
+<ul>
+<li>Printer registry <strong>in-memory</strong> (lost on container restart)</li>
+<li>Print jobs stored in DB but no worker processing them</li>
+<li>Relies entirely on the Electron Print Client polling via WebSocket</li>
+<li>Works well on single-VM but <strong>incompatible with horizontal scaling</strong></li>
+</ul>
+<hr>
+<h2 id="2-identified-problems">2. Identified Problems</h2>
+<h3 id="21-problem-summary-by-criticality">2.1 Problem Summary by Criticality</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Problem</th>
+<th>Criticality</th>
+<th>Impact</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>Single DB pool, no pgBouncer</td>
+<td>🔴 CRITICAL</td>
+<td>Import blocks check-ins</td>
+</tr>
+<tr>
+<td>2</td>
+<td>18 fire-and-forget <code>.catch(() =&gt; {})</code></td>
+<td>🔴 CRITICAL</td>
+<td>Uncontrolled DB flooding (bulk), invisible errors</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Bulk import launches N parallel recalculations</td>
+<td>🔴 CRITICAL</td>
+<td>1000 rows = 7000-14000 parallel queries</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Table auto-assign without transaction</td>
+<td>🟡 IMPORTANT</td>
+<td>Race condition on capacity</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Blocking emails (sync SMTP)</td>
+<td>🟡 IMPORTANT</td>
+<td>3-5s user latency</td>
+</tr>
+<tr>
+<td>6</td>
+<td>n8n webhook without retry</td>
+<td>🟡 IMPORTANT</td>
+<td>Data silently lost</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Printer registry in-memory</td>
+<td>🟡 IMPORTANT</td>
+<td>Lost on restart, incompatible with multi-VM</td>
+</tr>
+<tr>
+<td>8</td>
+<td>No cache</td>
+<td>🟢 MINOR</td>
+<td>Unnecessary repeated DB queries</td>
+</tr>
+<tr>
+<td>9</td>
+<td>No application monitoring</td>
+<td>🟢 MINOR</td>
+<td>No visibility into problems</td>
+</tr>
+</tbody></table>
+<h3 id="22-the-disaster-scenario-current">2.2 The Disaster Scenario (current)</h3>
+<pre><code>Tenant A: 2000-person event, check-in starts
+Tenant B: Admin imports 3000 Excel rows
+
+1. Tenant B&#39;s import begins
+   → Parse Excel (blocks the event loop ~1-2s)
+   → 3000 sequential inserts (monopolizes DB pool)
+   
+2. At the end of the import:
+   → 3000 × recalculateAttendeeMetrics() launched in parallel
+   → = 3000 × 7-14 queries = 21,000 to 42,000 queries
+   → ALL on the same DB pool (10 connections)
+   → Pool saturated immediately
+
+3. Meanwhile, Tenant A&#39;s check-ins:
+   → Connection pool timeout
+   → Hostesses see errors
+   → WebSockets disconnect
+   → Printing stops
+   → 💥 Event crashed
+</code></pre>
+<hr>
+<h2 id="3-target-architecture">3. Target Architecture</h2>
+<h3 id="31-overview">3.1 Overview</h3>
+<pre><code>┌───────────────────────────────────────────────────────────────────┐
+│                    GCP VM (Docker Compose)                        │
+│                                                                   │
+│  ┌──────────┐     ┌──────────────────────────────────────────┐   │
+│  │  Nginx   │────▶│         NestJS API                       │   │
+│  │          │     │                                          │   │
+│  │ - Reverse│     │  Main Thread (Event Loop)                │   │
+│  │   proxy  │     │  ┌───────────────────────────────────┐   │   │
+│  │ - Static │     │  │ Check-in ────▶ Fast HTTP response │   │   │
+│  │   front  │     │  │    └─ emit event → Redis Queue    │   │   │
+│  └──────────┘     │  │                                   │   │   │
+│                   │  │ API CRUD ──▶ Main pool (15)        │   │   │
+│                   │  │ WebSocket ──▶ Redis Adapter        │   │   │
+│                   │  └───────────────────────────────────┘   │   │
+│                   │                                          │   │
+│                   │  BullMQ Workers (same process)            │   │
+│                   │  ┌───────────────────────────────────┐   │   │
+│                   │  │ scoring.processor ──▶ Bulk pool (5)│   │   │
+│                   │  │ webhook.processor ──▶ HTTP (retry) │   │   │
+│                   │  │ email.processor ──▶ SMTP (retry)   │   │   │
+│                   │  │ import.processor ──▶ Bulk pool (5) │   │   │
+│                   │  └───────────────────────────────────┘   │   │
+│                   └──────────┬───────────────────────────────┘   │
+│                              │                                    │
+│  ┌───────────────┐  ┌───────▼──────────────────────────────┐    │
+│  │    Redis 7    │  │        Cloud SQL PostgreSQL           │    │
+│  │               │  │                                      │    │
+│  │ - BullMQ jobs │  │  pgBouncer (Docker sidecar, dev-owned)│    │
+│  │ - Socket.IO   │  │  ┌──────────┐  ┌──────────────┐     │    │
+│  │   adapter     │  │  │ Main     │  │ Bulk pool    │     │    │
+│  │ - Printer     │  │  │ pool     │  │ (imports,    │     │    │
+│  │   registry    │  │  │ (15 conn)│  │  scoring)    │     │    │
+│  │ - Cache       │  │  │          │  │ (5 conn)     │     │    │
+│  │   (optional)  │  │  └──────────┘  └──────────────┘     │    │
+│  └───────────────┘  └──────────────────────────────────────┘    │
+└───────────────────────────────────────────────────────────────────┘
+</code></pre>
+<h3 id="32-target-check-in-flow">3.2 Target Check-in Flow</h3>
+<pre><code>POST /registrations/{id}/check-in
+│
+├─ AWAIT  prisma.main.registration.findFirst()                   ~5ms
+├─ AWAIT  prisma.main.$transaction([                             ~8ms (atomic)
+│           registration.update({ checked_in_at }),
+│           table auto-assign (if configured)
+│         ])
+├─ SYNC   websocketGateway.emitRegistrationCheckedIn()           ~0.1ms
+├─ QUEUE  scoringQueue.add(&#39;recalculate&#39;, { attendeeId })        ~1ms (Redis)
+├─ QUEUE  webhookQueue.add(&#39;n8n-checkin&#39;, { registration })      ~1ms (Redis)
+│
+▼
+HTTP response sent (~15ms) ✅ Faster than before
+
+In background (BullMQ worker, separate bulk pool):
+  → scoringQueue processor: recalculates score + affinities
+  → webhookQueue processor: POST to n8n with 3 exponential retries
+</code></pre>
+<p><strong>Gains:</strong></p>
+<ul>
+<li>Faster check-in response (~15ms vs ~25ms)</li>
+<li>Scoring and webhook can NEVER block the check-in</li>
+<li>Automatic retry on webhooks</li>
+<li>Full visibility via Bull Board (job monitoring UI)</li>
+<li>Main DB pool is NEVER touched by background jobs</li>
+</ul>
+<h3 id="33-target-bulk-import-flow">3.3 Target Bulk Import Flow</h3>
+<pre><code>POST /registrations/import
+│
+├─ Parse Excel in a Worker Thread (does not block the event loop)
+├─ AWAIT  prisma.bulk.registration.createMany() in batches of 50
+│         └─ with adaptivePause() between each batch (CPU throttle)
+├─ For each affected attendee:
+│    QUEUE  scoringQueue.add(&#39;recalculate&#39;, { attendeeId })     ~1ms
+│    └─ Jobs stack up in Redis
+│
+▼
+HTTP response: { total: 3000, created: 2850, errors: [...] }
+
+In background:
+  → The 3000 scoring jobs are processed 1 by 1 by the worker
+  → Using the bulk pool (5 connections)
+  → At a pace the system can sustain
+  → If CPU &gt; 70% → the worker pauses automatically
+  → 0 impact on check-ins
+</code></pre>
+<h3 id="34-target-tech-stack">3.4 Target Tech Stack</h3>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Current</th>
+<th>Target</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Queue system</td>
+<td>None</td>
+<td><strong>BullMQ</strong> (via <code>@nestjs/bullmq</code>)</td>
+<td>Reliable queue, retry, backoff, monitoring</td>
+</tr>
+<tr>
+<td>Cache / Broker</td>
+<td>None</td>
+<td><strong>Redis 7</strong></td>
+<td>Backend for BullMQ + Socket.IO adapter + cache</td>
+</tr>
+<tr>
+<td>Connection pooler</td>
+<td>None</td>
+<td><strong>pgBouncer</strong> (Docker container, dev-managed)</td>
+<td>DB connection pooling</td>
+</tr>
+<tr>
+<td>DB pool</td>
+<td>1 pool (~10 conn)</td>
+<td><strong>2 pools</strong> (15 main + 5 bulk)</td>
+<td>Isolate check-ins from heavy operations</td>
+</tr>
+<tr>
+<td>Socket.IO adapter</td>
+<td>In-memory</td>
+<td><strong>Redis adapter</strong></td>
+<td>Ready for multi-VM</td>
+</tr>
+<tr>
+<td>Printer registry</td>
+<td>In-memory</td>
+<td><strong>Redis hash</strong></td>
+<td>Persistent, ready for multi-VM</td>
+</tr>
+<tr>
+<td>Fire-and-forget</td>
+<td><code>.catch(() =&gt; {})</code></td>
+<td><strong>BullMQ jobs</strong></td>
+<td>Retry, monitoring, throttle</td>
+</tr>
+<tr>
+<td>Table auto-assign</td>
+<td>4 separate queries</td>
+<td><strong>Prisma transaction</strong></td>
+<td>Atomicity, no race condition</td>
+</tr>
+<tr>
+<td>Email</td>
+<td>Sync SMTP</td>
+<td><strong>BullMQ email queue</strong></td>
+<td>Non-blocking, retry</td>
+</tr>
+<tr>
+<td>Excel parsing</td>
+<td>Event loop</td>
+<td><strong>Worker Thread</strong></td>
+<td>Does not block the API</td>
+</tr>
+</tbody></table>
+<h3 id="35-bullmq-queues-to-create">3.5 BullMQ Queues to Create</h3>
+<table>
+<thead>
+<tr>
+<th>Queue</th>
+<th>Jobs</th>
+<th>Concurrency</th>
+<th>Retry</th>
+<th>DB Pool</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>scoring</code></td>
+<td><code>recalculate-metrics</code></td>
+<td>3</td>
+<td>2 retries, backoff 5s</td>
+<td>bulk</td>
+</tr>
+<tr>
+<td><code>webhook</code></td>
+<td><code>n8n-checkin</code></td>
+<td>5</td>
+<td>3 retries, exponential backoff</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>email</code></td>
+<td><code>send-email</code></td>
+<td>3</td>
+<td>3 retries, backoff 30s</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>import</code></td>
+<td><code>process-import-batch</code></td>
+<td>1</td>
+<td>1 retry</td>
+<td>bulk</td>
+</tr>
+<tr>
+<td><code>badge-pdf</code></td>
+<td><code>generate-pdf</code></td>
+<td>1</td>
+<td>2 retries</td>
+<td>bulk</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="4-phased-refactoring-plan">4. Phased Refactoring Plan</h2>
+<h3 id="phase-0-redis-infrastructure-gcp-agency">Phase 0 — Redis Infrastructure (GCP agency)</h3>
+<p><strong>Who:</strong> GCP Agency
+<strong>What:</strong> Provision Redis and expose connection details. <strong>pgBouncer is no longer in scope here</strong> — it will be deployed by the backend developer as a Docker sidecar (see Phase 1).</p>
+<p><strong>Actions:</strong></p>
+<ul>
+<li><input disabled="" type="checkbox"> Provision a 1 GB Memorystore Redis (or accept Redis on the VM via Docker)</li>
+<li><input disabled="" type="checkbox"> Expose environment variable: <code>REDIS_URL</code></li>
+<li><input disabled="" type="checkbox"> Firewall: allow the VM to access Redis (if Memorystore)</li>
+<li><input disabled="" type="checkbox"> Monitoring: add alerts on Redis (memory, connections)</li>
+<li><input disabled="" type="checkbox"> Confirm the VM has enough RAM for an additional pgBouncer container (~50 MB)</li>
+</ul>
+<p><strong>Estimated duration:</strong> 0.5-1 day (agency-side infrastructure)</p>
+<hr>
+<h3 id="phase-1-separate-db-pool-pgbouncer-sidecar-developer">Phase 1 — Separate DB Pool + pgBouncer Sidecar (developer)</h3>
+<p><strong>Who:</strong> Backend developer
+<strong>Prerequisites:</strong> Phase 0 completed (Redis available, Cloud SQL reachable)
+<strong>Risk:</strong> Low (no business logic changes)</p>
+<blockquote>
+<p><strong>Note:</strong> Cloud SQL does NOT ship with a built-in pgBouncer. We deploy it ourselves as a Docker container in <code>docker-compose.prod.yml</code>, sitting between the NestJS API and Cloud SQL. This keeps connection pooling fully under the dev team&#39;s control (config tuning, pool mode, version upgrades) without depending on the agency for every change.</p>
+</blockquote>
+<p><strong>Target docker-compose.prod.yml:</strong></p>
+<pre><code class="language-yaml">services:
+  redis:
+    image: redis:7-alpine
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: [&quot;CMD&quot;, &quot;redis-cli&quot;, &quot;ping&quot;]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  pgbouncer:
+    image: edoburu/pgbouncer:1.23.1
+    restart: unless-stopped
+    environment:
+      - DB_HOST=${CLOUDSQL_HOST}        # private IP of Cloud SQL
+      - DB_PORT=5432
+      - DB_USER=${CLOUDSQL_USER}
+      - DB_PASSWORD=${CLOUDSQL_PASSWORD}
+      - DB_NAME=${CLOUDSQL_DB}
+      - POOL_MODE=transaction            # required for Prisma
+      - MAX_CLIENT_CONN=200
+      - DEFAULT_POOL_SIZE=25             # 15 main + 5 bulk + headroom
+      - SERVER_RESET_QUERY=DISCARD ALL
+    healthcheck:
+      test: [&quot;CMD&quot;, &quot;pg_isready&quot;, &quot;-h&quot;, &quot;localhost&quot;, &quot;-p&quot;, &quot;5432&quot;]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  api:
+    environment:
+      - REDIS_URL=redis://redis:6379
+      # API talks to pgbouncer, NOT directly to Cloud SQL
+      - DATABASE_URL=postgresql://${CLOUDSQL_USER}:${CLOUDSQL_PASSWORD}@pgbouncer:5432/${CLOUDSQL_DB}?pgbouncer=true&amp;connection_limit=20
+    depends_on:
+      redis:
+        condition: service_healthy
+      pgbouncer:
+        condition: service_healthy
+
+  nginx:
+    # unchanged
+
+volumes:
+  redis_data:
+</code></pre>
+<p><strong>Actions:</strong></p>
+<h4 id="11-refactor-prismaservice-with-2-pools">1.1 — Refactor PrismaService with 2 pools</h4>
+<pre><code class="language-typescript">// src/infra/db/prisma.service.ts
+@Injectable()
+export class PrismaService implements OnModuleInit, OnModuleDestroy {
+  /** Main pool: check-in, real-time API, WebSocket */
+  readonly main: PrismaClient;
+
+  /** Secondary pool: imports, scoring, PDF exports */
+  readonly bulk: PrismaClient;
+
+  constructor(private configService: ConfigService) {
+    const baseUrl = configService.databaseUrl;
+
+    this.main = new PrismaClient({
+      datasources: {
+        db: { url: `${baseUrl}&amp;connection_limit=15&amp;pool_timeout=15` },
+      },
+    });
+
+    this.bulk = new PrismaClient({
+      datasources: {
+        db: { url: `${baseUrl}&amp;connection_limit=5&amp;pool_timeout=30` },
+      },
+    });
+  }
+
+  async onModuleInit() {
+    await this.main.$connect();
+    await this.bulk.$connect();
+  }
+
+  async onModuleDestroy() {
+    await this.main.$disconnect();
+    await this.bulk.$disconnect();
+  }
+}
+</code></pre>
+<h4 id="12-migrate-existing-services">1.2 — Migrate existing services</h4>
+<p><strong>Global replacement:</strong> <code>this.prisma.</code> → <code>this.prisma.main.</code> in all services.
+Then, mark bulk operations with <code>this.prisma.bulk.</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Service</th>
+<th>Method</th>
+<th>Pool</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>RegistrationsService</td>
+<td>checkIn, create, update, findAll...</td>
+<td><code>main</code></td>
+</tr>
+<tr>
+<td>RegistrationsService</td>
+<td>bulkImport, bulkDelete, bulkCheckIn</td>
+<td><code>bulk</code></td>
+</tr>
+<tr>
+<td>AttendeeScoringService</td>
+<td>recalculateScore</td>
+<td><code>bulk</code></td>
+</tr>
+<tr>
+<td>AttendeeAffinityService</td>
+<td>recalculateAffinities</td>
+<td><code>bulk</code></td>
+</tr>
+<tr>
+<td>BadgeGenerationService</td>
+<td>generateBadge (PDF)</td>
+<td><code>bulk</code></td>
+</tr>
+<tr>
+<td>All other services</td>
+<td>Standard CRUD</td>
+<td><code>main</code></td>
+</tr>
+</tbody></table>
+<h4 id="13-atomic-transaction-for-table-auto-assign">1.3 — Atomic transaction for table auto-assign</h4>
+<pre><code class="language-typescript">// event-tables.service.ts
+async autoAssignOnCheckIn(registrationId, eventId, orgId) {
+  return this.prisma.main.$transaction(async (tx) =&gt; {
+    const registration = await tx.registration.findUnique({ ... });
+    if (registration.assigned_table_id) return registration.assigned_table_id;
+
+    const settings = await tx.eventSetting.findUnique({ ... });
+    const table = await tx.eventTable.findFirst({ ... }); // With implicit lock
+
+    if (table) {
+      await tx.registration.update({
+        where: { id: registrationId },
+        data: { assigned_table_id: table.id },
+      });
+      return table.id;
+    }
+    return null;
+  });
+}
+</code></pre>
+<p><strong>Estimated duration:</strong> 2-3 days
+<strong>Testing:</strong> Verify that simultaneous check-in + import no longer block each other</p>
+<hr>
+<h3 id="phase-2-bullmq-event-driven-queues-developer">Phase 2 — BullMQ + Event-Driven Queues (developer)</h3>
+<p><strong>Who:</strong> Backend developer
+<strong>Prerequisites:</strong> Phase 0 (Redis) + Phase 1 (separate pools)
+<strong>Risk:</strong> Moderate (async pattern change)</p>
+<p><strong>Actions:</strong></p>
+<h4 id="21-install-dependencies">2.1 — Install dependencies</h4>
+<pre><code class="language-bash">npm install @nestjs/bullmq bullmq
+</code></pre>
+<h4 id="22-configure-bullmq-in-appmodule">2.2 — Configure BullMQ in AppModule</h4>
+<pre><code class="language-typescript">// app.module.ts
+@Module({
+  imports: [
+    BullModule.forRoot({
+      connection: {
+        host: process.env.REDIS_HOST || &#39;redis&#39;,
+        port: parseInt(process.env.REDIS_PORT || &#39;6379&#39;),
+      },
+      defaultJobOptions: {
+        removeOnComplete: 1000,  // Keep last 1000 completed jobs
+        removeOnFail: 5000,      // Keep last 5000 failed jobs
+      },
+    }),
+    BullModule.registerQueue(
+      { name: &#39;scoring&#39; },
+      { name: &#39;webhook&#39; },
+      { name: &#39;email&#39; },
+    ),
+    // ... other modules
+  ],
+})
+</code></pre>
+<h4 id="23-create-the-scoring-processor">2.3 — Create the scoring processor</h4>
+<pre><code class="language-typescript">// src/jobs/scoring.processor.ts
+@Processor(&#39;scoring&#39;)
+export class ScoringProcessor extends WorkerHost {
+  constructor(
+    private scoringService: AttendeeScoringService,
+    private affinityService: AttendeeAffinityService,
+    private cpuMonitor: CpuMonitorService,
+  ) { super(); }
+
+  async process(job: Job&lt;{ attendeeId: string }&gt;) {
+    // CPU throttle: wait if the system is under load
+    while (this.cpuMonitor.getUsage() &gt; 70) {
+      await new Promise(r =&gt; setTimeout(r, 1000));
+    }
+
+    const { attendeeId } = job.data;
+    await this.scoringService.recalculateScore(attendeeId);
+    await this.affinityService.recalculateAffinities(attendeeId);
+  }
+}
+</code></pre>
+<h4 id="24-create-the-webhook-processor">2.4 — Create the webhook processor</h4>
+<pre><code class="language-typescript">// src/jobs/webhook.processor.ts
+@Processor(&#39;webhook&#39;)
+export class WebhookProcessor extends WorkerHost {
+  constructor(private n8nService: N8nWebhookService) { super(); }
+
+  async process(job: Job&lt;{ registration: any }&gt;) {
+    await this.n8nService.notifyCheckIn(job.data.registration);
+    // If it fails → BullMQ automatic retry (3 attempts, exponential backoff)
+  }
+}
+</code></pre>
+<h4 id="25-create-the-email-processor">2.5 — Create the email processor</h4>
+<pre><code class="language-typescript">// src/jobs/email.processor.ts
+@Processor(&#39;email&#39;)
+export class EmailProcessor extends WorkerHost {
+  constructor(private emailService: EmailService) { super(); }
+
+  async process(job: Job&lt;{ to: string; subject: string; html: string }&gt;) {
+    const { to, subject, html } = job.data;
+    const success = await this.emailService.sendEmail({ to, subject, html });
+    if (!success) throw new Error(`Email failed to ${to}`);
+    // BullMQ will auto-retry
+  }
+}
+</code></pre>
+<h4 id="26-replace-fire-and-forget-with-jobs">2.6 — Replace fire-and-forget with jobs</h4>
+<p><strong>Before:</strong></p>
+<pre><code class="language-typescript">// registrations.service.ts — check-in
+this.n8nWebhookService.notifyCheckIn(result).catch(() =&gt; {});
+this.recalculateAttendeeMetrics(registration.attendee_id).catch(() =&gt; {});
+</code></pre>
+<p><strong>After:</strong></p>
+<pre><code class="language-typescript">// registrations.service.ts — check-in
+await this.scoringQueue.add(&#39;recalculate&#39;, {
+  attendeeId: registration.attendee_id,
+});
+await this.webhookQueue.add(&#39;n8n-checkin&#39;, {
+  registration: result,
+}, {
+  attempts: 3,
+  backoff: { type: &#39;exponential&#39;, delay: 5000 },
+});
+</code></pre>
+<p><strong>Before (bulk import):</strong></p>
+<pre><code class="language-typescript">for (const attendeeId of affectedAttendeeIds) {
+  this.recalculateAttendeeMetrics(attendeeId).catch(() =&gt; {});
+}
+</code></pre>
+<p><strong>After (bulk import):</strong></p>
+<pre><code class="language-typescript">const jobs = [...affectedAttendeeIds].map(attendeeId =&gt; ({
+  name: &#39;recalculate&#39;,
+  data: { attendeeId },
+}));
+await this.scoringQueue.addBulk(jobs);
+// The 3000 jobs are queued in Redis in ~50ms
+// The worker processes them 1 by 1 at its own pace
+</code></pre>
+<h4 id="27-files-to-modify">2.7 — Files to modify</h4>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Change</th>
+<th>Effort</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>registrations.service.ts</code></td>
+<td>Replace 18 <code>.catch(() =&gt; {})</code> with <code>queue.add()</code></td>
+<td>Medium</td>
+</tr>
+<tr>
+<td><code>n8n-webhook.service.ts</code></td>
+<td>Remove <code>.catch()</code> at call site, keep the service as-is</td>
+<td>Low</td>
+</tr>
+<tr>
+<td><code>attendee-scoring.service.ts</code></td>
+<td>Use <code>prisma.bulk</code> instead of <code>prisma</code></td>
+<td>Low</td>
+</tr>
+<tr>
+<td><code>attendee-affinity.service.ts</code></td>
+<td>Use <code>prisma.bulk</code> instead of <code>prisma</code></td>
+<td>Low</td>
+</tr>
+<tr>
+<td><code>email.service.ts</code></td>
+<td>Keep as-is, called by the processor</td>
+<td>None</td>
+</tr>
+<tr>
+<td><code>app.module.ts</code></td>
+<td>Add BullMQ config + processor imports</td>
+<td>Low</td>
+</tr>
+<tr>
+<td><strong>New files</strong></td>
+<td>3 processors (scoring, webhook, email)</td>
+<td>Medium</td>
+</tr>
+<tr>
+<td><strong>New file</strong></td>
+<td>CpuMonitorService</td>
+<td>Low</td>
+</tr>
+</tbody></table>
+<p><strong>Estimated duration:</strong> 3-4 days
+<strong>Testing:</strong></p>
+<ul>
+<li>Individual check-in → verify scoring job goes into queue</li>
+<li>500-row import → verify jobs stack up without flooding DB</li>
+<li>Simulate a failing n8n webhook → verify retry behavior</li>
+</ul>
+<hr>
+<h3 id="phase-3-socketio-redis-adapter-printer-registry-developer">Phase 3 — Socket.IO Redis Adapter + Printer Registry (developer)</h3>
+<p><strong>Who:</strong> Backend developer
+<strong>Prerequisites:</strong> Phase 0 (Redis)
+<strong>Risk:</strong> Low
+<strong>Benefit:</strong> Ready for future multi-VM, persistent printer registry</p>
+<h4 id="31-socketio-redis-adapter">3.1 — Socket.IO Redis Adapter</h4>
+<pre><code class="language-bash">npm install @socket.io/redis-adapter
+</code></pre>
+<pre><code class="language-typescript">// websocket.gateway.ts
+import { createAdapter } from &#39;@socket.io/redis-adapter&#39;;
+import { createClient } from &#39;redis&#39;;
+
+afterInit(server: Server) {
+  const pubClient = createClient({ url: process.env.REDIS_URL });
+  const subClient = pubClient.duplicate();
+  Promise.all([pubClient.connect(), subClient.connect()]).then(() =&gt; {
+    server.adapter(createAdapter(pubClient, subClient));
+  });
+}
+</code></pre>
+<h4 id="32-printer-registry-in-redis">3.2 — Printer Registry in Redis</h4>
+<pre><code class="language-typescript">// print-queue.service.ts
+// Replace in-memory Map&lt;&gt; with Redis hashes
+
+async registerPrinter(orgId: string, deviceId: string, printers: PrinterInfo[]) {
+  const key = `printers:${orgId}:${deviceId}`;
+  await this.redis.set(key, JSON.stringify(printers), &#39;EX&#39;, 300); // TTL 5 min
+}
+
+async getExposedPrinters(orgId: string): Promise&lt;PrinterInfo[]&gt; {
+  const keys = await this.redis.keys(`printers:${orgId}:*`);
+  const results = await Promise.all(keys.map(k =&gt; this.redis.get(k)));
+  return results.flatMap(r =&gt; JSON.parse(r));
+}
+</code></pre>
+<p><strong>Estimated duration:</strong> 1-2 days</p>
+<hr>
+<h3 id="phase-4-monitoring-bull-board-developer">Phase 4 — Monitoring + Bull Board (developer)</h3>
+<p><strong>Who:</strong> Backend developer
+<strong>Prerequisites:</strong> Phase 2 (BullMQ)
+<strong>Risk:</strong> None</p>
+<h4 id="41-add-bull-board-queue-monitoring-ui">4.1 — Add Bull Board (queue monitoring UI)</h4>
+<pre><code class="language-bash">npm install @bull-board/api @bull-board/express @bull-board/nestjs
+</code></pre>
+<pre><code class="language-typescript">// Accessible at /admin/queues (protected by admin auth)
+// Visualizes: pending, in-progress, failed, completed jobs
+// Allows: retrying failed jobs, flushing a queue, viewing errors
+</code></pre>
+<h4 id="42-add-cpumonitorservice-adaptive-throttle">4.2 — Add CpuMonitorService (adaptive throttle)</h4>
+<p>Already documented in the capacity analysis — metrics exposed via <code>/api/health/metrics</code>.</p>
+<p><strong>Estimated duration:</strong> 1 day</p>
+<hr>
+<h2 id="5-effort-estimation">5. Effort Estimation</h2>
+<h3 id="summary-by-phase">Summary by Phase</h3>
+<table>
+<thead>
+<tr>
+<th>Phase</th>
+<th>Who</th>
+<th>Duration</th>
+<th>Risk</th>
+<th>Prerequisites</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Phase 0</strong> — Redis (infra)</td>
+<td>GCP Agency</td>
+<td>0.5-1 day</td>
+<td>Low</td>
+<td>GCP migration done</td>
+</tr>
+<tr>
+<td><strong>Phase 1</strong> — pgBouncer sidecar + separate DB pool + table transaction</td>
+<td>Backend dev</td>
+<td>3-4 days</td>
+<td>Low</td>
+<td>Phase 0</td>
+</tr>
+<tr>
+<td><strong>Phase 2</strong> — BullMQ event-driven queues</td>
+<td>Backend dev</td>
+<td>3-4 days</td>
+<td>Moderate</td>
+<td>Phase 0 + 1</td>
+</tr>
+<tr>
+<td><strong>Phase 3</strong> — Socket.IO Redis + printer registry</td>
+<td>Backend dev</td>
+<td>1-2 days</td>
+<td>Low</td>
+<td>Phase 0</td>
+</tr>
+<tr>
+<td><strong>Phase 4</strong> — Bull Board monitoring</td>
+<td>Backend dev</td>
+<td>1 day</td>
+<td>None</td>
+<td>Phase 2</td>
+</tr>
+<tr>
+<td><strong>TOTAL developer</strong></td>
+<td></td>
+<td><strong>9-12 days</strong></td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<h3 id="recommended-schedule">Recommended Schedule</h3>
+<pre><code>Week 1:
+  Mon-Tue: Phase 0 (GCP agency) + Phase 1 started (dev)
+  Wed-Thu: Phase 1 completed + testing
+  Fri:     Phase 3 (Socket.IO Redis + printer registry)
+
+Week 2:
+  Mon-Thu: Phase 2 (BullMQ — the largest phase)
+  Fri:     Phase 4 (monitoring) + full integration testing
+
+Week 3:
+  Mon-Tue: Load testing, bug fixes
+  Wed:     Staging deployment
+  Thu-Fri: Validation + production rollout
+</code></pre>
+<p><strong>Total: ~3 weeks including testing and deployment.</strong></p>
+<h3 id="phase-dependencies">Phase Dependencies</h3>
+<pre><code>Phase 0 (Redis Infra)
+    │
+    ├──▶ Phase 1 (pgBouncer Sidecar + Separate DB Pool)
+    │        │
+    │        └──▶ Phase 2 (BullMQ Queues)
+    │                 │
+    │                 └──▶ Phase 4 (Monitoring)
+    │
+    └──▶ Phase 3 (Socket.IO Redis)
+         (independent of Phase 1 &amp; 2)
+</code></pre>
+<h3 id="priority-order-if-time-is-limited">Priority Order if Time is Limited</h3>
+<ol>
+<li><strong>Phase 0 + Phase 1</strong> (BARE MINIMUM) — Solves the critical DB pool issue</li>
+<li><strong>Phase 2</strong> (IMPORTANT) — Eliminates fire-and-forget, adds retry, throttle</li>
+<li><strong>Phase 3</strong> (RECOMMENDED) — Prepares for future multi-VM</li>
+<li><strong>Phase 4</strong> (NICE TO HAVE) — Operational visibility</li>
+</ol>
+<hr>
+<h2 id="6-discussion-points-with-gcp-agency">6. Discussion Points with GCP Agency</h2>
+<h3 id="what-concerns-the-agency-infrastructure">What Concerns the Agency (infrastructure)</h3>
+<ol>
+<li><p><strong>Redis</strong> — Memorystore Redis (managed) vs Redis on the VM (Docker)?</p>
+<ul>
+<li>Memorystore: ~$30-50/month, managed, automatic backups</li>
+<li>Docker Redis on the VM: $0 extra, but shares VM resources</li>
+<li><strong>Recommendation:</strong> Docker Redis to start (cost savings), migrate to Memorystore if needed</li>
+</ul>
+</li>
+<li><p><strong>pgBouncer</strong> — <strong>Owned by the dev team</strong>, deployed as a Docker container alongside the API. The agency only needs to ensure the VM has ~50 MB extra RAM and that Cloud SQL accepts the connection volume.</p>
+<ul>
+<li>Verify that the Cloud SQL tier supports ~25 inbound connections from pgBouncer</li>
+<li>Small tier (1 vCPU): ~100 max_connections → OK</li>
+<li>No agency action needed on the Cloud SQL pooler side</li>
+</ul>
+</li>
+<li><p><strong>Environment variables</strong> — To expose in CI/CD and on the VM:</p>
+<pre><code>REDIS_URL=redis://redis:6379            # If Docker on VM
+REDIS_URL=redis://10.x.x.x:6379         # If Memorystore
+CLOUDSQL_HOST=10.x.x.x                  # Private IP of Cloud SQL
+CLOUDSQL_USER=...
+CLOUDSQL_PASSWORD=...
+CLOUDSQL_DB=attendee_ems
+# DATABASE_URL is built dynamically inside docker-compose to point at pgbouncer
+</code></pre>
+</li>
+<li><p><strong>Redis monitoring</strong> — Add alerts on:</p>
+<ul>
+<li>Redis memory &gt; 80%</li>
+<li>Redis connections &gt; 100</li>
+<li>Redis latency &gt; 10ms</li>
+</ul>
+</li>
+<li><p><strong>Firewall</strong> — If Memorystore: allow the VM to access the Redis VPC</p>
+</li>
+</ol>
+<h3 id="what-concerns-the-developer-code">What Concerns the Developer (code)</h3>
+<ul>
+<li>Phases 1 through 4 (everything code-related)</li>
+<li>Load testing after refactoring</li>
+<li>Updating docker-compose.prod.yml</li>
+</ul>
+<h3 id="what-can-be-done-in-parallel">What Can Be Done in Parallel</h3>
+<pre><code>GCP Agency                          Developer
+──────────                          ─────────
+OVH → GCP Migration                Phase 1 (DB pool)
+Setup Cloud SQL (no pooler          can start locally
+needed — dev runs pgBouncer)        with Docker Compose dev
+                                    
+Provision Redis                     Phase 2 (BullMQ)
+Expose REDIS_URL                    develop locally
+                                    with Docker Redis
+                                    
+CI/CD pipeline                      Phase 3 (Socket.IO Redis)
+Monitoring/Alerts                   Phase 4 (Bull Board)
+                                    
+         ──────── Merge ────────
+         Integration testing on GCP
+         Staging validation
+         Production
+</code></pre>
+<h3 id="questions-for-the-agency">Questions for the Agency</h3>
+<ol>
+<li>Is Cloud SQL already provisioned? What tier?</li>
+<li>Does the VM have ~50 MB free RAM for the pgBouncer container? (dev will deploy it)</li>
+<li>Will the VM have enough RAM for Docker Redis (~256 MB) on top of the API?</li>
+<li>What&#39;s the CI/CD plan? (GitHub Actions → SSH? Cloud Build?)</li>
+<li>Is there a private VPC network between the VM and Cloud SQL?</li>
+<li>Is Memorystore Redis being considered or is it out of initial budget?</li>
+<li>What&#39;s the migration timeline? When will the GCP VM be ready?</li>
+</ol>
+<hr>
+<h2 id="appendix-estimated-additional-cost">Appendix: Estimated Additional Cost</h2>
+<table>
+<thead>
+<tr>
+<th>Added Component</th>
+<th>Budget Option</th>
+<th>Managed Option</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Redis</td>
+<td>Docker on the VM ($0)</td>
+<td>Memorystore 1 GB (~$35/month)</td>
+</tr>
+<tr>
+<td>pgBouncer</td>
+<td>Docker container on the VM ($0)</td>
+<td>—</td>
+</tr>
+<tr>
+<td>BullMQ</td>
+<td>Code only, no infra</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Bull Board</td>
+<td>Code only, no infra</td>
+<td>—</td>
+</tr>
+<tr>
+<td><strong>Total added</strong></td>
+<td><strong>$0/month</strong></td>
+<td><strong>~$35/month</strong></td>
+</tr>
+</tbody></table>
+<p>The majority of the work is <strong>application refactoring</strong>, not additional infrastructure.</p>
+
+  </main>
+
+</div>
+
+<script>
+  // Highlight active sidebar link on scroll
+  const links = document.querySelectorAll('.sidebar a');
+  const headings = document.querySelectorAll('h2[id], h3[id]');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        links.forEach(l => l.classList.remove('active'));
+        const active = document.querySelector('.sidebar a[href="#' + entry.target.id + '"]');
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-10% 0px -80% 0px' });
+
+  headings.forEach(h => observer.observe(h));
+</script>
+</body>
+</html>

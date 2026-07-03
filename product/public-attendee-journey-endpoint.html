@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Endpoint public — Attendee Journey</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; line-height: 1.55; max-width: 900px; margin: 2rem auto; padding: 0 1.25rem; color: #1a1a1a; background: #fff; }
+  @media (prefers-color-scheme: dark) { body { color: #e6e6e6; background: #111; } code, pre { background: #1d1d1d !important; } th { background: #1d1d1d !important; } table, th, td { border-color: #333 !important; } a { color: #6cb6ff; } }
+  h1 { font-size: 1.9rem; border-bottom: 2px solid #ddd; padding-bottom: .35em; }
+  h2 { margin-top: 2.2rem; font-size: 1.35rem; border-bottom: 1px solid #eee; padding-bottom: .25em; }
+  h3 { margin-top: 1.6rem; font-size: 1.1rem; }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background: #f4f4f6; padding: .12em .4em; border-radius: 4px; font-size: .92em; }
+  pre { background: #f4f4f6; padding: 1em; border-radius: 8px; overflow-x: auto; font-size: .88rem; }
+  pre code { background: transparent; padding: 0; }
+  table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: .94rem; }
+  th, td { border: 1px solid #e0e0e0; padding: .55em .8em; text-align: left; vertical-align: top; }
+  th { background: #f6f6f8; }
+  blockquote { border-left: 4px solid #ffb648; background: #fff8eb; margin: 1rem 0; padding: .7rem 1rem; border-radius: 0 6px 6px 0; }
+  @media (prefers-color-scheme: dark) { blockquote { background: #2a2110; } }
+  ul.checklist { list-style: none; padding-left: 0; }
+  ul.checklist li::before { content: "☐ "; color: #888; margin-right: .25em; }
+  .pill { display: inline-block; background: #eef; color: #224; border-radius: 999px; padding: .12em .7em; font-size: .8em; font-weight: 600; }
+  .method-get { background: #d8f5dd; color: #14532d; }
+  hr { border: 0; border-top: 1px solid #eee; margin: 2rem 0; }
+</style>
+</head>
+<body>
+
+<h1>Endpoint public — Parcours d'un participant (Attendee Journey)</h1>
+
+<blockquote>
+Endpoint conçu pour qu'une application externe (scoring, gamification, dashboard partenaire) puisse récupérer le parcours individuel d'un participant à partir de la valeur encodée dans son QR code de badge.
+</blockquote>
+
+<h2>1. Spécification</h2>
+
+<p>
+<span class="pill method-get">GET</span>
+<code>/api/public/events/:publicToken/attendees/:badgeRef/journey</code>
+</p>
+
+<table>
+  <tr><th>Auth</th><td>Aucune — endpoint public</td></tr>
+  <tr><th>CORS</th><td><code>Access-Control-Allow-Origin: *</code> (cohérent avec <code>/live-stats</code>)</td></tr>
+  <tr><th>Tag Swagger</th><td><code>Public</code></td></tr>
+</table>
+
+<h3>Paramètres d'URL</h3>
+<table>
+  <tr><th>Param</th><th>Type</th><th>Description</th></tr>
+  <tr><td><code>publicToken</code></td><td>string</td><td>Token public unique de l'événement (<code>event_settings.public_token</code>)</td></tr>
+  <tr><td><code>badgeRef</code></td><td>UUID</td><td>Valeur encodée dans le QR du badge = <code>registration.id</code></td></tr>
+</table>
+
+<h3>Codes de réponse</h3>
+<table>
+  <tr><th>Code</th><th>Cas</th></tr>
+  <tr><td><code>200</code></td><td>Parcours retourné</td></tr>
+  <tr><td><code>404</code></td><td>Événement introuvable <em>ou</em> participant introuvable / hors événement / soft-deleted / <code>badgeRef</code> non UUID</td></tr>
+</table>
+
+<blockquote>Pour des raisons de sécurité, on <strong>ne distingue pas</strong> "événement introuvable" de "participant introuvable" côté client : les deux renvoient <code>404</code> afin d'éviter l'énumération.</blockquote>
+
+<h2>2. Schéma de réponse</h2>
+
+<pre><code>{
+  "attendee": {
+    "first_name": "Jean",
+    "last_name": "Dupont",
+    "company": "Acme Corp"
+  },
+  "totals": {
+    "partners": 4
+  },
+  "sessions": [
+    {
+      "session_id": "7f3c5d2b-9b1a-4b58-9f1e-1c4a6d7e2b10",
+      "session_name": "Keynote Google Cloud",
+      "scanned_at": "2026-05-20T09:42:00.000Z"
+    },
+    {
+      "session_id": "0c2d18e3-2efb-4f9a-9b34-2a6f3c1d5b88",
+      "session_name": "Démo IA Générative",
+      "scanned_at": "2026-05-20T10:15:00.000Z"
+    }
+  ]
+}</code></pre>
+
+<h3>Sémantique des champs</h3>
+<table>
+  <tr><th>Champ</th><th>Description</th></tr>
+  <tr><td><code>attendee.first_name</code> / <code>last_name</code> / <code>company</code></td><td>Identité du participant. En priorité depuis <code>attendees.*</code>, fallback sur <code>registrations.snapshot_*</code>. <code>null</code> si non renseigné.</td></tr>
+  <tr><td><code>totals.partners</code></td><td>Nombre <strong>DISTINCT</strong> de partenaires ayant scanné ce participant sur cet événement. Calculé sur <code>partner_scans</code>, distinct sur <code>scanned_by</code>, hors soft-deletes.</td></tr>
+  <tr><td><code>sessions[]</code></td><td>Liste chronologique des sessions où le participant a été scanné <code>IN</code> au moins une fois. Une seule entrée par session (premier scan IN).</td></tr>
+  <tr><td><code>sessions[].session_id</code></td><td>UUID de la session. À matcher côté front avec la liste fixe d'IDs spéciales pour calculer <code>is_special</code>.</td></tr>
+  <tr><td><code>sessions[].session_name</code></td><td>Nom courant de la session (non snapshot).</td></tr>
+  <tr><td><code>sessions[].scanned_at</code></td><td>Timestamp ISO-8601 UTC du <strong>premier</strong> scan IN.</td></tr>
+</table>
+
+<blockquote>⚠️ <code>is_special</code> n'est <strong>pas</strong> retourné : la classification est gérée côté front à partir d'une liste fixe d'IDs. L'endpoint reste générique.</blockquote>
+
+<h2>3. Exemples d'appel</h2>
+
+<h3>cURL</h3>
+<pre><code>curl -s "https://api.attendee.example.com/api/public/events/lfd-2026-public-token/attendees/3f1e2a4b-7c91-4d8e-9b22-1a5e8c0d6f44/journey" | jq</code></pre>
+
+<h3>TypeScript / fetch</h3>
+<pre><code>async function fetchAttendeeJourney(publicToken, badgeRef) {
+  const r = await fetch(
+    `https://api.attendee.example.com/api/public/events/${publicToken}/attendees/${badgeRef}/journey`,
+  );
+  if (r.status === 404) throw new Error('Event or attendee not found');
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  return r.json();
+}</code></pre>
+
+<h3>Calcul de score côté client</h3>
+<pre><code>const SPECIAL_SESSION_IDS = new Set([
+  '7f3c5d2b-9b1a-4b58-9f1e-1c4a6d7e2b10',
+  '0c2d18e3-2efb-4f9a-9b34-2a6f3c1d5b88',
+  'aa11bb22-cc33-dd44-ee55-66778899aabb',
+]);
+
+function score(journey) {
+  const partners = journey.totals.partners;
+  const special = journey.sessions.filter(s =&gt; SPECIAL_SESSION_IDS.has(s.session_id)).length;
+  const normal = journey.sessions.length - special;
+  return partners * 10 + normal * 5 + special * 20;
+}</code></pre>
+
+<h2>4. Architecture &amp; implémentation</h2>
+<table>
+  <tr><th>Élément</th><th>Emplacement</th></tr>
+  <tr><td>Route</td><td><code>src/modules/public/public.controller.ts</code></td></tr>
+  <tr><td>Logique métier</td><td><code>PublicService.getAttendeeJourney()</code></td></tr>
+  <tr><td>DTO de réponse</td><td><code>src/modules/public/dto/attendee-journey.dto.ts</code></td></tr>
+  <tr><td>Module</td><td><code>PublicModule</code> (déjà importé dans <code>AppModule</code>)</td></tr>
+</table>
+
+<h3>Garanties multi-tenant</h3>
+<ol>
+  <li><code>publicToken</code> résolu uniquement via <code>event_settings.public_token</code> (pas de fallback par UUID brute).</li>
+  <li><code>registration</code> récupérée avec <code>event_id</code> + <code>org_id</code> issus de l'event résolu — cross-event impossible.</li>
+  <li><code>partner_scans</code> filtrés sur <code>org_id + event_id + registration_id</code>.</li>
+  <li><code>session_scans</code> filtrés par la relation <code>session.event_id + session.org_id</code>.</li>
+  <li>Soft-deletes respectés : <code>registrations.deleted_at IS NULL</code>, <code>partner_scans.deleted_at IS NULL</code>.</li>
+</ol>
+
+<h3>Validation d'entrée</h3>
+<p><code>badgeRef</code> est validé contre une regex UUID v1-v5 avant tout accès Prisma. Un format invalide renvoie <code>404</code> (pas <code>400</code>) pour ne pas exposer la structure interne.</p>
+
+<h3>Performances</h3>
+<ul>
+  <li>Maximum 4 requêtes Prisma indexées (event_settings, registration, partner_scans distinct, session_scans).</li>
+  <li>Aucune jointure lourde. Réponse typiquement &lt; 50 ms.</li>
+  <li>Compatible avec une mise en cache HTTP courte (5–10 s) côté CDN si besoin.</li>
+</ul>
+
+<h2>5. Risques &amp; limites</h2>
+<table>
+  <tr><th>Risque</th><th>Mitigation actuelle</th><th>Évolution possible</th></tr>
+  <tr><td>Énumération de <code>badgeRef</code></td><td>UUID v4 (2<sup>122</sup>), erreur uniforme 404</td><td>Rate-limit IP si abus.</td></tr>
+  <tr><td>Fuite PII</td><td>Seulement first/last name + company (déjà sur le badge)</td><td>Ne jamais ajouter email/phone.</td></tr>
+  <tr><td>CORS ouvert</td><td>Lecture seule, sans credentials</td><td>Restreindre à l'origine de l'app externe.</td></tr>
+  <tr><td>Pic LFD 2026</td><td>Requêtes indexées, payload petite</td><td>Cache HTTP <code>s-maxage=5</code>.</td></tr>
+  <tr><td>Scans soft-deleted</td><td>Exclus via <code>deleted_at IS NULL</code></td><td>—</td></tr>
+  <tr><td>Sessions renommées</td><td><code>session_name</code> = état courant ; <code>session_id</code> stable</td><td>Snapshot si besoin futur.</td></tr>
+</table>
+
+<h2>6. Checklist QA</h2>
+<ul class="checklist">
+  <li><code>publicToken</code> inexistant → <code>404</code></li>
+  <li><code>badgeRef</code> non UUID → <code>404</code></li>
+  <li><code>badgeRef</code> d'un autre événement → <code>404</code> (isolation cross-event)</li>
+  <li><code>registration.deleted_at != null</code> → <code>404</code></li>
+  <li>Aucun partenaire n'a scanné → <code>totals.partners = 0</code></li>
+  <li>Même partenaire scanne 3 fois → <code>totals.partners = 1</code> (distinct)</li>
+  <li>Plusieurs scans IN sur la même session → 1 seule entrée, <code>scanned_at</code> = premier scan</li>
+  <li>Scans <code>OUT</code> ignorés</li>
+  <li>Header <code>Access-Control-Allow-Origin: *</code> présent</li>
+  <li>Swagger visible sur <code>/api/docs</code> (tag <code>Public</code>)</li>
+</ul>
+
+<hr />
+<p style="font-size:.85em;color:#888;">EMS Backend — créé le 2026-05-22.</p>
+
+</body>
+</html>

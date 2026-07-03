@@ -47,6 +47,9 @@ En fin de session (5 min de tri), je vide l'inbox : chaque ligne part dans le bo
 | [rabbit-holes/](rabbit-holes/README.md) | Pièges à ne PAS creuser — **fait / en-cours / a-faire** | inbox `[trap]` |
 | [learnings/](learnings/README.md) | Ce qu'on apprend (pas de découpe) | inbox `[learn]` |
 | [architecture/](architecture/README.md) | Décisions d'archi stables (pas de découpe) | inbox `[archi]` |
+| [product/](product/README.md) | Specs produit & parcours (onboarding, billing, endpoints publics) | migration `back/docs/product/` |
+| [infra/](infra/README.md) | Capacité, charge, SLA, PCA — surtout LFD 2026 (pas de découpe) | migration `back/docs/infra/` |
+| [ops/](ops/README.md) | Exploitation & supervision (monitoring, alerting) | migration `back/docs/ops/` |
 
 ---
 

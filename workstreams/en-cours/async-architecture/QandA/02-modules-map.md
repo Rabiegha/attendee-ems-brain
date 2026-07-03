@@ -1,44 +1,44 @@
 # 02 — Cartographie des modules backend
 
-Source : [src/app.module.ts](../../../../src/app.module.ts). Tous les modules ci-dessous sont `FOUND_IN_CODE` (instanciés dans `AppModule`).
+Source : [src/app.module.ts](../../../../../attendee-ems-back/src/app.module.ts). Tous les modules ci-dessous sont `FOUND_IN_CODE` (instanciés dans `AppModule`).
 
 ## Modules infrastructure
 
 ### `QueueModule` — `FOUND_IN_CODE`
-- Chemin : [src/infra/queue/queue.module.ts](../../../../src/infra/queue/queue.module.ts)
+- Chemin : [src/infra/queue/queue.module.ts](../../../../../attendee-ems-back/src/infra/queue/queue.module.ts)
 - Global. Initialise BullMQ via `BullModule.forRootAsync()` (connexion Redis ioredis, prefix `QUEUE_KEY_PREFIX`, `DEFAULT_JOB_OPTIONS`).
 - Pas de controller. Pas de service maison.
 - Async potentiel : **fondation actuelle** pour tout job.
 - Dépendances : `ConfigService`.
 
 ### `BullBoardSetupModule` — `FOUND_IN_CODE`
-- Chemin : [src/infra/queue/bull-board.module.ts](../../../../src/infra/queue/bull-board.module.ts)
+- Chemin : [src/infra/queue/bull-board.module.ts](../../../../../attendee-ems-back/src/infra/queue/bull-board.module.ts)
 - Monte `/admin/queues` (Express adapter). Toggle via `BULL_BOARD_ENABLED`.
 - ⚠️ Non protégé par un Guard NestJS (commentaire dans le code).
 
 ### `PrismaModule` — `FOUND_IN_CODE`
-- [src/infra/db/](../../../../src/infra/db/)
+- [src/infra/db/](../../../../../attendee-ems-back/src/infra/db)
 - Service injecté quasi partout. Source de vérité métier.
 
 ### `StorageModule` — `FOUND_IN_CODE`
-- [src/infra/storage/](../../../../src/infra/storage/)
+- [src/infra/storage/](../../../../../attendee-ems-back/src/infra/storage)
 - `R2Service` (Cloudflare R2 via `@aws-sdk/client-s3` + `@aws-sdk/lib-storage`).
 - Méthodes : `uploadFile`, `uploadBadgePdf`, `uploadBadgeImage`, `getFile`, `deleteFile`, `getSignedUploadUrl`, `uploadStream` (multipart), `getSignedDownloadUrl` (72 h), `listFiles`, `cleanupTestBadges`.
 - Async potentiel : utilisé par badges + exports processors.
 
 ### `WebSocketModule` — `FOUND_IN_CODE`
-- [src/websocket/websocket.module.ts](../../../../src/websocket/websocket.module.ts) — global. Namespace `/events`.
+- [src/websocket/websocket.module.ts](../../../../../attendee-ems-back/src/websocket/websocket.module.ts) — global. Namespace `/events`.
 - `EventsGateway` exporté ; injecté par : `RegistrationsService`, `EventsService` (probable), `PrintQueueService`.
 
 ### `ConfigModule` — `FOUND_IN_CODE`
-- [src/config/](../../../../src/config/) — validation Zod, lecture de toutes les variables (DB, Redis, JWT, R2, SMTP, Sentry, n8n).
+- [src/config/](../../../../../attendee-ems-back/src/config) — validation Zod, lecture de toutes les variables (DB, Redis, JWT, R2, SMTP, Sentry, n8n).
 
 ### `AuthModule` / `AuthzModule` — `FOUND_IN_CODE`
-- [src/auth/](../../../../src/auth/), [src/platform/authz/](../../../../src/platform/authz/)
+- [src/auth/](../../../../../attendee-ems-back/src/auth), [src/platform/authz/](../../../../../attendee-ems-back/src/platform/authz)
 - JWT access + refresh, RBAC hexagonal (étape 3 selon commentaire), guards `JwtAuthGuard`, `RequirePermissionGuard`.
 
 ### `HealthModule` — `FOUND_IN_CODE`
-- [src/health/](../../../../src/health/)
+- [src/health/](../../../../../attendee-ems-back/src/health)
 
 ## Modules métier
 

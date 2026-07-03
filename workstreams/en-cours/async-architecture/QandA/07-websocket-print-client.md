@@ -2,7 +2,7 @@
 
 ## 1. Architecture WebSocket actuelle — `FOUND_IN_CODE`
 
-- Fichier : [src/websocket/websocket.gateway.ts](../../../../src/websocket/websocket.gateway.ts) (255 lignes), [src/websocket/websocket.module.ts](../../../../src/websocket/websocket.module.ts) (23 lignes, global).
+- Fichier : [src/websocket/websocket.gateway.ts](../../../../../attendee-ems-back/src/websocket/websocket.gateway.ts) (255 lignes), [src/websocket/websocket.module.ts](../../../../../attendee-ems-back/src/websocket/websocket.module.ts) (23 lignes, global).
 - **Namespace** : `/events`.
 - **CORS** : `origin: '*'`, `credentials: true` — ⚠️ permissif, à restreindre derrière Nginx en prod.
 - **Transport** : `@nestjs/platform-socket.io` + `socket.io@4.8.3`.

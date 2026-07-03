@@ -2,8 +2,8 @@
 
 ## 1. Guards en place — `FOUND_IN_CODE`
 
-- `JwtAuthGuard` ([src/auth/](../../../../src/auth/)) — vérifie le JWT access token.
-- `RequirePermissionGuard` / `PermissionsGuard` ([src/common/guards/](../../../../src/common/guards/)) — vérifie les permissions RBAC.
+- `JwtAuthGuard` ([src/auth/](../../../../../attendee-ems-back/src/auth)) — vérifie le JWT access token.
+- `RequirePermissionGuard` / `PermissionsGuard` ([src/common/guards/](../../../../../attendee-ems-back/src/common/guards)) — vérifie les permissions RBAC.
 - `ApiKeyGuard` — utilisé sur n8n (`X-API-Key`).
 - `ThrottlerGuard` (`@nestjs/throttler`) — protection rate-limit.
 - Module `AuthzModule` (hexagonal, étape 3) — couche `platform/authz/` centralise la logique RBAC + CASL (`@casl/ability` dans `package.json`).

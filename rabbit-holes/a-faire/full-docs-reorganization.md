@@ -26,14 +26,14 @@ Risk level: Medium
 - « Réorganiser docs » dérive vers « réorganiser context/ » de chaque repo.
 - « Renommer un dossier » dérive vers « fixer tous les liens cassés » dans toute la doc.
 - « Fusionner ARCH et architecture » dérive vers une revue éditoriale complète.
-- « Aligner attendee-context-hub » dérive vers le chantier Context Mesh complet ([../backlog/context-mesh-improvements.md](../backlog/context-mesh-improvements.md)).
+- « Aligner attendee-context-hub » dérive vers le chantier Context Mesh complet ([../backlog/context-mesh-improvements.md](../../backlog/a-faire/context-mesh-improvements.md)).
 
 ## 4. Current decision
 
 - **Pas de réorg massive.**
 - La structure cible (`steering/`, `workstreams/`, `backlog/`, `rabbit-holes/`) est **additive** : on **crée** ces dossiers, on **ne supprime pas** l'existant, on **ne déplace pas** sauf si l'appartenance est évidente et sans risque.
 - Les dossiers historiques (`ARCH/`, `Refactore-autorization/`, `archive/`, `migration-GCP/`, `seeders/`, `async-architecture/`) restent **conservés et référencés**.
-- Toute idée de déplacement → fiche dans [../backlog/context-mesh-improvements.md](../backlog/context-mesh-improvements.md), pas exécution directe.
+- Toute idée de déplacement → fiche dans [../backlog/context-mesh-improvements.md](../../backlog/a-faire/context-mesh-improvements.md), pas exécution directe.
 
 ## 5. When to revisit
 
@@ -43,9 +43,9 @@ Risk level: Medium
 
 ## 6. Related docs
 
-- [../backlog/context-mesh-improvements.md](../backlog/context-mesh-improvements.md)
-- [../00-CONTROL-CENTER.md](../00-CONTROL-CENTER.md) (section 8 : Key folders).
-- [../steering/README.md](../steering/README.md)
+- [../backlog/context-mesh-improvements.md](../../backlog/a-faire/context-mesh-improvements.md)
+- [../00-CONTROL-CENTER.md](../../../attendee-ems-back/docs/00-CONTROL-CENTER.md) (section 8 : Key folders).
+- [../steering/README.md](../../../attendee-ems-back/docs/steering/README.md)
 
 ## 7. Rule for Copilot
 

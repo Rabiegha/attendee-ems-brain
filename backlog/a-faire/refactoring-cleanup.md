@@ -19,17 +19,17 @@ Le code back contient plusieurs **god-services** et duplications qui aggraveront
 ## 2. Current understanding
 
 - Ces sujets ont été cartographiés en détail dans les Q&A Async Architecture :
-  - [../async-architecture/QandA/05-coupling-and-side-effects.md](../workstreams/async-architecture/QandA/05-coupling-and-side-effects.md)
-  - [../async-architecture/QandA/13-information-gaps.md](../workstreams/async-architecture/QandA/13-information-gaps.md)
+  - [../async-architecture/QandA/05-coupling-and-side-effects.md](../../workstreams/en-cours/async-architecture/QandA/05-coupling-and-side-effects.md)
+  - [../async-architecture/QandA/13-information-gaps.md](../../workstreams/en-cours/async-architecture/QandA/13-information-gaps.md)
 - Aucun refactor n'a été lancé.
 - Plusieurs refactors sont **prérequis** à l'extension de BullMQ (imports, badges, prints) — donc ils émergeront naturellement dans le workstream Async Architecture **au compte-gouttes**.
 
 ## 3. What is already decided
 
-- **Ne pas** refactorer en masse (cf. rabbit hole [../rabbit-holes/massive-refactoring.md](../rabbit-holes/massive-refactoring.md)).
+- **Ne pas** refactorer en masse (cf. rabbit hole [../rabbit-holes/massive-refactoring.md](../../rabbit-holes/a-faire/massive-refactoring.md)).
 - Les refactors prérequis à BullMQ sont **scopés** par chantier (un service à la fois).
 - Les endpoints `/storage/...` de test ne sont pas supprimés sans ticket explicite.
-- Bug handling rule : pas de fix automatique sans ticket (voir [../steering/DECISIONS.md](../steering/DECISIONS.md#bug-handling-rule)).
+- Bug handling rule : pas de fix automatique sans ticket (voir [../steering/DECISIONS.md](../../../attendee-ems-back/docs/steering/DECISIONS.md#bug-handling-rule)).
 
 ## 4. What is not decided yet
 
@@ -52,11 +52,11 @@ Le code back contient plusieurs **god-services** et duplications qui aggraveront
 
 ## 7. Related docs
 
-- [../async-architecture/QandA/05-coupling-and-side-effects.md](../workstreams/async-architecture/QandA/05-coupling-and-side-effects.md)
-- [../async-architecture/QandA/13-information-gaps.md](../workstreams/async-architecture/QandA/13-information-gaps.md)
-- [../async-architecture/QandA/08-import-export-file-processing.md](../workstreams/async-architecture/QandA/08-import-export-file-processing.md)
-- [../async-architecture/QandA/07-websocket-print-client.md](../workstreams/async-architecture/QandA/07-websocket-print-client.md)
-- [../rabbit-holes/massive-refactoring.md](../rabbit-holes/massive-refactoring.md)
+- [../async-architecture/QandA/05-coupling-and-side-effects.md](../../workstreams/en-cours/async-architecture/QandA/05-coupling-and-side-effects.md)
+- [../async-architecture/QandA/13-information-gaps.md](../../workstreams/en-cours/async-architecture/QandA/13-information-gaps.md)
+- [../async-architecture/QandA/08-import-export-file-processing.md](../../workstreams/en-cours/async-architecture/QandA/08-import-export-file-processing.md)
+- [../async-architecture/QandA/07-websocket-print-client.md](../../workstreams/en-cours/async-architecture/QandA/07-websocket-print-client.md)
+- [../rabbit-holes/massive-refactoring.md](../../rabbit-holes/a-faire/massive-refactoring.md)
 
 ## 8. Possible future epics
 

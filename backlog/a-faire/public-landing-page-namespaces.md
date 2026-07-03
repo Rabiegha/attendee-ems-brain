@@ -18,7 +18,7 @@ Ce slug public ne doit **pas être confondu** avec l'identifiant interne d'organ
 
 - Aucun mécanisme `PublicNamespace` distinct n'existe aujourd'hui — l'URL publique de Public-Form-Logger utilise un identifiant d'event ou un token.
 - Le repo `Public-Form-Logger/` héberge déjà la couche publique de saisie formulaire (séparée de l'API back métier).
-- Décisions déjà actées (voir [../steering/DECISIONS.md](../steering/DECISIONS.md#public-namespaces)) :
+- Décisions déjà actées (voir [../steering/DECISIONS.md](../../../attendee-ems-back/docs/steering/DECISIONS.md#public-namespaces)) :
   - Ne **pas** utiliser `Organization.slug` directement comme sous-domaine garanti.
   - Séparer `Organization.internalSlug` et `PublicNamespace.subdomain`.
   - Les slugs **premium / sensibles** doivent être réservés / validés.
@@ -27,7 +27,7 @@ Ce slug public ne doit **pas être confondu** avec l'identifiant interne d'organ
 
 - Séparation `internalSlug` (interne, immutable, technique) et `subdomain` public.
 - Slugs premium et sensibles réservés.
-- Pas de custom domain complet pour l'instant (rabbit hole — voir [../rabbit-holes/full-custom-domains.md](../rabbit-holes/full-custom-domains.md)).
+- Pas de custom domain complet pour l'instant (rabbit hole — voir [../rabbit-holes/full-custom-domains.md](../../rabbit-holes/a-faire/full-custom-domains.md)).
 
 ## 4. What is not decided yet
 
@@ -52,10 +52,10 @@ Ce slug public ne doit **pas être confondu** avec l'identifiant interne d'organ
 
 ## 7. Related docs
 
-- [../architecture/organization-plan-subscription-model.md](../architecture/organization-plan-subscription-model.md)
-- [../product/saas-foundation-onboarding-billing.md](../product/saas-foundation-onboarding-billing.md)
-- [../roadmap/saas-foundation-epics.md](../roadmap/saas-foundation-epics.md)
-- [../rabbit-holes/full-custom-domains.md](../rabbit-holes/full-custom-domains.md)
+- [../architecture/organization-plan-subscription-model.md](../../architecture/organization-plan-subscription-model.md)
+- [../product/saas-foundation-onboarding-billing.md](../../product/saas-foundation-onboarding-billing.md)
+- [../roadmap/saas-foundation-epics.md](saas-foundation-epics.md)
+- [../rabbit-holes/full-custom-domains.md](../../rabbit-holes/a-faire/full-custom-domains.md)
 - Repo `Public-Form-Logger/` (architecture publique existante).
 
 ## 8. Possible future epics
@@ -69,5 +69,5 @@ Ce slug public ne doit **pas être confondu** avec l'identifiant interne d'organ
 
 - **Ne pas** ajouter de champ `subdomain` à `Organization` ; passer par un modèle dédié.
 - **Ne pas** utiliser `Organization.slug` comme route publique sans validation préalable.
-- Toute proposition « custom domain » doit aller dans [../rabbit-holes/full-custom-domains.md](../rabbit-holes/full-custom-domains.md).
+- Toute proposition « custom domain » doit aller dans [../rabbit-holes/full-custom-domains.md](../../rabbit-holes/a-faire/full-custom-domains.md).
 - Ne pas créer de migration Prisma depuis ce backlog.

@@ -17,7 +17,7 @@ Risk level: Medium-High
 - Aucun Platform Admin opérationnel aujourd'hui → on créerait une app vide.
 - L'équipe est petite, ajouter un repo / projet front double la charge ops.
 - Le besoin réel pour le MVP est très limité (peut-être 3-5 écrans).
-- Décision déjà actée : pour le MVP, préférer une **section `/platform`** dans le frontend existant (voir [../steering/DECISIONS.md](../steering/DECISIONS.md#platform-admin)).
+- Décision déjà actée : pour le MVP, préférer une **section `/platform`** dans le frontend existant (voir [../steering/DECISIONS.md](../../../attendee-ems-back/docs/steering/DECISIONS.md#platform-admin)).
 
 ## 3. Scope creep risk
 
@@ -31,7 +31,7 @@ Très élevé :
 
 - **Pas de second frontend pour le MVP.**
 - La console admin se fera **à l'intérieur** du frontend tenant existant via une section `/platform` protégée par un Guard `SUPER_ADMIN`.
-- Référence : [../architecture/platform-admin-access-model.md](../architecture/platform-admin-access-model.md).
+- Référence : [../architecture/platform-admin-access-model.md](../../architecture/platform-admin-access-model.md).
 
 ## 5. When to revisit
 
@@ -41,10 +41,10 @@ Très élevé :
 
 ## 6. Related docs
 
-- [../backlog/platform-admin-console.md](../backlog/platform-admin-console.md)
-- [../architecture/platform-admin-access-model.md](../architecture/platform-admin-access-model.md)
-- [../steering/DECISIONS.md](../steering/DECISIONS.md#platform-admin)
-- [../workstreams/onboarding-billing-management/README.md](../workstreams/async-architecture/README.md)
+- [../backlog/platform-admin-console.md](../../backlog/a-faire/platform-admin-console.md)
+- [../architecture/platform-admin-access-model.md](../../architecture/platform-admin-access-model.md)
+- [../steering/DECISIONS.md](../../../attendee-ems-back/docs/steering/DECISIONS.md#platform-admin)
+- [../workstreams/onboarding-billing-management/README.md](../../workstreams/en-cours/async-architecture/README.md)
 
 ## 7. Rule for Copilot
 

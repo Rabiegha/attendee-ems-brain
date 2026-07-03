@@ -62,8 +62,8 @@ L'objectif du **Context Mesh** est de garantir qu'un développeur (ou Copilot) q
 
 - `attendee-context-hub/` (méta-repo).
 - `ems-brain/` (référent IA transverse).
-- [../00-CONTROL-CENTER.md](../00-CONTROL-CENTER.md)
-- [../steering/DECISIONS.md](../steering/DECISIONS.md)
+- [../00-CONTROL-CENTER.md](../../../attendee-ems-back/docs/00-CONTROL-CENTER.md)
+- [../steering/DECISIONS.md](../../../attendee-ems-back/docs/steering/DECISIONS.md)
 - Dossiers `context/` de chaque repo Attendee.
 
 ## 8. Possible future epics
@@ -75,6 +75,6 @@ L'objectif du **Context Mesh** est de garantir qu'un développeur (ou Copilot) q
 
 ## 9. Notes for Copilot
 
-- **Ne pas** réorganiser massivement les `context/` de tous les repos depuis ce backlog (rabbit hole : [../rabbit-holes/full-docs-reorganization.md](../rabbit-holes/full-docs-reorganization.md)).
+- **Ne pas** réorganiser massivement les `context/` de tous les repos depuis ce backlog (rabbit hole : [../rabbit-holes/full-docs-reorganization.md](../../rabbit-holes/a-faire/full-docs-reorganization.md)).
 - **Ne pas** dupliquer une décision dans plusieurs repos — préférer un pointeur stable.
-- Si une décision cross-repo émerge, l'ajouter dans [../steering/DECISIONS.md](../steering/DECISIONS.md) du back et créer un pointeur depuis les autres repos.
+- Si une décision cross-repo émerge, l'ajouter dans [../steering/DECISIONS.md](../../../attendee-ems-back/docs/steering/DECISIONS.md) du back et créer un pointeur depuis les autres repos.
