@@ -15,14 +15,18 @@ Trois niveaux, rien de plus :
 
 | Niveau | Fichier / dossier | Rôle | Quand j'y touche |
 |---|---|---|---|
-| **Piloter** | [NOW.md](NOW.md) | Focus actif + prochaine action + hors-scope | Quand le focus change |
-| **Capturer** | [INBOX.md](INBOX.md) | Tout en vrac, 1 ligne, taggé | En continu, réflexe |
-| **Ranger** | dossiers ci-dessous | Le détail trié | En session de tri |
+| **Piloter** | `workspace-<moi>/NOW.md` | Focus actif + prochaine action + hors-scope | Quand le focus change |
+| **Capturer** | `workspace-<moi>/INBOX.md` | Tout en vrac, 1 ligne, taggé | En continu, réflexe |
+| **Ranger** | dossiers partagés ci-dessous | Le détail trié | En session de tri |
+
+> Le **pilotage est personnel** : chaque dev a son dossier `workspace-<prénom>/`
+> ([workspace-rabie/](workspace-rabie/README.md), [workspace-corentin/](workspace-corentin/README.md)).
+> Les **dossiers de fond** (workstreams, bugs, backlog, debts…) sont **partagés**.
 
 ### Le geste anti-dispersion
 
 Pendant que je bosse sur un workstream, **dès que je vois un truc** (bug, manque, idée, doute, piège) :
-1. J'ouvre [INBOX.md](INBOX.md).
+1. J'ouvre mon `workspace-<moi>/INBOX.md`.
 2. J'écris **1 ligne taggée**.
 3. Je reviens à mon workstream. **Je ne change pas de focus.**
 
@@ -34,13 +38,15 @@ En fin de session (5 min de tri), je vide l'inbox : chaque ligne part dans le bo
 
 | Dossier | Contient | Vient de |
 |---|---|---|
-| [workstreams/](workstreams/README.md) | Ce sur quoi je bosse (découpable en parties) | décision de piloter un sujet |
-| [backlog/](backlog/README.md) | Sujets pour plus tard | inbox `[idea]` |
-| [bugs/](bugs/README.md) | Bugs confirmés à suivre | inbox `[bug]` |
-| [DEBTS.md](DEBTS.md) | Dettes techniques et sécurité connues | inbox `[debt]` |
-| [rabbit-holes/](rabbit-holes/README.md) | Pièges à ne PAS creuser | inbox `[trap]` |
-| [learnings/](learnings/README.md) | Ce que j'apprends | inbox `[learn]` |
-| [architecture/](architecture/README.md) | Décisions d'archi stables | inbox `[archi]` |
+| [workspace-rabie/](workspace-rabie/README.md) | Pilotage perso de Rabie (`NOW.md` + `INBOX.md`) | — |
+| [workspace-corentin/](workspace-corentin/README.md) | Pilotage perso de Corentin (`NOW.md` + `INBOX.md`) | — |
+| [workstreams/](workstreams/README.md) | Ce sur quoi on bosse — découpé **fait / en-cours / a-faire** | décision de piloter un sujet |
+| [backlog/](backlog/README.md) | Sujets pour plus tard — **fait / en-cours / a-faire** | inbox `[idea]` |
+| [bugs/](bugs/README.md) | Bugs confirmés à suivre — **fait / en-cours / a-faire** | inbox `[bug]` |
+| [debts/](debts/README.md) | Dettes techniques et sécurité connues (registre `DEBTS.md`) | inbox `[debt]` |
+| [rabbit-holes/](rabbit-holes/README.md) | Pièges à ne PAS creuser — **fait / en-cours / a-faire** | inbox `[trap]` |
+| [learnings/](learnings/README.md) | Ce qu'on apprend (pas de découpe) | inbox `[learn]` |
+| [architecture/](architecture/README.md) | Décisions d'archi stables (pas de découpe) | inbox `[archi]` |
 
 ---
 
@@ -63,14 +69,17 @@ En fin de session (5 min de tri), je vide l'inbox : chaque ligne part dans le bo
 
 | Workstream | App | Status | Détail |
 |---|---|---|---|
-| Diagnostic & stabilisation mobile | mobile | **Active** | [workstreams/mobile-stabilization/](workstreams/mobile-stabilization/README.md) |
-| Async Architecture | back | Active (repo back) | `attendee-ems-back/docs/workstreams/async-architecture/` |
+| Diagnostic & stabilisation mobile | mobile | **En cours** | [workstreams/en-cours/mobile-stabilization/](workstreams/en-cours/mobile-stabilization/README.md) |
+| Système de contexte : fiabilité & adoption | transversal | **En cours** | [workstreams/en-cours/context-system/](workstreams/en-cours/context-system/README.md) |
+| Scaling API & charge LFD 2026 | back | **En cours** | [workstreams/en-cours/api-scaling-lfd2026/](workstreams/en-cours/api-scaling-lfd2026/README.md) |
+| Inscriptions & refonte des sessions LFD 2026 | back + front | À faire | [workstreams/a-faire/sessions-inscriptions-lfd2026/](workstreams/a-faire/sessions-inscriptions-lfd2026/README.md) |
+| Async Architecture | back | **En cours** | [workstreams/en-cours/async-architecture/](workstreams/en-cours/async-architecture/README.md) |
 
 ---
 
 ## 5. Vertical vs horizontal — la règle
 
-- **Pilotage = horizontal.** Ce cerveau (`ems-brain/`) pilote toute l'app. Un seul `NOW.md`, un seul `INBOX.md`.
+- **Pilotage = horizontal.** Ce cerveau (`ems-brain/`) pilote toute l'app. Chaque dev a son `workspace-<moi>/` avec **un** `NOW.md` et **un** `INBOX.md`.
 - **Détail technique = vertical.** Le contexte stable et profond reste **près du code** (dans `*/context/` de chaque repo). Le cerveau **pointe** vers lui, il ne le duplique pas.
 
 ---
@@ -90,20 +99,20 @@ Le seul pont : quand une décision d'un workstream devient une **règle définit
 
 Un workstream = 1 dossier :
 ```
-workstreams/<nom>/
+workstreams/en-cours/<nom>/
   README.md          ← objectif, état, prochaine action de CE chantier
   01-<partie>.md
   02-<partie>.md
 ```
 J'avance partie par partie. Le `README.md` du workstream dit toujours où j'en suis dedans.
+Quand il est fini, il passe dans `workstreams/fait/`.
 
 ---
 
 ## 8. Règles pour Copilot
 
-1. Lire ce fichier puis [NOW.md](NOW.md) avant tout gros changement.
-2. Si le sujet est **hors focus** → l'ajouter à [INBOX.md](INBOX.md), ne pas coder.
+1. Lire ce fichier puis le `NOW.md` du workspace concerné avant tout gros changement.
+2. Si le sujet est **hors focus** → l'ajouter à l'`INBOX.md` du workspace, ne pas coder.
 3. Ne pas transformer une analyse (bug, rabbit-hole) en correction sans accord explicite.
 4. Une décision validée → la consigner (workstream, `architecture/`, ou `context/` du repo).
 5. Garder `NOW.md` et `INBOX.md` courts.
-# attendee-ems-brain

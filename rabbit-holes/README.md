@@ -1,9 +1,27 @@
 # Rabbit holes
 
-Pièges à **ne pas creuser** sans raison. Vient de l'inbox `[trap]`.
+Pièges à **ne pas creuser** sans raison, toutes apps confondues. Vient de l'inbox `[trap]`.
 
-> Si je me surprends à plonger dans un de ces sujets sans qu'il soit dans [NOW.md](../NOW.md), je m'arrête.
+> Si je me surprends à plonger dans un de ces sujets sans qu'il soit dans mon `NOW.md`, je m'arrête.
 
-| Piège | Pourquoi c'est un piège |
+## Découpe (3 états)
+
+| Sous-dossier | Contient |
 |---|---|
-| _(vide)_ | |
+| [fait/](fait/) | Pièges tranchés / neutralisés (on sait quoi en faire). |
+| [en-cours/](en-cours/) | Pièges qu'on est en train d'évaluer. |
+| [a-faire/](a-faire/) | Pièges identifiés, à cadrer plus tard. |
+
+## Index
+
+| Piège | Pourquoi c'est un piège | État |
+|---|---|---|
+| [Full event-driven migration](a-faire/full-event-driven-migration.md) | Migrer toute l'app en event-driven (Pub/Sub, Kafka) tout de suite. | À faire |
+| [Full Stripe billing](a-faire/full-stripe-billing.md) | Intégrer Stripe complet (paiement, webhooks, dunning, factures) dès maintenant. | À faire |
+| [Separate admin frontend](a-faire/separate-admin-frontend.md) | Créer une 2e app frontend dédiée à l'admin plateforme. | À faire |
+| [Full custom domains](a-faire/full-custom-domains.md) | Support complet des custom domains (DNS, TLS automation). | À faire |
+| [Full RBAC rewrite](a-faire/full-rbac-rewrite.md) | Refaire entièrement le système RBAC. | À faire |
+| [User account deletion / anonymization](a-faire/user-account-deletion-anonymization.md) | Suppression / anonymisation globale user à l'échelle plateforme. | À faire |
+| [Immediate bug fixing](a-faire/immediate-bug-fixing.md) | Corriger immédiatement tous les bugs documentés. | À faire |
+| [Massive refactoring](a-faire/massive-refactoring.md) | Refactorer tous les gros controllers / god-services en même temps. | À faire |
+| [Full docs reorganization](a-faire/full-docs-reorganization.md) | Réorganiser massivement `docs/` (déplacer, fusionner, renommer). | À faire |
