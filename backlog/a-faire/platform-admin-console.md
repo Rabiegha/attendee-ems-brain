@@ -28,13 +28,13 @@ Aujourd'hui : pas de console dédiée. L'accès se fait via Bull Board, requête
 - Séparation Platform Admin ↔ rôles tenant.
 - Pas d'impersonation pour le MVP.
 - Pas de second frontend pour le MVP.
-- Bull Board doit être protégé (cf. [../async-architecture/QandA/09-security-multitenancy.md](../../workstreams/en-cours/async-architecture/QandA/09-security-multitenancy.md)) — préférer Guard SUPER_ADMIN + basic-auth Nginx.
+- Bull Board doit être protégé (cf. [../async-architecture/QandA/09-security-multitenancy.md](../../workstreams/a-faire/async-architecture/QandA/09-security-multitenancy.md)) — préférer Guard SUPER_ADMIN + basic-auth Nginx.
 
 ## 4. What is not decided yet
 
 - Périmètre exact de la console MVP (lecture seule ? actions limitées ?).
 - Mécanisme d'auth Platform Admin (claim JWT dédié ? table `PlatformAdmin` ?).
-- Audit des actions Platform Admin (besoin d'un `AuditLog`, cf. [../async-architecture/QandA/13-information-gaps.md](../../workstreams/en-cours/async-architecture/QandA/13-information-gaps.md)).
+- Audit des actions Platform Admin (besoin d'un `AuditLog`, cf. [../async-architecture/QandA/13-information-gaps.md](../../workstreams/a-faire/async-architecture/QandA/13-information-gaps.md)).
 - Intégration de Bull Board dans la console ou maintien séparé.
 
 ## 5. Why not now
@@ -54,7 +54,7 @@ Aujourd'hui : pas de console dédiée. L'accès se fait via Bull Board, requête
 - [../architecture/platform-admin-access-model.md](../../architecture/platform-admin-access-model.md)
 - [../product/saas-foundation-onboarding-billing.md](../../product/saas-foundation-onboarding-billing.md)
 - [../roadmap/saas-foundation-epics.md](saas-foundation-epics.md)
-- [../workstreams/onboarding-billing-management/README.md](../../workstreams/en-cours/async-architecture/README.md)
+- [../workstreams/onboarding-billing-management/README.md](../../workstreams/a-faire/async-architecture/README.md)
 - [../rabbit-holes/separate-admin-frontend.md](../../rabbit-holes/a-faire/separate-admin-frontend.md)
 
 ## 8. Possible future epics

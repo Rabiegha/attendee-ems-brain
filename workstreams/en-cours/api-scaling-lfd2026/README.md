@@ -9,9 +9,9 @@
 
 ## Où est l'info détaillée
 
-Tout le détail technique est dans **`attendee-ems-back/docs/infra/`** :
+Tout le détail technique est dans **[infra/](../../../infra/)** (ems-brain) :
 
-- **`lfd-2026-session-handoff-2026-06-25.md`** ⭐ — **commencer par là** (handoff complet,
+- **[lfd-2026-session-handoff-2026-06-25.md](../../../infra/lfd-2026-session-handoff-2026-06-25.md)** ⭐ — **commencer par là** (handoff complet,
   déroulé, chiffres, reste à faire, règles critiques, infos opé).
 - `lfd-2026-load-test-results.md` — résultats techniques mesurés.
 - `lfd-2026-reproduction.md` — refaire les optimisations + tests soi-même.

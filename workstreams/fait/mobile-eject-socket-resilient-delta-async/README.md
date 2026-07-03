@@ -1,10 +1,10 @@
-# Workstream — Diagnostic & stabilisation mobile
+# Workstream — Mobile eject / socket resilient delta async
 
 ## Pilote
 
 ```
 App:      attendee-ems-mobile
-Status:   Active
+Status:   Fait (pas encore testé)
 Priority: High
 ```
 
@@ -12,7 +12,11 @@ Priority: High
 1. **Hard restart** de l'app.
 2. Ouverture de l'**écran de scan**.
 
+Plus le passage à un **socket résilient avec delta sync asynchrone** (voir [03-socket-resilient-delta-sync.md](03-socket-resilient-delta-sync.md)).
+
 **Approche :** d'abord **diagnostiquer** (reproduire + isoler la cause racine), seulement ensuite corriger. Pas de correction à l'aveugle.
+
+> ✅ **Fait — mais pas encore testé en conditions réelles.** À valider via un nouveau build store (pas un OTA).
 
 ---
 

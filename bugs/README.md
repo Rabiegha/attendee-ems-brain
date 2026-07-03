@@ -27,8 +27,8 @@ Le détail vit dans les workstreams concernés :
 
 | Bug | App | Où c'est traité |
 |---|---|---|
-| Éjection au hard restart | mobile | [workstreams/en-cours/mobile-stabilization/01](../workstreams/en-cours/mobile-stabilization/01-eject-hard-restart.md) |
-| Éjection à l'ouverture du scan | mobile | [workstreams/en-cours/mobile-stabilization/02](../workstreams/en-cours/mobile-stabilization/02-eject-on-scan.md) |
-| Crash écran gris à la reconnexion (check-in + undo offline) | mobile | [workstreams/en-cours/mobile-stabilization/03 §8.3](../workstreams/en-cours/mobile-stabilization/03-socket-resilient-delta-sync.md) — `ConflictsBanner.tsx` Rules of Hooks |
-| Faux conflit STALE + état incohérent (action + action inverse offline) | mobile | [workstreams/en-cours/mobile-stabilization/03 §8.3](../workstreams/en-cours/mobile-stabilization/03-socket-resilient-delta-sync.md) — neutralisation mutations opposées |
-| Cache figé après micro-coupure réseau (socket mort) | mobile | [workstreams/en-cours/mobile-stabilization/03 §8.1](../workstreams/en-cours/mobile-stabilization/03-socket-resilient-delta-sync.md) — socket résilient + delta-sync |
+| Éjection au hard restart | mobile | [workstreams/en-cours/mobile-stabilization/01](../workstreams/fait/mobile-eject-socket-resilient-delta-async/01-eject-hard-restart.md) |
+| Éjection à l'ouverture du scan | mobile | [workstreams/en-cours/mobile-stabilization/02](../workstreams/fait/mobile-eject-socket-resilient-delta-async/02-eject-on-scan.md) |
+| Crash écran gris à la reconnexion (check-in + undo offline) | mobile | [workstreams/en-cours/mobile-stabilization/03 §8.3](../workstreams/fait/mobile-eject-socket-resilient-delta-async/03-socket-resilient-delta-sync.md) — `ConflictsBanner.tsx` Rules of Hooks |
+| Faux conflit STALE + état incohérent (action + action inverse offline) | mobile | [workstreams/en-cours/mobile-stabilization/03 §8.3](../workstreams/fait/mobile-eject-socket-resilient-delta-async/03-socket-resilient-delta-sync.md) — neutralisation mutations opposées |
+| Cache figé après micro-coupure réseau (socket mort) | mobile | [workstreams/en-cours/mobile-stabilization/03 §8.1](../workstreams/fait/mobile-eject-socket-resilient-delta-async/03-socket-resilient-delta-sync.md) — socket résilient + delta-sync |

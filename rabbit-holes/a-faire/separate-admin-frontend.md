@@ -44,7 +44,7 @@ Très élevé :
 - [../backlog/platform-admin-console.md](../../backlog/a-faire/platform-admin-console.md)
 - [../architecture/platform-admin-access-model.md](../../architecture/platform-admin-access-model.md)
 - [../steering/DECISIONS.md](../../../attendee-ems-back/docs/steering/DECISIONS.md#platform-admin)
-- [../workstreams/onboarding-billing-management/README.md](../../workstreams/en-cours/async-architecture/README.md)
+- [../workstreams/onboarding-billing-management/README.md](../../workstreams/a-faire/async-architecture/README.md)
 
 ## 7. Rule for Copilot
 

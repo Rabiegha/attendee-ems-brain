@@ -14,6 +14,7 @@ Dettes connues à ne pas oublier. Ne **pas** corriger sans ticket explicite.
 | S-01 | `EXPO_PUBLIC_PRINTNODE_API_KEY` en clair dans `eas.json` (4 profils), `.env` et `.env.local-backup` — commité sur GitHub.                                                | mobile     | ⚠️ Haute   | 1. Générer nouvelle clé PrintNode. 2. `eas env:create` → EAS Secrets. 3. Retirer de `eas.json` et `*.env*`. |
 | S-02 | Redis prod (`ems-redis`) sans mot de passe malgré `$REDIS_PASSWORD` dans l'env.                                                                                          | back/infra | ⚠️ Haute   | Configurer l'auth Redis dans le container + mettre à jour le docker-compose prod.                           |
 | S-03 | IP réelle du client **non transmise** au backend (Nginx ne forward pas `X-Forwarded-For`). `refresh_tokens.ip` enregistre toujours l'IP du container Nginx `172.18.0.7`. | back/infra | 🟡 Moyenne | Configurer `trust proxy` dans Nest + `proxy_set_header X-Forwarded-For` dans Nginx.                         |
+| S-04 | **Webshells / fichiers PHP malveillants injectés** dans `choyou.fr/_/attendee/` (mutualisé, legacy PHP — PAS le VPS). Réapparaissent après suppression → persistance probable (accès compromis ou cron). 2 fichiers supprimés le 03/07. | infra/legacy | 🔴 Haute | Rabie : nettoyer l'arborescence, changer creds FTP/SSH/DB, vérifier crons OVH, envisager de retirer le legacy. Détail : `bugs/a-faire/2026-07-03-webshell-php-choyou-attendee.md`. |
 
 ---
 

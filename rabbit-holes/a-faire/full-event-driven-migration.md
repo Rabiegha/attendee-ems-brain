@@ -10,7 +10,7 @@ Risk level: High
 - Le projet utilise déjà BullMQ → on peut croire qu'il « suffit » de tout transformer en events.
 - Permettrait de découpler radicalement les modules métier.
 - Préparerait des intégrations externes (n8n, Zapier, CRM, marketing).
-- Le QandA Async Architecture évoque déjà le sujet ([../async-architecture/QandA/14-future-event-driven-compatibility.md](../../workstreams/en-cours/async-architecture/QandA/14-future-event-driven-compatibility.md)).
+- Le QandA Async Architecture évoque déjà le sujet ([../async-architecture/QandA/14-future-event-driven-compatibility.md](../../workstreams/a-faire/async-architecture/QandA/14-future-event-driven-compatibility.md)).
 
 ## 2. Why it is dangerous now
 
@@ -40,14 +40,14 @@ Très élevé :
 
 - Quand **plusieurs intégrations externes** (≥ 3) commenceront à câbler le même flux (check-in, registration) — preuve qu'un bus serait rentable.
 - Quand `AuditLog` / `OutboxEvent` sera en place et stable.
-- Quand les conventions Palier 1 (cf. [../async-architecture/QandA/14-future-event-driven-compatibility.md](../../workstreams/en-cours/async-architecture/QandA/14-future-event-driven-compatibility.md)) seront actées et respectées partout.
+- Quand les conventions Palier 1 (cf. [../async-architecture/QandA/14-future-event-driven-compatibility.md](../../workstreams/a-faire/async-architecture/QandA/14-future-event-driven-compatibility.md)) seront actées et respectées partout.
 
 ## 6. Related docs
 
-- [../async-architecture/QandA/14-future-event-driven-compatibility.md](../../workstreams/en-cours/async-architecture/QandA/14-future-event-driven-compatibility.md)
-- [../async-architecture/QandA/05-coupling-and-side-effects.md](../../workstreams/en-cours/async-architecture/QandA/05-coupling-and-side-effects.md)
-- [../async-architecture/QandA/13-information-gaps.md](../../workstreams/en-cours/async-architecture/QandA/13-information-gaps.md)
-- [../workstreams/async-architecture/README.md](../../workstreams/en-cours/async-architecture/README.md)
+- [../async-architecture/QandA/14-future-event-driven-compatibility.md](../../workstreams/a-faire/async-architecture/QandA/14-future-event-driven-compatibility.md)
+- [../async-architecture/QandA/05-coupling-and-side-effects.md](../../workstreams/a-faire/async-architecture/QandA/05-coupling-and-side-effects.md)
+- [../async-architecture/QandA/13-information-gaps.md](../../workstreams/a-faire/async-architecture/QandA/13-information-gaps.md)
+- [../workstreams/async-architecture/README.md](../../workstreams/a-faire/async-architecture/README.md)
 
 ## 7. Rule for Copilot
 

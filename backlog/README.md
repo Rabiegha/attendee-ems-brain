@@ -12,11 +12,17 @@ Sujets pour **plus tard**, toutes apps confondues. Vient de l'inbox `[idea]`.
 | [en-cours/](en-cours/) | Sujets démarrés mais pas finis. |
 | [a-faire/](a-faire/) | Sujets pas encore commencés. |
 
+## En cours — index
+
+| Sujet | App | Note |
+|---|---|---|
+| [Appli mobile — préparation LFD2026](en-cours/appli-mobile-lfd2026.md) | mobile | Mot de passe oublié, pagination sessions, offline scans, use cases scan, version stable pour l'event |
+| [Sujets parkés — hors-scope](en-cours/sujets-parkes-hors-scope.md) | mobile + back | Refonte nav mobile, migration persistance MMKV, sécurité EAS, async architecture (aiguillage). |
+
 ## À faire — index
 
 | Sujet | App | Note |
 |---|---|---|
-| [Appli mobile — préparation LFD2026](a-faire/appli-mobile-lfd2026.md) | mobile | Mot de passe oublié, pagination sessions, offline scans, use cases scan, version stable pour l'event |
 | [Backlog technique](a-faire/BACKLOG-TECH.md) | transversal | Chantiers techniques (faux succès scan session, idempotence locale, OTA, print offline…). Contient lui-même ses sections Fait / En cours / À faire. |
 | [Plan CI/CD](a-faire/CI_CD_PLAN.md) | infra | Mise en place de l'intégration / déploiement continu. |
 | [Backup automatique DB](a-faire/brief-backup-automatique-db.md) | back/infra | Cron de dump + rétention sur le VPS. |
@@ -28,7 +34,6 @@ Sujets pour **plus tard**, toutes apps confondues. Vient de l'inbox `[idea]`.
 | [Refactoring & cleanup](a-faire/refactoring-cleanup.md) | back | Liste cible des refactorings et nettoyages, au compte-gouttes. |
 | [QR code stability & registration identity](a-faire/qr-code-stability-and-registration-identity/README.md) | back + mobile | Stabilité QR, réconciliation identité d'inscription, modèle de credential. |
 | [SaaS Foundation — Epics & Phases](a-faire/saas-foundation-epics.md) | back + front | Roadmap SaaS découpée en phases (onboarding, plans, platform admin). |
-| [Sujets parkés — hors-scope](a-faire/sujets-parkes-hors-scope.md) | mobile + back | Refonte nav mobile, migration persistance MMKV, sécurité EAS, async architecture (aiguillage). |
 | [Archive migrée — `other/`](a-faire/other/) | back / infra | Notes & plans détaillés migrés depuis `back/docs/other/` (voir découpe ci-dessous). |
 
 ## `other/` — archive migrée (détail)

@@ -44,7 +44,7 @@ De plus, beaucoup de décisions d'onboarding dépendent de Billing (cf. [billing
 ## 6. When to revisit
 
 - Après clôture de la phase Q&A Async Architecture.
-- Après décision humaine sur les questions BLOCKING listées dans [../async-architecture/QandA/12-open-questions-for-human.md](../../workstreams/en-cours/async-architecture/QandA/12-open-questions-for-human.md).
+- Après décision humaine sur les questions BLOCKING listées dans [../async-architecture/QandA/12-open-questions-for-human.md](../../workstreams/a-faire/async-architecture/QandA/12-open-questions-for-human.md).
 - Avant l'epic « Plan and subscription visibility » côté Billing (les deux se croisent).
 
 ## 7. Related docs
@@ -53,7 +53,7 @@ De plus, beaucoup de décisions d'onboarding dépendent de Billing (cf. [billing
 - [../architecture/platform-admin-access-model.md](../../architecture/platform-admin-access-model.md)
 - [../product/saas-foundation-onboarding-billing.md](../../product/saas-foundation-onboarding-billing.md)
 - [../roadmap/saas-foundation-epics.md](saas-foundation-epics.md)
-- [../workstreams/onboarding-billing-management/README.md](../../workstreams/en-cours/async-architecture/README.md)
+- [../workstreams/onboarding-billing-management/README.md](../../workstreams/a-faire/async-architecture/README.md)
 - [../bugs/user-deletion-multitenant-membership.md](../../bugs/a-faire/user-deletion-multitenant-membership.md)
 
 ## 8. Possible future epics

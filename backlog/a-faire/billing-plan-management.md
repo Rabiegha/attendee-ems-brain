@@ -53,7 +53,7 @@ Attendee a vocation à être un SaaS payant avec plusieurs plans (Free, Trial, p
 - [../architecture/organization-plan-subscription-model.md](../../architecture/organization-plan-subscription-model.md)
 - [../product/saas-foundation-onboarding-billing.md](../../product/saas-foundation-onboarding-billing.md)
 - [../roadmap/saas-foundation-epics.md](saas-foundation-epics.md)
-- [../workstreams/onboarding-billing-management/README.md](../../workstreams/en-cours/async-architecture/README.md)
+- [../workstreams/onboarding-billing-management/README.md](../../workstreams/a-faire/async-architecture/README.md)
 - [../rabbit-holes/full-stripe-billing.md](../../rabbit-holes/a-faire/full-stripe-billing.md)
 
 ## 8. Possible future epics

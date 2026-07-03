@@ -19,8 +19,8 @@ Le code back contient plusieurs **god-services** et duplications qui aggraveront
 ## 2. Current understanding
 
 - Ces sujets ont été cartographiés en détail dans les Q&A Async Architecture :
-  - [../async-architecture/QandA/05-coupling-and-side-effects.md](../../workstreams/en-cours/async-architecture/QandA/05-coupling-and-side-effects.md)
-  - [../async-architecture/QandA/13-information-gaps.md](../../workstreams/en-cours/async-architecture/QandA/13-information-gaps.md)
+  - [../async-architecture/QandA/05-coupling-and-side-effects.md](../../workstreams/a-faire/async-architecture/QandA/05-coupling-and-side-effects.md)
+  - [../async-architecture/QandA/13-information-gaps.md](../../workstreams/a-faire/async-architecture/QandA/13-information-gaps.md)
 - Aucun refactor n'a été lancé.
 - Plusieurs refactors sont **prérequis** à l'extension de BullMQ (imports, badges, prints) — donc ils émergeront naturellement dans le workstream Async Architecture **au compte-gouttes**.
 
@@ -52,10 +52,10 @@ Le code back contient plusieurs **god-services** et duplications qui aggraveront
 
 ## 7. Related docs
 
-- [../async-architecture/QandA/05-coupling-and-side-effects.md](../../workstreams/en-cours/async-architecture/QandA/05-coupling-and-side-effects.md)
-- [../async-architecture/QandA/13-information-gaps.md](../../workstreams/en-cours/async-architecture/QandA/13-information-gaps.md)
-- [../async-architecture/QandA/08-import-export-file-processing.md](../../workstreams/en-cours/async-architecture/QandA/08-import-export-file-processing.md)
-- [../async-architecture/QandA/07-websocket-print-client.md](../../workstreams/en-cours/async-architecture/QandA/07-websocket-print-client.md)
+- [../async-architecture/QandA/05-coupling-and-side-effects.md](../../workstreams/a-faire/async-architecture/QandA/05-coupling-and-side-effects.md)
+- [../async-architecture/QandA/13-information-gaps.md](../../workstreams/a-faire/async-architecture/QandA/13-information-gaps.md)
+- [../async-architecture/QandA/08-import-export-file-processing.md](../../workstreams/a-faire/async-architecture/QandA/08-import-export-file-processing.md)
+- [../async-architecture/QandA/07-websocket-print-client.md](../../workstreams/a-faire/async-architecture/QandA/07-websocket-print-client.md)
 - [../rabbit-holes/massive-refactoring.md](../../rabbit-holes/a-faire/massive-refactoring.md)
 
 ## 8. Possible future epics

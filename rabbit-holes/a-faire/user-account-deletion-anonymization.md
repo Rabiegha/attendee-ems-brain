@@ -48,7 +48,7 @@ Très élevé :
 
 - [../bugs/user-deletion-multitenant-membership.md](../../bugs/a-faire/user-deletion-multitenant-membership.md)
 - [../backlog/onboarding-multi-tenant.md](../../backlog/a-faire/onboarding-multi-tenant.md)
-- [../async-architecture/QandA/13-information-gaps.md](../../workstreams/en-cours/async-architecture/QandA/13-information-gaps.md)
+- [../async-architecture/QandA/13-information-gaps.md](../../workstreams/a-faire/async-architecture/QandA/13-information-gaps.md)
 - [../steering/DECISIONS.md](../../../attendee-ems-back/docs/steering/DECISIONS.md#bug-handling-rule)
 
 ## 7. Rule for Copilot

@@ -49,7 +49,7 @@ quand il existe déjà ailleurs — ne pas dupliquer, compléter la source.
   event bus).
 - **Pourquoi ici :** avance **en parallèle**, ce n'est pas le focus mobile — juste un rappel
   qu'il tourne pour éviter d'y basculer par réflexe.
-- **Détail (source de vérité) :** workstream [en-cours/async-architecture/](../../workstreams/en-cours/async-architecture/README.md).
+- **Détail (source de vérité) :** workstream [en-cours/async-architecture/](../../workstreams/a-faire/async-architecture/README.md).
 - **Quand reprendre :** piloté indépendamment côté back, pas depuis ce backlog.
 
 ---

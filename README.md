@@ -72,11 +72,12 @@ En fin de session (5 min de tri), je vide l'inbox : chaque ligne part dans le bo
 
 | Workstream | App | Status | Détail |
 |---|---|---|---|
-| Diagnostic & stabilisation mobile | mobile | **En cours** | [workstreams/en-cours/mobile-stabilization/](workstreams/en-cours/mobile-stabilization/README.md) |
-| Système de contexte : fiabilité & adoption | transversal | **En cours** | [workstreams/en-cours/context-system/](workstreams/en-cours/context-system/README.md) |
 | Scaling API & charge LFD 2026 | back | **En cours** | [workstreams/en-cours/api-scaling-lfd2026/](workstreams/en-cours/api-scaling-lfd2026/README.md) |
+| Async Architecture | back | À faire | [workstreams/a-faire/async-architecture/](workstreams/a-faire/async-architecture/README.md) |
+| Système de contexte : fiabilité & adoption | transversal | À faire | [workstreams/a-faire/context-system/](workstreams/a-faire/context-system/README.md) |
+| Onboarding & Billing Management | back | À faire | [workstreams/a-faire/onboarding-billing-management/](workstreams/a-faire/onboarding-billing-management/README.md) |
 | Inscriptions & refonte des sessions LFD 2026 | back + front | À faire | [workstreams/a-faire/sessions-inscriptions-lfd2026/](workstreams/a-faire/sessions-inscriptions-lfd2026/README.md) |
-| Async Architecture | back | **En cours** | [workstreams/en-cours/async-architecture/](workstreams/en-cours/async-architecture/README.md) |
+| Mobile eject / socket resilient delta async | mobile | **Fait** (pas encore testé) | [workstreams/fait/mobile-eject-socket-resilient-delta-async/](workstreams/fait/mobile-eject-socket-resilient-delta-async/README.md) |
 
 ---
 

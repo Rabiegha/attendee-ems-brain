@@ -12,7 +12,7 @@ Priority:   High
 **Objectif :** Comprendre et corriger les éjections de l'app mobile (hard restart + ouverture du scan).
 
 **Prochaine action :**
-➡️ Reproduire et instrumenter l'éjection au hard restart — voir [workstreams/mobile-stabilization/01-eject-hard-restart.md](../workstreams/en-cours/mobile-stabilization/01-eject-hard-restart.md).
+➡️ Reproduire et instrumenter l'éjection au hard restart — voir [workstreams/mobile-stabilization/01-eject-hard-restart.md](../workstreams/fait/mobile-eject-socket-resilient-delta-async/01-eject-hard-restart.md).
 
 ---
 
@@ -26,7 +26,7 @@ Priority:   High (contrat client, 4–5 sept 2026)
 Session:    2026-06-25
 ```
 
-**Reprise → lire d'abord** : [attendee-ems-back/docs/infra/lfd-2026-session-handoff-2026-06-25.md](../../attendee-ems-back/docs/infra/lfd-2026-session-handoff-2026-06-25.md)
+**Reprise → lire d'abord** : [infra/lfd-2026-session-handoff-2026-06-25.md](../infra/lfd-2026-session-handoff-2026-06-25.md)
 et le workstream [api-scaling-lfd2026](../workstreams/en-cours/api-scaling-lfd2026/README.md).
 
 - ✅ Diagnostic prouvé : plafond ≈ **33–37 inscriptions/s** = **sérialisation écriture DB**
@@ -40,7 +40,7 @@ et le workstream [api-scaling-lfd2026](../workstreams/en-cours/api-scaling-lfd20
 
 ## Fait récemment (2026-06-18)
 
-- ✅ **Socket résilient + delta-sync à la reconnexion** livré ([workstreams/mobile-stabilization/03](../workstreams/en-cours/mobile-stabilization/03-socket-resilient-delta-sync.md) §8) : reconnexions infinies, delta-sync auto, indicateur d'état socket.
+- ✅ **Socket résilient + delta-sync à la reconnexion** livré ([workstreams/mobile-stabilization/03](../workstreams/fait/mobile-eject-socket-resilient-delta-async/03-socket-resilient-delta-sync.md) §8) : reconnexions infinies, delta-sync auto, indicateur d'état socket.
 - ✅ **Détection hors-ligne rapide** (~4-6s au lieu de ~30-48s) + **retry silencieux 409 STALE**.
 - ✅ Bugs corrigés : crash écran gris (Rules of Hooks dans `ConflictsBanner`), faux conflit STALE sur action + action inverse offline, build EAS débloqué (runtimeVersion).
 - ⏳ Reste : valider sur tablette physique (APK preview EAS) les scénarios de coupure réseau.

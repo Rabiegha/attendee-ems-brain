@@ -46,7 +46,7 @@ Très élevé :
 - [attendee-context-hub/analyse/AUTHZ_V1_DIAGNOSTIC_FINAL.md](../../../attendee-context-hub/analyse/AUTHZ_V1_DIAGNOSTIC_FINAL.md)
 - [attendee-context-hub/analyse/AUTHZ_V1_DRIFT_DETECTION.md](../../../attendee-context-hub/analyse/AUTHZ_V1_DRIFT_DETECTION.md)
 - [attendee-context-hub/analyse/AUTHZ_V1_SMOKE_TESTS.md](../../../attendee-context-hub/analyse/AUTHZ_V1_SMOKE_TESTS.md)
-- [../async-architecture/QandA/09-security-multitenancy.md](../../workstreams/en-cours/async-architecture/QandA/09-security-multitenancy.md)
+- [../async-architecture/QandA/09-security-multitenancy.md](../../workstreams/a-faire/async-architecture/QandA/09-security-multitenancy.md)
 
 ## 7. Rule for Copilot
 

@@ -8,13 +8,13 @@ Risk level: High
 
 - Plusieurs **god-services** identifiés (`RegistrationsService` ~4113 l., `BadgeGenerationService` ~2228 l., `PrintQueueService` stateful).
 - Plusieurs **duplications** (exports legacy vs module `Exports`).
-- Le QandA Async Architecture les liste explicitement ([../async-architecture/QandA/05-coupling-and-side-effects.md](../../workstreams/en-cours/async-architecture/QandA/05-coupling-and-side-effects.md), [../async-architecture/QandA/13-information-gaps.md](../../workstreams/en-cours/async-architecture/QandA/13-information-gaps.md)).
+- Le QandA Async Architecture les liste explicitement ([../async-architecture/QandA/05-coupling-and-side-effects.md](../../workstreams/a-faire/async-architecture/QandA/05-coupling-and-side-effects.md), [../async-architecture/QandA/13-information-gaps.md](../../workstreams/a-faire/async-architecture/QandA/13-information-gaps.md)).
 - Tentation de « faire le grand nettoyage » d'un coup pour repartir sur de bonnes bases.
 
 ## 2. Why it is dangerous now
 
 - Refactor massif = **risque de régression massif**.
-- La couverture de tests est faible / incertaine (cf. [../async-architecture/QandA/11-observability-testing.md](../../workstreams/en-cours/async-architecture/QandA/11-observability-testing.md)) — pas de filet.
+- La couverture de tests est faible / incertaine (cf. [../async-architecture/QandA/11-observability-testing.md](../../workstreams/a-faire/async-architecture/QandA/11-observability-testing.md)) — pas de filet.
 - Plusieurs refactors **dépendent de décisions humaines** encore ouvertes (Q1, Q2, Q10 du QandA).
 - Un refactor en parallèle de la cartographie Async Architecture **brouille les pistes** : on ne sait plus si une régression vient du refactor ou du chantier en cours.
 - Touche multi-modules → review massive, merge conflicts, deploy à risque.
@@ -42,9 +42,9 @@ Très élevé :
 
 ## 6. Related docs
 
-- [../async-architecture/QandA/05-coupling-and-side-effects.md](../../workstreams/en-cours/async-architecture/QandA/05-coupling-and-side-effects.md)
-- [../async-architecture/QandA/13-information-gaps.md](../../workstreams/en-cours/async-architecture/QandA/13-information-gaps.md)
-- [../async-architecture/QandA/11-observability-testing.md](../../workstreams/en-cours/async-architecture/QandA/11-observability-testing.md)
+- [../async-architecture/QandA/05-coupling-and-side-effects.md](../../workstreams/a-faire/async-architecture/QandA/05-coupling-and-side-effects.md)
+- [../async-architecture/QandA/13-information-gaps.md](../../workstreams/a-faire/async-architecture/QandA/13-information-gaps.md)
+- [../async-architecture/QandA/11-observability-testing.md](../../workstreams/a-faire/async-architecture/QandA/11-observability-testing.md)
 - [../backlog/refactoring-cleanup.md](../../backlog/a-faire/refactoring-cleanup.md)
 
 ## 7. Rule for Copilot

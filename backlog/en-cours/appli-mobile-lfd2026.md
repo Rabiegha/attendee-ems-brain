@@ -14,7 +14,7 @@
 ### 3. Offline fiable pour les scans en session
 - S'assurer que le mode offline fonctionne **sans aucun souci**, surtout pour les scans
   pendant les sessions (queue offline, resync, pas de perte de scans).
-- S'appuyer sur les acquis de [mobile-stabilization/03](../../workstreams/en-cours/mobile-stabilization/03-socket-resilient-delta-sync.md)
+- S'appuyer sur les acquis de [mobile-stabilization/03](../../workstreams/fait/mobile-eject-socket-resilient-delta-async/03-socket-resilient-delta-sync.md)
   (socket résilient + delta-sync).
 
 ### 4. Couverture de tous les use cases de scan

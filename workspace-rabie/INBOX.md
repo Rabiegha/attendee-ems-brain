@@ -5,6 +5,7 @@
 
 ## À trier
 
+- 🚨 [bug][security] **Webshells PHP injectés dans `choyou.fr/_/attendee/`** (mutualisé legacy, PAS le VPS). Vérifier l'arborescence + supprimer les fichiers non désirés ; ils réapparaissent → persistance probable (changer creds FTP/SSH/DB, vérifier crons OVH). 2 fichiers déjà supprimés le 03/07. → `bugs/a-faire/2026-07-03-webshell-php-choyou-attendee.md`
 - [archi] back/LFD : **plafond inscription ≈ 33–37 reg/s = sérialisation écriture DB** (prouvé : 4 cœurs = même débit que 2). Levier = sortir le COUNT capacité de la transaction. → workstream api-scaling-lfd2026
 - [trap] back/LFD : cluster N instances **casse l'impression temps réel silencieusement** (registres en mémoire) → JAMAIS en prod sans clustering (redis-adapter+sticky+présence Redis).
 - [learn] back/LFD : email post-inscription = **QR code** dans le mail, **pas** un badge PDF (le PDF est généré à l'impression). Corriger `lfd-2026-executive-summary.md`.
