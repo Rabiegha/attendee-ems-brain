@@ -16,6 +16,7 @@ Chantiers de travail, toutes apps confondues. Un workstream = 1 dossier avec un 
 | Workstream | App | Priority | Dossier |
 |---|---|---|---|
 | LFD 2026 — chaîne de livraison (email/billet/PDF/sessions) | back + front | High | [en-cours/lfd2026/](en-cours/lfd2026/README.md) |
+| API scaling — clustering multi-worker (Redis présence + adapter) | back | High | [en-cours/api-scaling-clustering/](en-cours/api-scaling-clustering/README.md) |
 
 ## À faire
 

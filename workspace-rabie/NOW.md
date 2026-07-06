@@ -36,22 +36,29 @@ l'**archive de référence** — on ne perd rien.
 
 ### 🚫 Cadre interdit / en attente (étape 6)
 
-- **L13 cluster (Voie B) = INTERDIT en prod** tant que le workstream `api-scaling-clustering`
+- **L13 cluster (Voie B) = INTERDIT en prod** tant que le workstream
+  [api-scaling-clustering](../workstreams/en-cours/api-scaling-clustering/README.md)
   n'est pas livré (Redis-adapter + présence Redis + sticky nginx + tests cross-worker verts).
   Sinon → casse l'impression temps réel **silencieusement** (registres en mémoire de process).
-  ⚠️ `api-scaling-clustering` vit dans **`attendee-ems-back`**, **branche `staging` uniquement**
-  (`docs/workstreams/api-scaling-clustering/README.md`) — **pas encore sur `main`**.
+  ℹ️ Code du plan clustering : `attendee-ems-back` (branche `staging`,
+  `docs/workstreams/api-scaling-clustering/`) — **pas encore sur `main`**.
 - **L12 `synchronous_commit`** : abandonné, **ne pas rejouer** (aucun gain mesuré).
 
 ---
 
-## ⏭️ Ensuite (priorité n°1 après A) — Chantier B : chaîne email → billet PDF
+## ⏭️ Ensuite — dans l'ordre
 
-Joindre le **billet PDF à l'email** de confirmation (aujourd'hui non joint). Moteur tranché :
-**Option D — Gotenberg sur Cloud Run** (rendu hors VPS).
-➡️ **On ne fait qu'UNE seule partie** de ce chantier pour l'instant — **à décider laquelle**.
-Réf : [00-plan-action.md §3-B](../workstreams/en-cours/lfd2026/00-plan-action.md) ·
-[décision lib PDF/badge](../workstreams/en-cours/lfd2026/decisions/lib-pdf-badge.md).
+1. **Chantier A — refonte** (archivage + rejouer les leviers proprement) — étapes 0→6 ci-dessus.
+2. **API scaling — clustering multi-worker** (juste après A) : externaliser présence +
+   imprimantes en **Redis**, `redis-adapter`, sticky nginx, tests cross-worker. **Fondation de
+   tout le scaling horizontal.** Effort ~1,5–2,5 sem. Prérequis : l'étape 3 de A (trancher
+   CPU vs DB) doit dire si le cluster apporte vraiment quelque chose.
+   ➡️ [workstream api-scaling-clustering](../workstreams/en-cours/api-scaling-clustering/README.md).
+3. **Chantier B — chaîne email → billet PDF** : joindre le **billet PDF à l'email** de
+   confirmation (aujourd'hui non joint). Moteur tranché : **Option D — Gotenberg sur Cloud Run**.
+   **Une seule partie**, à décider laquelle.
+   ➡️ [00-plan-action.md §3-B](../workstreams/en-cours/lfd2026/00-plan-action.md) ·
+   [décision lib PDF/badge](../workstreams/en-cours/lfd2026/decisions/lib-pdf-badge.md).
 
 ---
 

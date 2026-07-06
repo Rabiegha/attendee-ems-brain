@@ -20,8 +20,8 @@ Tout le détail technique est dans **[infra/](../../../infra/)** (ems-brain) :
 - `lfd-2026-client-report.md` — rapport client MEAE.
 - `lfd-2026-load-test-plan.md`, `lfd-2026-capacity-planning.md` — plan & dimensionnement.
 
-Workstreams techniques liés (back) : `docs/workstreams/async-badge-email/`,
-`docs/workstreams/api-scaling-clustering/`.
+Workstreams techniques liés : `attendee-ems-back/docs/workstreams/async-badge-email/`,
+[api-scaling-clustering](../../en-cours/api-scaling-clustering/README.md).
 
 ---
 
