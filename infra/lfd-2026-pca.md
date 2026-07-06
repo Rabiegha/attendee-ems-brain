@@ -2,6 +2,9 @@
 
 > Document interne — Réponse technique cahier des charges client.
 > Évènement diplomatique public — 4 et 5 septembre 2026.
+>
+> 🔗 **Version de travail détaillée** (workstream) : [plan-continuite-activite.md](../workstreams/a-faire/infra-scaling-pca/plan-continuite-activite.md).
+> Ce fichier-ci = version **synthétique orientée client** ; l'autre = version **longue de travail**.
 
 ---
 

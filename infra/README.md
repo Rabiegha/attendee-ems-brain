@@ -13,8 +13,9 @@ Tout ce qui touche à la **tenue de charge** et à la **résilience** de l'infra
 | [lfd-2026-capacity-planning.md](lfd-2026-capacity-planning.md) | Dimensionnement / capacité au pic |
 | [lfd-2026-load-test-plan.md](lfd-2026-load-test-plan.md) | Plan de tests de charge |
 | [lfd-2026-sla-strategy.md](lfd-2026-sla-strategy.md) | Stratégie SLA |
-| [lfd-2026-pca.md](lfd-2026-pca.md) | Plan de continuité d'activité |
+| [lfd-2026-pca.md](lfd-2026-pca.md) | Plan de continuité d'activité (version client) — version de travail : [workstream infra-scaling-pca](../workstreams/a-faire/infra-scaling-pca/plan-continuite-activite.md) |
+| [lfd-2026-migration-gcp-call.md](lfd-2026-migration-gcp-call.md) | Call migration GCP (questions & décision, chantier F) |
 
 ## Liens
 
-- Workstream lié : [../workstreams/en-cours/api-scaling-lfd2026/](../workstreams/en-cours/api-scaling-lfd2026/README.md)
+- Workstreams liés : [infra-scaling-pca](../workstreams/a-faire/infra-scaling-pca/README.md) (perf + PCA) · [lfd2026](../workstreams/en-cours/lfd2026/README.md) (email/billet/PDF/sessions)

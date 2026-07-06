@@ -1,5 +1,9 @@
 # Audit de la branche `staging` — travaux scaling LFD 2026
 
+> ℹ️ **Note d'archive :** le workstream `api-scaling-lfd2026` cité ci-dessous a depuis été
+> scindé ; ce volet **scaling/staging + PCA** vit désormais dans
+> `workstreams/a-faire/infra-scaling-pca/`. Les mentions historiques ci-dessous sont conservées telles quelles.
+
 > **Objet :** tracer **tout** ce qui a été fait sur la branche `staging` (repos
 > `attendee-ems-back` et `attendee-ems-brain`) depuis mercredi soir, lister **tous** les
 > leviers, leurs exécutions et résultats réels, puis poser un **plan d'annulation +

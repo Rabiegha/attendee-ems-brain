@@ -3,9 +3,9 @@
 > **Objet :** trancher le fournisseur d'envoi d'emails (ESP) pour l'événement La Fabrique de la
 > Diplomatie 2026 (MEAE, ~12 400 inscriptions, 4-5 sept). Aujourd'hui Attendee envoie en
 > **nodemailer SMTP direct** (pas d'ESP) → risque de délivrabilité majeur sur un envoi de masse.
-> **Date :** 1er juillet 2026 · **Rattachement :** workstream `api-scaling-lfd2026`
-> **Réfs :** [diagnostic-email-billet-wallet.md](./diagnostic-email-billet-wallet.md) (§1 stack email, §6 Q2) ·
-> [plan-action-lfd2026.md](./plan-action-lfd2026.md) (chantier C)
+> **Date :** 1er juillet 2026 · **Rattachement :** workstream `lfd2026`
+> **Réfs :** [diagnostic email/billet/wallet](../diagnostics/email-billet-wallet.md) (§1 stack email, §6 Q2) ·
+> [00-plan-action.md](../00-plan-action.md) (chantier C)
 >
 > ⚠️ **Les tarifs ci-dessous sont des ordres de grandeur** — à revérifier sur les sites des
 > fournisseurs au moment du choix (les grilles changent souvent).

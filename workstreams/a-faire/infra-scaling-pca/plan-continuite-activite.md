@@ -1,5 +1,8 @@
 # Plan de Continuité d'Activité — Solution de billetterie Attendee
 
+> 🔗 **Version synthétique orientée client** : [infra/lfd-2026-pca.md](../../../infra/lfd-2026-pca.md).
+> Ce fichier-ci = version **longue de travail** (workstream LFD 2026) ; l'autre = réponse CDC condensée.
+
 ## 1. Objectif du PCA
 
 Le présent Plan de Continuité d'Activité a pour objectif d'assurer la continuité des services critiques de la solution Attendee pendant la période de préparation, d'ouverture des inscriptions et de déroulement de l'événement.

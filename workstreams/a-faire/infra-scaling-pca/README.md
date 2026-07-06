@@ -1,9 +1,11 @@
-# Workstream — Scaling API & charge LFD 2026 (contrat MEAE)
+# Workstream — Infra Scaling & Plan de Continuité (LFD 2026, contrat MEAE)
 
-> **Statut :** EN COURS — diagnostic terminé, optimisations partielles livrées
+> **Statut :** À FAIRE — diagnostic terminé, optimisations partielles livrées ; reste = leviers perf (chantier I) + PCA/HA.
 > **Priorité :** 🔴 Haute (contrat client, échéance 4–5 sept 2026)
 > **Dernière session :** 2026-06-25
 > **Repo principal :** `attendee-ems-back`
+> **Contenu :** perf/scaling + **plan de continuité** ([plan-continuite-activite.md](./plan-continuite-activite.md)) + audit staging ([journal/](journal/2026-06-26-audit-branche-staging.md)).
+> **Workstream événement lié** (email/billet/PDF/sessions) : [lfd2026](../../en-cours/lfd2026/README.md).
 
 ---
 
@@ -39,7 +41,7 @@ Prouvé par nos propres mesures (25/06) : ce n'est **ni le CPU** (2→4 cœurs =
 capacité** + upsert + create → **sérialisation**. C'est un plafond **algorithmique**, donc
 **améliorable sans changer d'infra** : compteur de capacité **dénormalisé** (UPDATE atomique
 ou Redis DECR) + **transaction réduite au `create`**. **Gain plausible ×3–×10.**
-Cadré comme **chantier I** dans [plan-action-lfd2026.md](./plan-action-lfd2026.md) (§3-I).
+Cadré comme **chantier I** dans [00-plan-action.md](../../en-cours/lfd2026/00-plan-action.md) (§3-I).
 Tant que ce levier n'est pas fait, le plafond reste — quelle que soit l'infra (OVH, GCP, VM plus grosse).
 
 ---

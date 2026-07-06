@@ -5,10 +5,10 @@
 > (CI/CD, monitoring — inexistants aujourd'hui), (A) la **refonte propre** du §7 de l'audit, puis
 > (B→H) les **nouveaux chantiers** (chaîne email/billet, sécurité QR, sauvegarde DB, continuité,
 > wallet V2, **inscriptions par session**). Les durées supposent un travail **assisté par IA**.
-> **Date :** 30 juin 2026 · **Rattachement :** workstream `api-scaling-lfd2026`
-> **Références :** [audit-branche-staging.md](./audit-branche-staging.md) ·
-> [diagnostic-email-billet-wallet.md](./diagnostic-email-billet-wallet.md) ·
-> [plan-continuite-activite.md](./plan-continuite-activite.md) ·
+> **Date :** 30 juin 2026 · **Rattachement :** workstream `lfd2026`
+> **Références :** [audit-branche-staging.md](../../a-faire/infra-scaling-pca/journal/2026-06-26-audit-branche-staging.md) ·
+> [diagnostic email/billet/wallet](./diagnostics/email-billet-wallet.md) ·
+> [plan-continuite-activite.md](../../a-faire/infra-scaling-pca/plan-continuite-activite.md) ·
 > [brief-backup-automatique-db.md](../../../backlog/a-faire/brief-backup-automatique-db.md)
 
 ---
@@ -160,7 +160,7 @@ levier dans son propre commit, diff minimal, mesure avant/après.
 ### Étape 3 — Réconcilier la doc (P2)
 **Temps : ~15 min**
 
-- Corriger `api-scaling-lfd2026/README.md` : remplacer « ~33/s / plafond DB » par les **mesures
+- Corriger `infra-scaling-pca/README.md` : remplacer « ~33/s / plafond DB » par les **mesures
   réelles** (~25/s, plafond **CPU**, DB sous-utilisée).
 - Les rapports infra font déjà foi (corrigés le 26/06) → simple alignement.
 
@@ -226,8 +226,8 @@ levier dans son propre commit, diff minimal, mesure avant/après.
 > l'event. Le détail technique vit dans les docs dédiés ; ici = cadrage + priorité + reste à faire.
 
 ### Chantier B — Chaîne email → billet PDF  🔴 Haute
-> Réf : [diagnostic-email-billet-wallet.md](./diagnostic-email-billet-wallet.md) §2.2 / §3
-> · [comparatif-lib-pdf-badge.md](./comparatif-lib-pdf-badge.md) (choix moteur)
+> Réf : [diagnostic email/billet/wallet](./diagnostics/email-billet-wallet.md) §2.2 / §3
+> · [décision lib PDF/badge](./decisions/lib-pdf-badge.md) (choix moteur)
 
 Aujourd'hui le PDF du billet est généré (Puppeteer→R2) **mais n'est pas joint à l'email**.
 
@@ -307,7 +307,7 @@ Le script `db-dump.sh` existe mais est **manuel**. MVP (le 80/20) :
 **Effort : ~demi-journée** pour le MVP.
 
 ### Chantier F — Continuité d'activité  � Partiellement reportée (post-GCP)
-> Réf : [plan-continuite-activite.md](./plan-continuite-activite.md)
+> Réf : [plan-continuite-activite.md](../../a-faire/infra-scaling-pca/plan-continuite-activite.md)
 
 **Pourquoi la continuité est ultra importante :**
 - C'est **la seule protection contre l'erreur humaine et la corruption logique** pendant l'event.
@@ -522,7 +522,7 @@ lien) vs. avec inscription (lien public + capacité optionnelle + stats complèt
   chiffres optimistes erronés → décisions de scaling basées sur des faits.
 
 ### 5.4 Sur le pilotage projet
-- **Traçabilité** : chaque levier rattaché à son workstream (`api-scaling-lfd2026`,
+- **Traçabilité** : chaque levier rattaché à son workstream (`infra-scaling-pca`,
   `async-badge-email`, `api-scaling-clustering`) → on sait quoi est livré, quoi est en attente.
 - **Périmètre clair** : ce qui est interdit (Voie B cluster) et abandonné (`synchronous_commit`)
   est explicite → pas de re-travail inutile ni de déploiement dangereux.

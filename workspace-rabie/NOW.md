@@ -27,7 +27,7 @@ Session:    2026-06-25
 ```
 
 **Reprise → lire d'abord** : [infra/lfd-2026-session-handoff-2026-06-25.md](../infra/lfd-2026-session-handoff-2026-06-25.md)
-et le workstream [api-scaling-lfd2026](../workstreams/en-cours/api-scaling-lfd2026/README.md).
+et le workstream [infra-scaling-pca](../workstreams/a-faire/infra-scaling-pca/README.md).
 
 - ✅ Diagnostic prouvé : plafond ≈ **33–37 inscriptions/s** = **sérialisation écriture DB**
   (ni CPU, ni pool, ni nb de process). Couvre le besoin contractuel (3000 en ~90 s).

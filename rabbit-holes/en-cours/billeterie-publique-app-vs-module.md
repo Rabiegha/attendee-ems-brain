@@ -8,7 +8,7 @@ Date: 2026-07-03
 > **Contexte client :** un organisateur veut piloter sa **billeterie** et exposer une **page publique
 > par session** (lien public par session). Pic attendu : **~3000 concurrents**. Le plafond d'écriture
 > mesuré d'Attendee est **~33–37 inscriptions/s** (sérialisation DB) — voir
-> [workstreams/en-cours/api-scaling-lfd2026](../../workstreams/en-cours/api-scaling-lfd2026/diagnostic-email-billet-wallet.md).
+> [workstreams/en-cours/lfd2026](../../workstreams/en-cours/lfd2026/diagnostics/email-billet-wallet.md).
 
 ---
 
@@ -50,7 +50,7 @@ Voir la billeterie comme **deux couches**, pas « une feature de plus » :
 - Les écritures (inscription, toggle ouvrir/fermer) **mettent à jour / invalident** le cache.
 - Le pic public tape **Redis/CDN**, pas Postgres. Postgres ne voit que les ~33 écritures/s (plafond réel).
 - L'affichage peut être **eventually-consistent** à quelques secondes ; l'atomicité anti-surbooking se joue **à l'écriture**, pas à l'affichage.
-- **Bénéfice résilience** : la vitrine sert une page cachée même si Attendee est sous pression (aligné [plan-continuite-activite.md](../../workstreams/en-cours/api-scaling-lfd2026/plan-continuite-activite.md)).
+- **Bénéfice résilience** : la vitrine sert une page cachée même si Attendee est sous pression (aligné [plan-continuite-activite.md](../../workstreams/a-faire/infra-scaling-pca/plan-continuite-activite.md)).
 
 ## 4. Pourquoi l'app séparée est le bon choix (pas un pis-aller)
 
@@ -69,8 +69,8 @@ Voir la billeterie comme **deux couches**, pas « une feature de plus » :
 ## 6. Related docs
 
 - [../../workstreams/a-faire/sessions-inscriptions-lfd2026/README.md](../../workstreams/a-faire/sessions-inscriptions-lfd2026/README.md) — primitives jauge/session (ouvrir/fermer, capacité, token public, stats live).
-- [../../workstreams/en-cours/api-scaling-lfd2026/diagnostic-email-billet-wallet.md](../../workstreams/en-cours/api-scaling-lfd2026/diagnostic-email-billet-wallet.md) — plafond écriture + compteur Redis DECR.
-- [../../workstreams/en-cours/api-scaling-lfd2026/plan-continuite-activite.md](../../workstreams/en-cours/api-scaling-lfd2026/plan-continuite-activite.md) — jauges & continuité au pic.
+- [../../workstreams/en-cours/lfd2026/diagnostics/email-billet-wallet.md](../../workstreams/en-cours/lfd2026/diagnostics/email-billet-wallet.md) — plafond écriture + compteur Redis DECR.
+- [../../workstreams/a-faire/infra-scaling-pca/plan-continuite-activite.md](../../workstreams/a-faire/infra-scaling-pca/plan-continuite-activite.md) — jauges & continuité au pic.
 - [../../bugs/a-faire/cors-origin-security-review.md](../../bugs/a-faire/cors-origin-security-review.md) — CORS/Origin WS (origin `*` aujourd'hui).
 - [../a-faire/full-custom-domains.md](../a-faire/full-custom-domains.md) — piège builder générique / DNS-TLS.
 - [../a-faire/separate-admin-frontend.md](../a-faire/separate-admin-frontend.md) — piège « 2ᵉ frontend » (distinct : ici l'app publique est justifiée).

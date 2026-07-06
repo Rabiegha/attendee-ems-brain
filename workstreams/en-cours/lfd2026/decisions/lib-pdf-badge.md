@@ -2,8 +2,8 @@
 
 > **Objet :** arbitrer le moteur de génération du **billet PDF / badge**, sur deux axes : **effort
 > dev** et **tenue de charge le jour de l'event** (pic estimé **~3 000 demandes concurrentes**).
-> Source technique détaillée : [attendee-ems-back/docs/workstreams/async-badge-email/README.md §7](../../../../attendee-ems-back/docs/workstreams/async-badge-email/README.md).
-> Réf plan : [plan-action-lfd2026.md](./plan-action-lfd2026.md) Chantier B.
+> Source technique détaillée : [attendee-ems-back/docs/workstreams/async-badge-email/README.md §7](../../../../../attendee-ems-back/docs/workstreams/async-badge-email/README.md).
+> Réf plan : [00-plan-action.md](../00-plan-action.md) Chantier B.
 
 ---
 
@@ -112,7 +112,7 @@ Avant de comparer, il faut **séparer deux flux** qui n'ont pas le même profil 
 ## 5. Estimation chiffrée — temps de génération des 3 000 badges *sous charge réelle*
 
 > Analyse **ancrée sur les chiffres mesurés** du load test (campagne 25/06,
-> [lfd-2026-load-test-results.md](../../../../attendee-ems-back/docs/infra/lfd-2026-load-test-results.md)),
+> [lfd-2026-load-test-results.md](../../../../../attendee-ems-back/docs/infra/lfd-2026-load-test-results.md)),
 > **PAS en isolation** : on tient compte des inscriptions, emails, logins qui tournent en même temps.
 
 ### 5.1 Ce qui est MESURÉ vs ce qui est HYPOTHÈSE

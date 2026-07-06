@@ -15,12 +15,13 @@ Chantiers de travail, toutes apps confondues. Un workstream = 1 dossier avec un 
 
 | Workstream | App | Priority | Dossier |
 |---|---|---|---|
-| Scaling API & charge LFD 2026 (contrat MEAE) | back | High | [en-cours/api-scaling-lfd2026/](en-cours/api-scaling-lfd2026/README.md) |
+| LFD 2026 — chaîne de livraison (email/billet/PDF/sessions) | back + front | High | [en-cours/lfd2026/](en-cours/lfd2026/README.md) |
 
 ## À faire
 
 | Workstream | App | Dossier |
 |---|---|---|
+| Infra Scaling & Plan de Continuité (LFD 2026) | back | [a-faire/infra-scaling-pca/](a-faire/infra-scaling-pca/README.md) |
 | Async Architecture | back | [a-faire/async-architecture/](a-faire/async-architecture/README.md) |
 | Système de contexte : fiabilité & adoption | transversal | [a-faire/context-system/](a-faire/context-system/README.md) |
 | Onboarding & Billing Management | back | [a-faire/onboarding-billing-management/](a-faire/onboarding-billing-management/README.md) |

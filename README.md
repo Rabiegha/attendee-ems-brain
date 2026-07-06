@@ -72,7 +72,8 @@ En fin de session (5 min de tri), je vide l'inbox : chaque ligne part dans le bo
 
 | Workstream | App | Status | Détail |
 |---|---|---|---|
-| Scaling API & charge LFD 2026 | back | **En cours** | [workstreams/en-cours/api-scaling-lfd2026/](workstreams/en-cours/api-scaling-lfd2026/README.md) |
+| LFD 2026 — chaîne de livraison (email/billet/PDF/sessions) | back + front | **En cours** | [workstreams/en-cours/lfd2026/](workstreams/en-cours/lfd2026/README.md) |
+| Infra Scaling & Plan de Continuité (LFD 2026) | back | À faire | [workstreams/a-faire/infra-scaling-pca/](workstreams/a-faire/infra-scaling-pca/README.md) |
 | Async Architecture | back | À faire | [workstreams/a-faire/async-architecture/](workstreams/a-faire/async-architecture/README.md) |
 | Système de contexte : fiabilité & adoption | transversal | À faire | [workstreams/a-faire/context-system/](workstreams/a-faire/context-system/README.md) |
 | Onboarding & Billing Management | back | À faire | [workstreams/a-faire/onboarding-billing-management/](workstreams/a-faire/onboarding-billing-management/README.md) |

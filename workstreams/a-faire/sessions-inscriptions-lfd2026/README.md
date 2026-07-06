@@ -5,7 +5,7 @@
 > **refonte front des sessions** (inspirée de la section *Placement*) donnant à l'organisateur
 > **visibilité + contrôle** en temps réel.
 > **Rattachement :** événement La Fabrique de la Diplomatie 2026 (MEAE) —
-> nouveau **Chantier** du [plan-action-lfd2026.md](../../en-cours/api-scaling-lfd2026/plan-action-lfd2026.md).
+> nouveau **Chantier** du [00-plan-action.md](../../en-cours/lfd2026/00-plan-action.md).
 > **Date :** 1ᵉʳ juillet 2026 · **Statut :** 🟡 cadrage validé, prêt à découper.
 
 ---
@@ -203,7 +203,7 @@ PK inchangée (`registration_id, session_id`). Check-in session = **toujours** `
 
 > **À trancher pour le plan LFD :** phases 0–2 sont candidates au périmètre du mois ; la phase 3 est
 > reportable post-event. À insérer comme **nouveau Chantier** dans
-> [plan-action-lfd2026.md](../../en-cours/api-scaling-lfd2026/plan-action-lfd2026.md).
+> [00-plan-action.md](../../en-cours/lfd2026/00-plan-action.md).
 
 ---
 
@@ -214,6 +214,6 @@ PK inchangée (`registration_id, session_id`). Check-in session = **toujours** `
 - **Course capacité/waitlist** : le `COUNT` capacité est best-effort hors transaction aujourd'hui —
   sous pic LFD, décider si la promotion waitlist doit être sérialisée (advisory lock, comme le scan session).
 - **Ne pas fausser les compteurs** : l'inscription **ne crée pas** de `SessionScan` (décision A).
-- **Perf** : réutiliser les leviers du workstream `api-scaling-lfd2026` (tx courte, worker BullMQ,
+- **Perf** : réutiliser les leviers du workstream `infra-scaling-pca` (tx courte, worker BullMQ,
   cache) — ne pas réintroduire une transaction interactive longue dans le register session.
 - **Permissions** : `events.update` (config/contrôle) et `events.read` (stats/listes), comme Placement.
