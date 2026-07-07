@@ -6,9 +6,9 @@
 > (B→H) les **nouveaux chantiers** (chaîne email/billet, sécurité QR, sauvegarde DB, continuité,
 > wallet V2, **inscriptions par session**). Les durées supposent un travail **assisté par IA**.
 > **Date :** 30 juin 2026 · **Rattachement :** workstream `lfd2026`
-> **Références :** [audit-branche-staging.md](../../a-faire/infra-scaling-pca/journal/2026-06-26-audit-branche-staging.md) ·
+> **Références :** [audit-branche-staging.md](../infra-scaling-pca/journal/2026-06-26-audit-branche-staging.md) ·
 > [diagnostic email/billet/wallet](./diagnostics/email-billet-wallet.md) ·
-> [plan-continuite-activite.md](../../a-faire/infra-scaling-pca/plan-continuite-activite.md) ·
+> [plan-continuite-activite.md](../infra-scaling-pca/plan-continuite-activite.md) ·
 > [brief-backup-automatique-db.md](../../../backlog/a-faire/brief-backup-automatique-db.md)
 
 ---
@@ -307,7 +307,7 @@ Le script `db-dump.sh` existe mais est **manuel**. MVP (le 80/20) :
 **Effort : ~demi-journée** pour le MVP.
 
 ### Chantier F — Continuité d'activité  � Partiellement reportée (post-GCP)
-> Réf : [plan-continuite-activite.md](../../a-faire/infra-scaling-pca/plan-continuite-activite.md)
+> Réf : [plan-continuite-activite.md](../infra-scaling-pca/plan-continuite-activite.md)
 
 **Pourquoi la continuité est ultra importante :**
 - C'est **la seule protection contre l'erreur humaine et la corruption logique** pendant l'event.

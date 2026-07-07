@@ -10,7 +10,7 @@
 
 > 🔗 **Prérequis bloquant du levier L13 (Voie B / cluster).** Tant que ce workstream
 > n'est pas livré, la Voie B est **interdite en prod** — voir
-> [infra-scaling-pca](../../a-faire/infra-scaling-pca/README.md) et le cadre interdit du
+> [infra-scaling-pca](../infra-scaling-pca/README.md) et le cadre interdit du
 > [chantier A](../lfd2026/00-plan-action.md).
 
 ---

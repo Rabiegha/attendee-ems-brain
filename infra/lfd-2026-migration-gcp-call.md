@@ -5,7 +5,7 @@
 > VPS OVH = primaire »** (inverse de ce qui est décrit dans le PCA aujourd'hui).
 > **Date :** 1er juillet 2026 · **Rattachement :** workstream `lfd2026`
 > **Réfs :** [00-plan-action.md](../workstreams/en-cours/lfd2026/00-plan-action.md) (chantier F) ·
-> [plan-continuite-activite.md](../workstreams/a-faire/infra-scaling-pca/plan-continuite-activite.md) (§3 archi, §10 sauvegardes)
+> [plan-continuite-activite.md](../workstreams/en-cours/infra-scaling-pca/plan-continuite-activite.md) (§3 archi, §10 sauvegardes)
 
 ---
 
@@ -98,7 +98,7 @@ l'event, faite au calme.
 ## Impact sur la doc PCA (si plan B retenu)
 
 Inverser **§3 (architecture)** et **§10 (sauvegardes)** du
-[plan-continuite-activite.md](../workstreams/a-faire/infra-scaling-pca/plan-continuite-activite.md) :
+[plan-continuite-activite.md](../workstreams/en-cours/infra-scaling-pca/plan-continuite-activite.md) :
 aujourd'hui l'archi décrite est *PostgreSQL primaire → réplica* sur une même infra. À reformuler en
 **« VPS OVH = primaire de production, GCP/Cloud SQL = site de reprise (DR) »**, avec la procédure de
 bascule et le **RPO/RTO réels** obtenus par réplication externe.

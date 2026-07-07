@@ -47,7 +47,7 @@
   faire 1 dump **la veille** + 1 dump **en fenêtre creuse** (nuit J1→J2) si l'event dure 2 jours.
 - Le besoin de **RPO faible pendant l'event** (perte de quelques minutes max) est traité
   **hors de ce brief**, par l'**archivage WAL / PITR** décrit dans le
-  [plan de continuité d'activité](../../workstreams/a-faire/infra-scaling-pca/plan-continuite-activite.md).
+  [plan de continuité d'activité](../../workstreams/en-cours/infra-scaling-pca/plan-continuite-activite.md).
   Ce n'est pas un sujet de cadence de dump.
 - Les dumps portent un **horodatage + raison** (déjà géré par `REASON=`).
 

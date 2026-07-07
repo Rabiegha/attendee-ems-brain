@@ -14,7 +14,7 @@ dans son propre commit (diff minimal + mesure avant/après). La branche `staging
 l'**archive de référence** — on ne perd rien.
 
 **Plan maître :** [00-plan-action.md](../workstreams/en-cours/lfd2026/00-plan-action.md) (chantier A, §0–§2)
-· **Workstream :** [infra-scaling-pca](../workstreams/a-faire/infra-scaling-pca/README.md)
+· **Workstream :** [infra-scaling-pca](../workstreams/en-cours/infra-scaling-pca/README.md)
 
 **Prochaine action :**
 ➡️ **Étape 0 — geler & archiver** : `git tag archive/staging-2026-06-25` sur back **et** brain, puis push des tags.

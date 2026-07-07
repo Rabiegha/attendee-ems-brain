@@ -3,7 +3,7 @@
 > **Statut :** EN COURS — cadrage fait, chantiers à dérouler.
 > **Priorité :** 🔴 Haute (contrat MEAE, échéance 4–5 sept 2026)
 > **Repo principal :** `attendee-ems-back` (+ `attendee-ems-front` pour les sessions)
-> **Workstream infra/perf lié** (scaling + continuité) : [infra-scaling-pca](../../a-faire/infra-scaling-pca/README.md).
+> **Workstream infra/perf lié** (scaling + continuité) : [infra-scaling-pca](../infra-scaling-pca/README.md).
 
 ---
 
@@ -35,4 +35,4 @@ A→I, priorités, planning). C'est le point d'entrée.
 - **H** — Inscriptions par session → [workstream dédié](../../a-faire/sessions-inscriptions-lfd2026/README.md).
 
 > Les chantiers **perf (I)** et **continuité/HA (F)** sont pilotés dans
-> [infra-scaling-pca](../../a-faire/infra-scaling-pca/README.md).
+> [infra-scaling-pca](../infra-scaling-pca/README.md).
