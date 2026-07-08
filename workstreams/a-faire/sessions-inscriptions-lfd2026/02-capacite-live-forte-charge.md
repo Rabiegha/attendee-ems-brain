@@ -184,6 +184,40 @@ Deux leviers retenus, **tous mono-machine et durables** :
 
 ---
 
+## 2g. Levier candidat **L9.1** — compteur de présence session O(1)
+
+> ⚠️ **Conditionné à la mesure.** À ne déclencher que si un test montre que le `COUNT` gêne
+> (table `session_scans` grosse + pic combiné). Le check-in étant gated par l'humain, il se peut
+> qu'il n'y ait **rien à faire**.
+
+**Problème actuel** ([sessions.service.ts](../../../../attendee-ems-back/src/modules/sessions/sessions.service.ts)) :
+à chaque scan **IN** sur une session à capacité, le code fait **`2× COUNT(*)`** sur `session_scans`
+(admitted IN / admitted OUT) → **O(n)** : le coût **grandit** avec le nombre de scans déjà enregistrés.
+
+**Levier** : arrêter de recompter → tenir un **compteur incrémental** (`+1` IN admis / `−1` OUT admis).
+Lecture de la capacité = **lire un nombre = O(1)**, constant quelle que soit la taille de la table.
+
+**Où stocker le compteur — deux options, les DEUX règlent le O(n) :**
+
+| Option | Règle le O(n) ? | Quand |
+|---|---|---|
+| **Colonne Postgres `present_count`** (défaut) | ✅ | **Suffit ici.** Check-in gated humain (quelques scans/s) → contention négligeable. Simple, **cohérent** (même tx que l'insert du scan). |
+| **Redis `session:{id}:present`** (nice-to-have) | ✅ | **Win « no effort »** : Redis sera **déjà en place pour le portier inscription (2a)** → réutiliser `INCR`/`DECR` coûte quasi rien, et donne en **bonus** : lecture **hors Postgres** + compteur **temps réel poussable en WS**. Rôle = **cache dérivé** (PG = vérité, seed + réconciliation). |
+
+> **Redis n'est PAS obligatoire pour ce levier** — c'est juste **où** ranger le compteur. Il ne devient
+> indispensable que sous **forte concurrence sur la même clé** (= le portier inscription, 3000 simultanés),
+> pas pour le check-in session. **Mais** comme il tourne déjà pour l'inscription, l'y brancher est un
+> **gain gratuit** si on veut l'affichage live d'occupation.
+
+**Durable** : le O(1) reste constant à toute échelle et taille de table, et **survit au clustering**.
+
+> ⇒ Asymétrie à retenir : le **check-in session** a ce problème O(n) ; le **check-in event principal**
+> ([`checkIn()`](../../../../attendee-ems-back/src/modules/registrations/registrations.service.ts)) **non**
+> (simple `UPDATE` par clé primaire sur sa propre ligne, aucun `COUNT`, aucune ligne chaude) → déjà O(1),
+> **pas de levier**, juste l'isolation par pool DB réservé (§2e).
+
+---
+
 ## 3. Ordre de construction (la vérité avant le tuyau)
 
 | # | Brique | Dépend de |
@@ -197,6 +231,7 @@ Deux leviers retenus, **tous mono-machine et durables** :
 | 7 | **Endpoint read (snapshot)** servi par Redis + **pré-chauffe** + single-flight | 1 |
 | 8 | **CDN** pour le bundle front (ou nginx statique + cache headers — suffit à 3000) | — |
 | 9 | **Isolation check-in** : pool DB réservé (pgBouncer) + priorité sur la rafale inscriptions | levier L2 |
+| 9b | **Compteur présence session** (L9.1) : colonne PG `present_count` O(1) — **si la mesure le justifie** ; Redis en bonus si l'affichage live est voulu | mesure |
 | 10 | **Test de charge COMBINÉ** : WS + inscriptions (file) + check-ins session/entrée (sync) simultanés | tout |
 
 ---

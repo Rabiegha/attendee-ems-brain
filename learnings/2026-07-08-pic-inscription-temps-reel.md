@@ -220,6 +220,21 @@ stateless.
   (pool inscription vs pool check-in) est de la config saine qu'on **garde même en clustering** (chaque
   instance conserve ses pools séparés). Zéro dette.
 
+## Compteur O(1) : le levier ≠ le stockage du compteur
+
+Un contrôle de capacité qui **recompte toutes les lignes** (`COUNT(*)`) à chaque scan est **O(n)** :
+le coût grandit avec la table. **Le levier**, c'est de **tenir un compteur incrémental** (`+1`/`−1`)
+→ lecture O(1) constante. **Attention à ne pas confondre le levier avec son stockage :**
+
+- **Le levier** (arrêter de recompter) est ce qui compte. Obligatoire **si la mesure** le justifie.
+- **Où ranger le compteur** est un choix d'implémentation : **colonne Postgres** (suffit en faible
+  concurrence, cohérente car même tx que l'insert) **ou Redis** (indispensable seulement en **forte
+  concurrence sur la même clé**, ex. portier inscription 3000 simultanés).
+
+**Règle :** forte concurrence sur une clé → Redis ; faible concurrence → colonne Postgres suffit.
+**Win « no effort » :** si Redis tourne **déjà** (pour l'inscription), y brancher le compteur d'un flux
+faible-concurrence (ex. présence session) est quasi gratuit et débloque l'affichage temps réel hors PG.
+
 ## CDN : pas un prérequis à petite échelle
 
 Un CDN se met **devant** l'origine, il ne s'installe pas sur le VPS. Mais à ~3000 users, le bundle front
