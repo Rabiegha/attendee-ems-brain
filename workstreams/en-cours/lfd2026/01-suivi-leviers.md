@@ -37,6 +37,7 @@
 |---|---|---|---|---|---|
 | **L1/L2/L10** stack staging + pgBouncer + pool | `infra/staging-stack` | infra/config | 🟢 **Codé + testé local** | [#14](https://github.com/Rabiegha/attendee-ems-back/pull/14) → `dev` (ouverte) | ⏳ pas encore (baseline à faire sur staging) |
 | **L9** transaction allégée (`public.service.ts`) | `feat/register-tx-slim` | **code métier** (chirurgie) | ⚪ À faire | — | — |
+| **L9.1** compteur présence session O(1) (candidat, **priorisé**) | `feat/session-present-counter` | code métier (colonne PG `present_count`) | ⚪ À faire | — | — |
 | **L7** email async BullMQ | `feat/email-async-bullmq` | nouveaux fichiers | ⚪ À faire | — | — |
 | **L8** worker `PROCESS_ROLE` (Voie A) | `feat/process-role-worker` | code (gating `main.ts`) | ⚪ À faire | — | — |
 | **L3** `directUrl` Prisma | `chore/prisma-directurl` | config (+5 lignes) | ⚪ À faire | — | — |
@@ -51,7 +52,7 @@
 |---|---|---|---|
 | 0 | Geler & archiver | ✅ Fait | tag `archive/staging-2026-06-25` + branche `staging-archive-2026-06-25` (back). Brain : à vérifier. |
 | 1 | Séparer reformatage / logique | ✅ Fait | format-on-save vérifié OFF (learning créé). |
-| 2 | Rejouer les 5 leviers | 🟡 En cours | 1/5 fait (L1/L2/L10). |
+| 2 | Rejouer les leviers (chantier A + L9.1) | 🟡 En cours | 1/6 fait (L1/L2/L10). **Focus du jour : L9 + L9.1.** |
 | 3 | Réconcilier la doc (~25/s CPU vs ~33/s DB) | ⚪ À faire | dans `infra-scaling-pca/README.md`. |
 | 4 | Post-mortem 502 prod | ⚪ À faire | `bugs/2026-06-25-prod-502-collision-compose.md`. |
 | 5 | Isoler le compose prod (PR dédiée) | ⚪ À faire | `docker-compose.prod.yml`, ne pas merger sans revue. |
@@ -81,7 +82,19 @@
 - **Source de rejeu :** archive `staging-archive-2026-06-25` (rejouer à la main, pas cherry-pick du fourre-tout).
 - **Reste :** tout. À démarrer dans un chat dédié.
 
+### ⚪ L9.1 — compteur de présence session O(1)
+- **Branche :** `feat/session-present-counter` · **Fichier :** `src/modules/sessions/sessions.service.ts`.
+- **Problème :** `2× COUNT(*)` sur `session_scans` à chaque scan IN → **O(n)** (coût qui grandit avec la table).
+- **Levier :** compteur incrémental → **O(1)**. **Colonne PG `present_count` par défaut** (suffit, faible concurrence) ; Redis en **bonus « win no effort »** si affichage live voulu (Redis déjà là pour l'inscription).
+- **Nature :** ⚠️ **code métier** → **test de non-régression obligatoire** (pas de survente, occupation correcte après IN / OUT / annulation, idempotence double-scan).
+- **Conditionné mesure** à l'origine, **priorisé** pour ce cycle (décision 2026-07-08).
+- **Détail conceptuel :** [workstream 02 §2g](../../a-faire/sessions-inscriptions-lfd2026/02-capacite-live-forte-charge.md).
+- **Reste :** tout. À démarrer dans un chat dédié (après/avec L9).
+
 ### ⚪ L7 — email async (BullMQ)
+- **Branche :** `feat/email-async-bullmq` · **Nature :** nouveaux fichiers (rejeu guidé).
+- **But :** sortir l'envoi d'email du chemin critique de l'inscription (file BullMQ).
+- **Reste :** tout.
 - **Branche :** `feat/email-async-bullmq` · **Nature :** nouveaux fichiers (rejeu guidé).
 - **But :** sortir l'envoi d'email du chemin critique de l'inscription (file BullMQ).
 - **Reste :** tout.

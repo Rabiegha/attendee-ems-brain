@@ -18,7 +18,19 @@ l'**archive de référence** — on ne perd rien.
 · **📌 Suivi vivant (état par levier) :** [01-suivi-leviers.md](../workstreams/en-cours/lfd2026/01-suivi-leviers.md) — **à ouvrir au début de chaque chat**.
 
 **Prochaine action :**
-➡️ **Levier suivant : L9** (transaction allégée, branche `feat/register-tx-slim`) — + merger la MR [#14](https://github.com/Rabiegha/attendee-ems-back/pull/14) (L1/L2/L10) sur `dev`.
+➡️ **Focus du jour : L9 puis L9.1**, **codés ET testés** (non-régression). Merger d'abord la MR [#14](https://github.com/Rabiegha/attendee-ems-back/pull/14) (L1/L2/L10) sur `dev`.
+
+### 🎯 Ordre de priorité (à jour 2026-07-08)
+
+1. **L9** — transaction d'inscription allégée (`feat/register-tx-slim`) **+ test de non-régression**.
+2. **L9.1** — compteur présence session O(1) (`feat/session-present-counter`, colonne PG par défaut) **+ test**.
+3. **Chantier Cloud Run — génération PDF billet** (chantier B) : billet PDF joint à l'email (Gotenberg / Cloud Run).
+4. **Prépa du call de demain** : **post-event** + **review du setup Cloud Run** déjà effectué.
+5. **Ensuite seulement** : reste des leviers/étapes du chantier A, workstream capacité live forte charge, **backlog mobile** (cf. « Ensuite »).
+
+> ⚠️ **Validation post-leviers OBLIGATOIRE** : une fois L9 **et** L9.1 appliqués, **re-tester que tout
+> marche** (inscription + check-in), **surtout L9.1** — le compteur ne doit **jamais diverger du réel**
+> (pas de survente, occupation correcte après IN / OUT / annulation, idempotence double-scan).
 
 ### Étapes du chantier A (~3 h 35, hors temps k6)
 
@@ -26,9 +38,10 @@ l'**archive de référence** — on ne perd rien.
 
 - [x] **0.** Geler & archiver (tag `archive/staging-2026-06-25` + branche `staging-archive-2026-06-25`).
 - [x] **1.** Séparer reformatage / logique (format-on-save vérifié OFF).
-- [ ] **2.** Rejouer les **5 leviers**, 1 branche + 1 commit + 1 mesure chacun — **1/5 fait** :
+- [ ] **2.** Rejouer les **leviers du chantier A (+ L9.1)**, 1 branche + 1 commit + 1 mesure chacun — **1/6 fait** :
   - 🟢 L1/L2/L10 stack staging + pgBouncer + pool — `infra/staging-stack` (codé+testé local, MR #14)
-  - ⚪ L9 transaction allégée — `feat/register-tx-slim`
+  - ⚪ L9 transaction allégée — `feat/register-tx-slim` **(focus du jour)**
+  - ⚪ L9.1 compteur présence session O(1) — `feat/session-present-counter` **(focus du jour)**
   - ⚪ L7 email async BullMQ — `feat/email-async-bullmq`
   - ⚪ L8 worker `PROCESS_ROLE` (Voie A) — `feat/process-role-worker`
   - ⚪ L3 `directUrl` Prisma — `chore/prisma-directurl`
@@ -49,19 +62,20 @@ l'**archive de référence** — on ne perd rien.
 
 ---
 
-## ⏭️ Ensuite — dans l'ordre
+## ⏭️ Ensuite — dans l'ordre (à jour 2026-07-08)
 
-1. **Chantier A — refonte** (archivage + rejouer les leviers proprement) — étapes 0→6 ci-dessus.
-2. **API scaling — clustering multi-worker** (juste après A) : externaliser présence +
-   imprimantes en **Redis**, `redis-adapter`, sticky nginx, tests cross-worker. **Fondation de
-   tout le scaling horizontal.** Effort ~1,5–2,5 sem. Prérequis : l'étape 3 de A (trancher
-   CPU vs DB) doit dire si le cluster apporte vraiment quelque chose.
+1. **L9 + L9.1** (focus du jour) — codés + **testés** (non-régression), cf. ci-dessus.
+2. **Chantier B — chaîne email → billet PDF** : joindre le **billet PDF** à l'email (moteur **Gotenberg sur Cloud Run**). Une partie à décider.
+   ➡️ [00-plan-action.md §3-B](../workstreams/en-cours/lfd2026/00-plan-action.md) · [décision lib PDF/badge](../workstreams/en-cours/lfd2026/decisions/lib-pdf-badge.md).
+3. **Prépa du call de demain** : **post-event** + **review du setup Cloud Run** déjà effectué.
+4. **Reste du chantier A** : merger #14 sur `dev`, puis L7 / L8 / L3, puis étapes 3→6 (réconcilier CPU/DB, post-mortem 502, isoler compose prod, cadrer interdits).
+5. **Workstream capacité live forte charge** (sessions/inscriptions LFD) — portier Redis + WebSocket + pic combiné.
+   ➡️ [02-capacite-live-forte-charge](../workstreams/a-faire/sessions-inscriptions-lfd2026/02-capacite-live-forte-charge.md).
+6. **Backlog mobile LFD2026** : pagination sessions, offline scans fiable, perf liste ~20k attendees, refactor check-in/out historique, bug recherche entreprise…
+   ➡️ [appli-mobile-lfd2026](../backlog/en-cours/appli-mobile-lfd2026.md).
+7. **API scaling — clustering multi-worker** (post-event) : présence + imprimantes en **Redis**, `redis-adapter`, sticky nginx, tests cross-worker. Fondation du scaling horizontal.
    ➡️ [workstream api-scaling-clustering](../workstreams/en-cours/api-scaling-clustering/README.md).
-3. **Chantier B — chaîne email → billet PDF** : joindre le **billet PDF à l'email** de
-   confirmation (aujourd'hui non joint). Moteur tranché : **Option D — Gotenberg sur Cloud Run**.
-   **Une seule partie**, à décider laquelle.
-   ➡️ [00-plan-action.md §3-B](../workstreams/en-cours/lfd2026/00-plan-action.md) ·
-   [décision lib PDF/badge](../workstreams/en-cours/lfd2026/decisions/lib-pdf-badge.md).
+8. **Migration GCP complète** (post-event) — Cloud SQL HA/PITR, Memorystore, LB, Cloud Run.
 
 ---
 
@@ -84,11 +98,12 @@ socket/hors-ligne du 18/06.
 
 ## Objectifs de cette semaine
 
-- [ ] Dérouler le **chantier A (refonte)** — étapes 0 → 6 (checklist ci-dessus).
-- [ ] Rejouer les 5 leviers proprement, 1 branche + 1 mesure chacun.
-- [ ] Réconcilier le chiffre de plafond (**~25/s CPU** vs « ~33/s DB ») dans la doc.
-- [ ] **Décider quelle partie** du chantier B (email → billet PDF) on attaque en premier.
-- [ ] (Si temps) valider sur tablette physique les fixes mobile du 18/06.
+- [ ] **L9** (transaction allégée) codé + **testé** (non-régression) — `feat/register-tx-slim`.
+- [ ] **L9.1** (compteur présence session O(1)) codé + **testé** — `feat/session-present-counter`.
+- [ ] **Validation post-leviers** : vérifier que tout marche après L9 **et** L9.1, **surtout L9.1** (pas de divergence du compteur).
+- [ ] **Chantier Cloud Run** (email → billet PDF) : décider + attaquer la 1re partie.
+- [ ] **Prépa call de demain** : post-event + review du setup Cloud Run.
+- [ ] Merger la MR [#14](https://github.com/Rabiegha/attendee-ems-back/pull/14) (L1/L2/L10) sur `dev`.
 
 ---
 
