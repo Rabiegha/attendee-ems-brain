@@ -130,19 +130,39 @@ d'écriture** tapent **en même temps** — le vrai plafond, c'est leur **somme*
 2. **Le check-in ne peut PAS être mis en file** (personne à la porte → « admis/refusé » immédiat).
    → il faut **isoler + prioriser** le chemin check-in face à la rafale d'inscriptions.
 
-### Isolation — faisable JOUR J, SANS clustering
+### ⚠️ Piège de vocabulaire — le check-in ne se « worker-ise » PAS
+
+Un **worker** traite des jobs **en différé** (asynchrone). Le **check-in est synchrone** : la personne
+est **à la porte** et attend « admis/refusé » en < 1s. → **on ne met JAMAIS le check-in dans une file.**
+
+« Prioriser le check-in » ≠ lui donner un worker. Ça veut dire **protéger son chemin HTTP synchrone**
+contre la rafale d'inscriptions. Ce qu'on met dans le worker, c'est l'**inscription** (qui, elle,
+tolère du différé) — ce qui **libère** la DB **pour** le check-in.
+
+| Flux | Nature | Va dans une file ? |
+|---|---|---|
+| Inscription | asynchrone (« c'est en cours ») | ✅ oui → worker BullMQ |
+| Check-in | **synchrone** (personne à la porte) | ❌ **jamais** → HTTP direct |
+
+> **Worker = 1 process, plusieurs *types* de jobs — pas 1 worker par tâche.** Un seul worker consomme
+> toute la file (register, email, PDF…). On n'ajoute pas un worker par fonctionnalité ; on ajoute des
+> **types de jobs**. C'est une archi **durable**, pas une rustine. Ce qui est temporaire, c'est le
+> **mono-instance** (limite verticale), pas le worker.
+
+### Isolation du check-in — faisable JOUR J, SANS clustering
 > **Worker séparé ≠ clustering.** Un worker BullMQ (L8) est une **séparation de rôles** mono-machine
 > (l'API sert le HTTP, le worker vide la file). Il ne tient **ni socket ni imprimante** → **aucun**
 > problème d'état. Le clustering (L13, interdit avant tests verts) concerne **plusieurs copies du rôle
 > stateful** — pas ça.
 
-Trois leviers, **tous mono-machine** :
-1. **La file isole déjà** : les inscriptions dans BullMQ n'occupent pas les threads HTTP des check-ins ;
-   le worker draine à ~33/s **en arrière-plan**.
+Deux leviers retenus, **tous mono-machine et durables** :
+1. **La file isole déjà (gratuit)** : les inscriptions dans BullMQ n'occupent pas les threads HTTP des
+   check-ins ; le worker draine à ~33/s **en arrière-plan**.
 2. **Budget de connexions DB réservé** au check-in (pools pgBouncer distincts) → une rafale d'inscriptions
-   ne peut pas **assécher** les connexions du check-in. = **config**.
-3. **(Optionnel) process dédié check-in** : OK sur une machine car les endpoints check-in sont
-   **sans état** (insert scan + contrôle capacité Redis). Toujours **pas** du clustering.
+   ne peut pas **assécher** les connexions du check-in. **= config, pas de code, et ça se garde à long
+   terme** (chaque instance garde ses pools cloisonnés, même en clustering plus tard).
+3. **(Optionnel, non retenu pour l'instant)** process API dédié check-in — endpoints **sans état**, donc
+   OK sur une machine, toujours **pas** du clustering. Laissé de côté tant que (1)+(2) suffisent.
 
 ---
 

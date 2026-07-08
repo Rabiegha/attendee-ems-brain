@@ -208,6 +208,18 @@ post-event) = **plusieurs copies du rôle STATEFUL** (celui qui tient sockets/im
 séparation de rôles protège un chemin critique (ex. check-in) d'une rafale **sans** débloquer le refacto
 stateless.
 
+### Piège de vocabulaire (à ne pas confondre)
+
+- **Un worker = 1 process, plusieurs *types* de jobs — jamais 1 worker par tâche.** Le même worker
+  consomme toute la file (register, email, PDF…). On ajoute des **types de jobs**, pas des workers. C'est
+  une archi **durable**. Ce qui est temporaire, c'est le **mono-instance**, pas le worker.
+- **On ne « worker-ise » PAS le check-in.** Le check-in est **synchrone** (personne à la porte). « Le
+  prioriser » = protéger son **chemin HTTP synchrone**, pas lui mettre une file. Ce qu'on met dans le
+  worker c'est l'**inscription** (async), ce qui **libère** la DB pour le check-in.
+- **Le pool DB réservé (pgBouncer) est durable, pas une rustine.** Cloisonner les connexions
+  (pool inscription vs pool check-in) est de la config saine qu'on **garde même en clustering** (chaque
+  instance conserve ses pools séparés). Zéro dette.
+
 ## CDN : pas un prérequis à petite échelle
 
 Un CDN se met **devant** l'origine, il ne s'installe pas sur le VPS. Mais à ~3000 users, le bundle front
