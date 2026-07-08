@@ -31,7 +31,7 @@
 | **H** | **Inscriptions par session** (lien public par session + capacité/waitlist + refonte front) | 🔴 Haute (**fonctionnel**) | 🟡 Cadré, prêt à découper | §3-H |
 | **J** | **Capacité live forte charge** — portier Redis (anti-survente) + WebSocket statut live + **pic combiné** insc/check-in | 🔴 Haute (**event**) | 🟡 Cadré (workstream 02) | [ws 02](../../a-faire/sessions-inscriptions-lfd2026/02-capacite-live-forte-charge.md) |
 | **F** | Continuité — **HA réplication** | 🔵 **Reporté → migration GCP** | HA/PITR natifs Cloud SQL | §3-F |
-| **G** | Wallet Apple + Google | ⚪ V2 | Hors périmètre event | §3-G |
+| **G** | Wallet Apple + Google — **harnais dans B · onboarding now · Google fast-follow · Apple hors chemin critique** | 🟡 Découpé (was ⚪ V2) | Onboarding à lancer J1 | §3-G |
 
 > **⚡ Ordre :** **A (refonte) d'abord** — elle débloque le déploiement propre de tout le reste.
 > En parallèle, lancer **dès J1** le warm-up ESP (délai calendaire). **CI/CD et monitoring restent
@@ -241,6 +241,11 @@ Aujourd'hui le PDF du billet est généré (Puppeteer→R2) **mais n'est pas joi
 On sort **totalement** le rendu PDF du VPS (le goulot CPU mesuré) → charge jour-J neutralisée, fidélité
 préservée (même moteur Chromium), **faisable sans attendre la migration GCP**.
 
+> 🧩 **Harnais commun wallet (décision 2026-07-08) :** concevoir le service de génération Cloud Run avec
+> une **interface agnostique** `generate(format, data)` — **PDF = 1ʳᵉ implémentation**, wallet Apple/Google
+> = formats **pluggables** plus tard (cf. **G-harnais**). Le coût du harnais est payé **une fois** ici → pas
+> de refacto quand on ajoutera les wallets. Le check-in lit le **même token QR** quel que soit le format.
+
 > ✂️ **Découpé en B0 (POC, faisable cet aprem) + B1 (durcissement)** — le Cloud Run est **déjà déployé**
 > (à reviewer au call de demain), donc l'item infra ci-dessous est **déjà fait**.
 
@@ -354,15 +359,29 @@ PITR en plus du backup MVP). La HA complète arrive **avec GCP**, hors périmèt
 > ⚠️ *À confirmer : timing de la migration GCP vs l'event (4-5 sept). Si GCP est livré avant l'event,*
 > *la continuité est couverte nativement. Sinon, le couple backup MVP + PITR léger est le filet.*
 
-### Chantier G — Wallet Apple + Google  ⚪ V2 (hors périmètre event)
+### Chantier G — Wallet Apple + Google  🟡 Découpé (harnais now · onboarding now · Apple hors chemin critique)
 > **📎 Fichiers liés :** [diagnostic email/billet/wallet §2.3 / §4](./diagnostics/email-billet-wallet.md)
 
-**Reporté en V2.** QR + PDF suffisent pour LFD 2026. À démarrer en V2 (avec délai de validation
-Apple en tête). Prérequis comptes (Apple Developer, Google Wallet API) détenus par Rabiegha, **tout
-à créer le moment venu**.
+**Décision 2026-07-08 :** « faire Apple + Google en même temps que le PDF » = **vrai pour le harnais, faux
+pour la génération par format**. On **découpe G en 4** au lieu d'un bloc V2 monolithique :
 
-**Estimation indicative V2 : ~1 semaine de dev** (`.pkpass` signé Apple + Google Wallet API + intégration
-file/R2 + tests), **hors délais comptes/certifs** (validation Apple = calendaire, plusieurs jours).
+| Sous-chantier | Nature | Quand | Effort |
+| --- | --- | --- | --- |
+| **G-harnais** — interface `generate(format, data)` agnostique dans le service Cloud Run | dev (fusionné dans **B**) | **maintenant** (avec B) | inclus dans B (~0 en plus) |
+| **G-onboarding** — compte **Apple Developer** + **Pass Type ID cert** + **Issuer Google** | admin / délai externe | **démarrer aujourd'hui** | 0 dev (pur calendaire) |
+| **G-Google** — objet `EventTicketObject` + **JWT signé** + lien « Save to Google Wallet » | dev (léger) | **fast-follow après le PDF** si buffer | ~½ – 1 j |
+| **G-Apple** — `.pkpass` **signé** (manifest + PKCS#7) + assets @2x/@3x + gestion cert | dev + op | **après PDF solide, hors chemin critique** | ~2 – 3 j |
+| **Sous-total G (Google + Apple)** | | | **~2,5 – 4 j** |
+
+**Pourquoi cette découpe :**
+- **PDF** = aucune dépendance, couvre **100 %** des gens → must-have. Le wallet est un **confort**.
+- **Google** = léger une fois l'**Issuer** approuvé (JSON + JWT) → bon candidat fast-follow.
+- **Apple** = **compte dev (99 $/an) + Pass Type ID cert + renouvellement annuel** → **délai externe** +
+  nouveaux modes de panne (secrets, expiration cert) → **jamais sur le chemin critique** de l'event.
+- Le **check-in est découplé du format** (même token QR) → le harnais commun est le vrai gain.
+
+> ⚠️ **Ordre :** G-harnais **dans B** (payé une fois) · G-onboarding **lancé maintenant** (délai) ·
+> G-Google puis G-Apple **empilés après** que le PDF soit prouvé sous charge. Le PDF reste le **fallback 100 %**.
 
 ### Chantier I — ⚡ Levier débit n°1 : compteur capacité dénormalisé + transaction courte  🔴 Haute (perf)
 > **📎 Fichiers liés :** `attendee-ems-back/docs/infra/lfd-2026-load-test-results.md` §5/§8 ·

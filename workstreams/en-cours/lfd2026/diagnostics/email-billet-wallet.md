@@ -67,6 +67,34 @@ Légende : ✅ existe / ⚠️ existe mais à durcir / ❌ absent / 🔴 chantie
   - Les deux fichiers/liens seraient **joints/inclus dans l'email**.
 - **Effort :** élevé — **dépend de prérequis comptes/certifs** (voir §4). **À traiter en V2**, pas avant l'event.
 
+> **🧩 Décision 2026-07-08 — découper G en 4, ne PAS tout mettre dans B event-critique.**
+> Question posée : « faire Apple + Google **en même temps** que le PDF, c'est à peu près la même
+> chose (même génération sur Cloud Run) ? » → **vrai pour le harnais, faux pour la génération par format.**
+>
+> **Ce qui est commun (le harnais) :** déclencheur post-inscription, source de données, **même token
+> QR de check-in**, **service de génération Cloud Run** (stateless), livraison email. Le check-in
+> est **découplé du format** (le scanner lit le même token) → ça vaut le coup de bâtir le harnais **une fois**.
+>
+> **Ce qui n'est PAS la même chose (le piège) :**
+> - **PDF** = rendu pur, **aucune** dépendance externe, couvre **100 %** des gens → le must-have.
+> - **Google Wallet** = JSON (`EventTicketObject`) + **JWT signé** ; une fois l'**Issuer** approuvé
+>   → **léger**. Le wallet « facile ».
+> - **Apple Wallet** = bundle `.pkpass` **signé** (PKCS#7) : **compte Apple Developer** (99 $/an) +
+>   **Pass Type ID cert** + WWDR + assets @2x/@3x + **renouvellement annuel du cert** + secrets serveur.
+>   → **délai externe** (création compte/cert) + nouveaux **modes de panne op** → **hors chemin critique**.
+>
+> **Reco actée (découpe de G) :**
+> 1. **G-harnais → fusionné dans B maintenant** : interface de génération **agnostique** `generate(format, data)`,
+>    PDF = 1ʳᵉ implémentation. Coût du harnais payé une fois, zéro refacto ensuite.
+> 2. **G-onboarding → démarrer aujourd'hui, en parallèle** (0 dev, pur délai admin) : ouvrir le **compte
+>    Apple Developer + Pass Type ID cert** ET l'**Issuer Google**. Dégage le délai externe du chemin critique.
+> 3. **G-Google → fast-follow après le PDF** si buffer (JSON + JWT une fois l'Issuer prêt).
+> 4. **G-Apple → après PDF solide**, avant l'event si buffer, mais **hors chemin critique** ; le PDF reste le fallback 100 %.
+>
+> **Coût caché du « en même temps » :** faire les 3 d'un coup **triple la surface QA + load-test**
+> simultanément sur un service **sur le chemin critique de l'email** → livrer le PDF, prouver le pipeline
+> sous charge, PUIS empiler les wallets qui réutilisent le harnais éprouvé.
+
 ---
 
 ## 3. Décisions actées
