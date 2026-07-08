@@ -100,3 +100,84 @@ flowchart LR
 3. **WebSocket/poll caché** = affichage live, retard toléré.
 4. **Mono-instance verticale** = suffisant pour l'event (le multi-instance = redis-adapter, post-event —
    cf. [scaling horizontal stateless](2026-07-08-scaling-horizontal-stateless.md)).
+
+---
+
+## Démarrage à froid : le cache stampede
+
+À la **première visite**, chaque user charge **2 choses** : (A) le **bundle front** (statique) et
+(B) un **read initial** (état des sessions). D'où deux pièges :
+
+- **(A) bundle** → doit être servi par un **CDN / statique**, jamais l'API. Sinon 3000 téléchargements
+  concurrencent l'API sur le même VPS.
+- **(B) read initial sur cache FROID** → **cache stampede** : 3000 requêtes arrivent en même temps sur
+  un cache vide → si rien ne les coordonne, **les 3000 passent jusqu'à Postgres** pour reconstruire la
+  valeur → exactement le pic qu'on voulait éviter.
+
+**Parades (combinables) :**
+1. **Pré-chauffer le cache** (cache warming) **avant** d'ouvrir les inscriptions → cache déjà chaud à
+   l'ouverture → 0 requête Postgres. Idéal quand l'heure d'ouverture est connue.
+2. **Single-flight / request coalescing** : sur cache froid, **une seule** requête reconstruit, les
+   autres **attendent** ce résultat (verrou court) au lieu de taper toutes Postgres. Les CDN le font
+   nativement (« request collapsing »).
+
+---
+
+## Cohérence du cache : Redis-**vérité** vs Redis-**cache**
+
+Deux usages de Redis, **deux façons de le tenir à jour** :
+
+| Usage | Exemple | Mise à jour |
+|---|---|---|
+| **Redis = vérité** (petit, critique) | `session:X:places`, `:open` | l'API **écrit directement dedans** — pas d'« invalidation », il n'y a qu'**une** vérité |
+| **Redis = cache** (dérivé, lourd) | liste sessions + stats | **write-through** (réécrire à la modif) **+ TTL court** (filet) ± delete-on-write + single-flight |
+
+> Règle : données **critiques et petites** → Redis = vérité (zéro problème de cohérence). Données
+> **dérivées et lourdes** → Redis = cache (write-through + TTL).
+
+---
+
+## Pull + Push : snapshot + stream
+
+Le **cache (read/pull)** et le **WebSocket (push)** sont **deux mécanismes séparés** mais branchés sur
+**la même vérité Redis**. Ils se **complètent**, ne se concurrencent pas :
+
+- **Pull = snapshot** : « c'est quoi l'état **maintenant** que j'arrive ? » (chargement, reconnexion).
+- **Push = stream** : « préviens-moi **quand** ça change » (pendant que je suis là).
+
+**Pattern client :** au chargement → **pull** l'état (snapshot), puis **s'abonner** au WS (stream).
+
+### « Même vérité » ≠ « lire physiquement Redis »
+
+Analogie du **tableau de score** (= Redis, la vérité) : le **pull** = tu marches regarder le tableau ;
+le **push** = un speaker crie le nouveau score **quand il change**. Le speaker **n'invente rien**, il
+crie **ce qui vient d'être inscrit au tableau**. Séparés dans le **transport**, identiques dans la
+**source**.
+
+### Deux règles pour ne JAMAIS diverger
+1. **Un seul écrivain** : seule l'API écrit l'état, **dans Redis**. Le push ne calcule pas une valeur
+   « à part » → sinon deux vérités.
+2. **Ordre : écrire Redis PUIS émettre.** Sinon un client peut recevoir le push (nouvelle valeur) puis
+   pull l'**ancienne**.
+
+### État **absolu**, pas delta
+L'event WS transporte l'**état complet** (« places = 12 », « fermée »), pas un incrément (« −1 »).
+→ un event **raté se corrige tout seul** (le suivant écrase), l'**ordre** n'importe plus, et le format
+du push = celui du pull. Avec des deltas, un event perdu **corromprait** le compteur.
+
+---
+
+## Le WebSocket « écoute »-t-il Redis ? Mono vs multi
+
+Redis a **deux casquettes** : **store clé-valeur** (la vérité, lue par le pull) et **bus pub/sub**
+(notifier un changement). La question « le WS écoute Redis ? » porte sur le **bus** :
+
+| | **Mono-instance** (event) | **Multi-instance** (post-event) |
+|---|---|---|
+| Push | **emit direct** (même process) | via **Redis pub/sub** |
+| Le WS écoute Redis ? | **NON** | **OUI** |
+| Pourquoi | tout est en mémoire locale | l'état change sur A, le client est sur B → bus partagé obligatoire |
+
+> Le passage « emit direct » → « écoute pub/sub » **est** exactement le `redis-adapter` de socket.io,
+> **la brique qui débloque le multi-instance**. Rien à faire pour l'event (mono-instance) ; obligatoire
+> après (cf. [scaling horizontal stateless](2026-07-08-scaling-horizontal-stateless.md)).

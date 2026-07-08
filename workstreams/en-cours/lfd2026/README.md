@@ -18,6 +18,11 @@ billet + QR, rendu PDF/badge, et la refonte **inscriptions par session**. Le vol
 ➡️ **[00-plan-action.md](./00-plan-action.md)** — plan d'action consolidé (tous les chantiers
 A→I, priorités, planning). C'est le point d'entrée.
 
+> 🗺️ **Carte stratégique (event vs post-event) :**
+> [infra/lfd-2026-strategie-2-chantiers.md](../../../infra/lfd-2026-strategie-2-chantiers.md) —
+> sépare la **prépa event** (OVH + leviers + Gotenberg + capacité live) du **post-event**
+> (scaling horizontal + migration GCP). Décisions du 08/07.
+
 ## Contenu du dossier
 
 | Fichier | Sujet |

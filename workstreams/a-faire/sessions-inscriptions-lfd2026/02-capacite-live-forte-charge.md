@@ -78,6 +78,37 @@ demande**. Les sessions normales gardent l'approche simple du README.
 
 ---
 
+## 2c. Démarrage à froid (première visite = 3000 en même temps) 🔴
+
+À la première visite, chaque user charge **2 choses** : le **bundle front** (statique) + un **read
+initial** (état sessions). Deux pièges :
+
+- **Bundle** → **CDN / statique**, jamais l'API (sinon 3000 téléchargements concurrencent l'API).
+- **Read sur cache FROID → cache stampede** : 3000 requêtes sur cache vide, non coordonnées, passent
+  toutes jusqu'à Postgres.
+
+**Parades :**
+1. **Pré-chauffer le cache** (`session:*` + payloads dérivés) **avant l'ouverture** des inscriptions.
+2. **Single-flight** : sur cache froid, une seule requête reconstruit, les autres attendent (verrou court).
+
+---
+
+## 2d. Cohérence pull + push (le point subtil)
+
+**Cache (pull)** et **WebSocket (push)** = **deux mécanismes séparés**, **même vérité Redis** :
+
+- **Pull = snapshot** (à l'arrivée) · **Push = stream** (les changements). Client : pull **puis** subscribe.
+- **Deux usages de Redis** : *store-vérité* (`places`, `open` → écriture directe, pas d'invalidation) vs
+  *cache dérivé* (listes/stats → write-through + TTL court).
+- **Règles anti-divergence :** (1) un seul écrivain (l'API, dans Redis) ; (2) **écrire Redis PUIS émettre** ;
+  (3) event WS = **état absolu** (« places = 12 »), pas delta → tolérant aux pertes/désordre.
+- **Mono vs multi :** mono-instance = **emit direct** (le WS n'écoute pas Redis) ; multi-instance =
+  **Redis pub/sub** (redis-adapter) → post-event uniquement.
+
+> Détail conceptuel complet : [learning — pic d'inscription temps réel](../../../learnings/2026-07-08-pic-inscription-temps-reel.md).
+
+---
+
 ## 3. Ordre de construction (la vérité avant le tuyau)
 
 | # | Brique | Dépend de |
@@ -88,7 +119,9 @@ demande**. Les sessions normales gardent l'approche simple du README.
 | 4 | **Gateway WebSocket + rooms** (back) | 3 |
 | 5 | **Front** : abonnement + MAJ UI | 4 |
 | 6 | **Config infra** : `ulimit`, nginx upgrade/timeout | 4 |
-| 7 | **Test de charge** : N clients WS + rafale d'inscriptions | tout |
+| 7 | **Endpoint read (snapshot)** servi par Redis + **pré-chauffe** + single-flight | 1 |
+| 8 | **CDN** pour le bundle front | — |
+| 9 | **Test de charge** : N clients WS + rafale d'inscriptions + démarrage à froid | tout |
 
 ---
 
@@ -101,6 +134,10 @@ demande**. Les sessions normales gardent l'approche simple du README.
 - [ ] **Propagation live** : un changement de statut se voit côté front en < 2s.
 - [ ] **Reconnexion** : redémarrage instance → clients se reconnectent sans tempête (backoff).
 - [ ] **Réconciliation** : compteur Redis == base après le pic (aucune place fantôme).
+- [ ] **Démarrage à froid** : 3000 arrivées simultanées sur cache pré-chauffé → 0 (ou ~1) requête
+      Postgres pour le read initial (single-flight vérifié).
+- [ ] **Cohérence pull/push** : après un changement, pull et push renvoient la **même** valeur
+      (état absolu, écriture Redis avant émission).
 
 ---
 

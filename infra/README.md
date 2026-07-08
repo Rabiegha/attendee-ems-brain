@@ -9,6 +9,7 @@ Tout ce qui touche à la **tenue de charge** et à la **résilience** de l'infra
 
 | Fichier | Sujet |
 |---|---|
+| [lfd-2026-strategie-2-chantiers.md](lfd-2026-strategie-2-chantiers.md) | **Carte stratégique — 2 chantiers (Prépa event / Post-event + migration GCP).** Point d'entrée. |
 | [lfd-2026-executive-summary.md](lfd-2026-executive-summary.md) | Synthèse décideurs LFD 2026 |
 | [lfd-2026-capacity-planning.md](lfd-2026-capacity-planning.md) | Dimensionnement / capacité au pic |
 | [lfd-2026-load-test-plan.md](lfd-2026-load-test-plan.md) | Plan de tests de charge |
