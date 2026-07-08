@@ -385,6 +385,7 @@ pour la génération par format**. On **découpe G en 4** au lieu d'un bloc V2 m
 
 ### Chantier I — ⚡ Levier débit n°1 : compteur capacité dénormalisé + transaction courte  🔴 Haute (perf)
 > **📎 Fichiers liés :** `attendee-ems-back/docs/infra/lfd-2026-load-test-results.md` §5/§8 ·
+> [décision — tenir l'event sans GCP (+ gate post-L9)](./decisions/tenir-event-sans-gcp.md) ·
 > [carte stratégique 2 chantiers](../../../infra/lfd-2026-strategie-2-chantiers.md) ·
 > [learning — pic inscription temps réel](../../../learnings/2026-07-08-pic-inscription-temps-reel.md) ·
 > [plan de test de charge](../../../infra/lfd-2026-load-test-plan.md)

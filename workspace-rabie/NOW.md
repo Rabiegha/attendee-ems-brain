@@ -25,7 +25,7 @@ l'**archive de référence** — on ne perd rien.
 1. **L9** — transaction d'inscription allégée (`feat/register-tx-slim`) **+ test de non-régression**.
 2. **L9.1** — compteur présence session O(1) (`feat/session-present-counter`, colonne PG par défaut) **+ test**.
 3. **Chantier Cloud Run — génération PDF billet** (chantier B) : billet PDF joint à l'email (Gotenberg / Cloud Run).
-4. **Prépa du call de demain** : **post-event** + **review du setup Cloud Run** déjà effectué.
+4. **Prépa du call de demain** : **post-event** + **review du setup Cloud Run** déjà effectué — point clé : [tenir l'event **sans GCP** (+ gate post-L9)](../workstreams/en-cours/lfd2026/decisions/tenir-event-sans-gcp.md).
 5. **Ensuite seulement** : reste des leviers/étapes du chantier A, workstream capacité live forte charge, **backlog mobile** (cf. « Ensuite »).
 
 > ⚠️ **Validation post-leviers OBLIGATOIRE** : une fois L9 **et** L9.1 appliqués, **re-tester que tout
