@@ -113,6 +113,35 @@ couverte sur le VPS.** La contrainte « même serveur » bloque **l'HA**, pas le
 > pas HA. C'est **pour ça que l'HA attend GCP** (endpoint + LB + quorum managés) ; pour l'event, le filet =
 > **backup offsite + restauration rapide** (RTO borné, suffisant face au vrai risque = perte de données).
 
+> #### 🎯 Décision nette : PAS de HA pour l'event — risque assumé
+> Si la machine meurt jour-J → **down + recovery manuel** depuis backup (RTO borné, minutes → 1-2 h).
+> C'est un **choix**, pas un oubli : la HA couvre le risque **le moins probable** (panne matérielle sur
+> 2 jours) et **ne couvre PAS** les vrais dangers (saturation, disque, perte de données).
+> **⚠️ À vérifier avant de valider :** **pas de SLA d'uptime contractuel** imposé par le MEAE. Si SLA strict
+> → accélérer GCP **ou** failover OVH temporaire pour les 2 jours (seul cas qui changerait la décision).
+
+> #### 🗺️ Carte des vrais risques event (tous couverts SANS GCP)
+>
+> | Risque | Probabilité | La HA aide ? | Parade réelle (sans GCP) |
+> |---|---|---|---|
+> | **Saturation CPU/DB** (3000 concurrents) | **élevée** | ❌ | **L9 + file BullMQ** |
+> | **Disque plein** | **moyenne-élevée** | ❌ (réplica se remplit pareil) | **0-MON alerte disque + capacité + rotation logs + offload R2** |
+> | **Perte / corruption données** | moyenne | ❌ (réplique la bêtise) | **backup offsite + restore testé** |
+> | **Machine meurt** (hardware) | **faible** | ✅ | *(HA → reportée GCP, risque assumé)* |
+>
+> **La HA ne couvre que la dernière ligne — la moins probable. Les 3 premières = les vrais dangers, réglés sur le VPS.**
+
+> #### 💽 Zoom « disque plein » (mode de panne sous-estimé)
+> **Pourquoi ça met l'API à terre :** disque plein → **Postgres ne peut plus écrire son WAL** → refuse
+> les écritures / crash → **API down**. Coupables typiques : logs non tournés (le `console.log` par
+> inscription !), **WAL accumulé** (slot de réplication bloqué = classique), bloat MVCC sous pic
+> d'`UPDATE`, PDF/backups stockés en local, Redis persistant + gros backlog.
+> **La HA n'aide pas** (voire empire : un runaway remplit primaire **et** réplica). **Parades :**
+> (1) **alerte disque 70/80/90 %** *(la n°1)*, (2) **marge de capacité** dimensionnée pour l'event,
+> (3) **rotation des logs**, (4) **gestion WAL / slots**, (5) **offload PDF+backups → R2**,
+> (6) **autovacuum réglé**, (7) **runbook « libérer / redimensionner le volume à chaud »** (OVH).
+> → C'est du ressort de **0-MON + hygiène**, pas de la HA. Consolidé dans le workstream **résilience event**.
+
 ### 4.4 Statelessness — **non-bloquant pour l'event**
 Prérequis du **clustering / GCP**, pas du plan « 1 VPS + L9 + file ». → travail **post-event / migration**,
 ne pas le laisser bloquer le plan event.
@@ -156,5 +185,7 @@ est acceptable »), sinon le gate n'a pas de seuil.
 - ✅ **On tient l'event sans GCP.** Focus du mois = **L9** (débit) puis **J** (file + portier Redis).
 - ✅ **Clustering NON maintenant** → gate mesuré post-L9.
 - ✅ **Continuité** = backup MVP now (VPS) ; HA reportée à GCP.
+- ✅ **Pas de HA event = risque assumé** (à confirmer : pas de SLA MEAE strict).
 - ✅ **Statelessness** = post-event, non-bloquant.
 - ⏭️ **Prochaine action concrète :** coder L9 + test, puis **load test combiné** → relire ce doc au gate.
+- 🧾 **Vérif finale avant J-7 :** [workstream résilience event](../../a-faire/resilience-event-lfd2026/README.md) — checklist que **tout ce qui protège** (saturation / disque / perte / recovery) est en place et **testé**.

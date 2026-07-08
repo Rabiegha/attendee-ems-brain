@@ -30,6 +30,7 @@
 | **B1** | **Email → billet PDF (durcissement)** — auth s2s, fallback lien, séquencement, edge cases, tests | 🔴 Haute | ⚪ Après B0 | §3-B |
 | **H** | **Inscriptions par session** (lien public par session + capacité/waitlist + refonte front) | 🔴 Haute (**fonctionnel**) | 🟡 Cadré, prêt à découper | §3-H |
 | **J** | **Capacité live forte charge** — portier Redis (anti-survente) + WebSocket statut live + **pic combiné** insc/check-in | 🔴 Haute (**event**) | 🟡 Cadré (workstream 02) | [ws 02](../../a-faire/sessions-inscriptions-lfd2026/02-capacite-live-forte-charge.md) |
+| **K** | **Résilience event** — checklist finale : être sûr que **tout ce qui protège** est en place (saturation, disque, perte, recovery testé) | 🔴 Haute (**event**) | 🔴 À vérifier avant J-7 | [ws résilience](../../a-faire/resilience-event-lfd2026/README.md) |
 | **F** | Continuité — **HA réplication** | 🔵 **Reporté → migration GCP** | HA/PITR natifs Cloud SQL | §3-F |
 | **G** | Wallet Apple + Google — **harnais dans B · onboarding now · Google fast-follow · Apple hors chemin critique** | 🟡 Découpé (was ⚪ V2) | Onboarding à lancer J1 | §3-G |
 
@@ -94,8 +95,14 @@ est un **visualiseur de logs**, pas un système d'alerte.
 | **Uptime externe + alerte** (UptimeRobot / Better Uptime) sur `/health` → SMS/Slack si down | ~2 h |
 | **Error-tracking** (Sentry) back + front → exceptions remontées | ~demi-journée |
 | **Métriques système** (CPU/RAM/disque) + dashboard (Grafana+node-exporter, ou Netdata) | ~1 jour |
-| **Alerting sur seuils** (CPU élevé, file BullMQ qui gonfle, disque plein) | ~demi-journée |
+| **Alerting sur seuils** — **CPU élevé · file BullMQ qui gonfle · 🔴 disque ≥ 70/80/90 %** (disque plein = Postgres ne peut plus écrire le WAL → **API down**) | ~demi-journée |
 | **Sous-total 0-MON** | **~2 jours** |
+
+> 🔴 **L'alerte disque est la protection n°1 souvent oubliée.** Un disque plein est presque **toujours
+> un échec de monitoring** (on n'a pas été prévenu). La HA **n'aide pas** (le réplica se remplit pareil).
+> À coupler : **rotation des logs** (`logrotate` / Docker `max-size`), **offload PDF+backups vers R2**
+> (pas sur le disque local), **surveiller les slots de réplication bloqués** (WAL jamais recyclé). Cf.
+> [décision — tenir sans GCP §4.3](./decisions/tenir-event-sans-gcp.md) et le workstream **résilience event**.
 
 > **⚡ Ces deux chantiers (~4 jours, version minimale) sont des fondations à poser tôt** (S1), en
 > parallèle de la refonte (A). Tant qu'ils ne sont pas là, chaque modif sur la prod se fait
@@ -359,6 +366,14 @@ PITR en plus du backup MVP). La HA complète arrive **avec GCP**, hors périmèt
 > ⚠️ *À confirmer : timing de la migration GCP vs l'event (4-5 sept). Si GCP est livré avant l'event,*
 > *la continuité est couverte nativement. Sinon, le couple backup MVP + PITR léger est le filet.*
 
+> 🎯 **Décision (2026-07-08) : PAS de HA pour l'event — risque assumé.** Si la machine meurt jour-J
+> → **down + recovery manuel** depuis backup (RTO borné, minutes → 1-2 h). C'est un **choix** : la HA
+> couvre le risque **le moins probable** (panne matérielle sur 2 j) et **ne couvre PAS** les vrais dangers
+> — **saturation** (→ L9+file), **disque plein** (→ 0-MON alerte disque), **perte/corruption** (→ backup).
+> **⚠️ À vérifier avant de valider :** **pas de SLA d'uptime contractuel** imposé par le MEAE. Si SLA strict
+> → accélérer GCP **ou** monter un failover OVH temporaire pour les 2 jours. Cf.
+> [décision — tenir sans GCP §4.3](./decisions/tenir-event-sans-gcp.md).
+
 ### Chantier G — Wallet Apple + Google  🟡 Découpé (harnais now · onboarding now · Apple hors chemin critique)
 > **📎 Fichiers liés :** [diagnostic email/billet/wallet §2.3 / §4](./diagnostics/email-billet-wallet.md)
 
@@ -487,9 +502,10 @@ WebSocket) et **écriture** (inscription → portier Redis atomique → file Bul
 | **E** — Backup auto (MVP) + PITR léger | **~1,5 – 2 jours** | — |
 | **H** — Inscriptions par session (phases 0–2) | **~5,5 – 8,5 jours** | — |
 | **J** — Capacité live forte charge (portier Redis + WebSocket + pic combiné) | **~4 – 7 jours** | — (Redis déjà présent) |
+| **K** — Résilience event (checklist protections : saturation/disque/perte/recovery testé) | **~½ – 1 jour** *(surtout vérif + runbooks)* | — |
 | **F** — HA réplication complète | 🔵 **reporté** | → migration GCP |
 | **G** — Wallet (V2) | ~1 semaine *(hors event)* | validation Apple |
-| **Total périmètre event (mois)** | **~22 – 31 jours-dev** | DNS + warm-up ESP + Cloud Run |
+| **Total périmètre event (mois)** | **~22 – 32 jours-dev** | DNS + warm-up ESP + Cloud Run |
 
 > ⚠️ **Chevauchement à arbitrer :** le chantier **J** (capacité live forte charge) recoupe en partie
 > **H** (inscriptions par session : capacité/waitlist) et **I** (compteur capacité). Ne pas double-compter :
