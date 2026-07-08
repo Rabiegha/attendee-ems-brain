@@ -87,6 +87,32 @@ Le clustering est une réponse à un **manque mesuré**, pas à une intuition.
 Le vrai risque institutionnel MEAE = **perdre les données**, pas 5 min d'indispo. **Cette moitié-là est
 couverte sur le VPS.** La contrainte « même serveur » bloque **l'HA**, pas le **backup**.
 
+> #### 🔌 HA : comment marche VRAIMENT le failover (et pourquoi 1 VPS ne peut pas)
+>
+> **Le problème :** si Attendee/DNS pointe sur **l'IP fixe de la machine**, quand elle meurt l'IP meurt
+> avec elle → **failover impossible**. La HA consiste à **ne jamais pointer sur l'IP de la machine**, mais
+> sur **un point stable qu'on peut re-brancher** sur un autre nœud. 3 façons :
+>
+> 1. **IP flottante** (OVH « IP Failover ») : une IP publique **détachable/rattachable via API**. Les clients
+>    pointent dessus ; quand le nœud A meurt, un orchestrateur la **rebranche sur B**. Même IP, autre machine.
+> 2. **Load balancer devant** : le DNS pointe sur le **LB** (IP stable) ; il **health-check** A et B et ne
+>    route qu'aux nœuds sains. A tombe → LB bascule sur B automatiquement.
+> 3. **Bascule DNS** (le moins bon) : réécrire l'enregistrement DNS vers B — ⚠️ **cache TTL** → lent/peu fiable.
+>
+> **Côté DB :** l'app parle au **primaire courant** via un proxy/VIP piloté par un orchestrateur (**Patroni**…).
+> En **managé (Cloud SQL)** : un **seul endpoint stable**, GCP le re-pointe tout seul → aucune IP à gérer.
+>
+> **Qui déclenche :** un health-check qui (1) détecte le primaire mort, (2) **promeut** le standby, (3) **déplace
+> l'IP flottante / met à jour le LB**. Automatique (Patroni/keepalived/managé) ou manuel (script/bouton).
+>
+> **Le piège maison — split-brain :** si mal fait, **les 2 nœuds se croient primaires** → divergence. Il faut un
+> **arbitre/quorum** (3ᵉ témoin). C'est **la partie difficile** → raison n°1 de préférer le managé GCP.
+>
+> **Notre situation :** 1 seul VPS, **pas d'IP flottante, pas de LB, pas de standby** → **aucun failover auto**.
+> Si la machine meurt = **manuel** (monter un serveur + **restaurer le backup** + re-pointer l'IP) = **recovery**,
+> pas HA. C'est **pour ça que l'HA attend GCP** (endpoint + LB + quorum managés) ; pour l'event, le filet =
+> **backup offsite + restauration rapide** (RTO borné, suffisant face au vrai risque = perte de données).
+
 ### 4.4 Statelessness — **non-bloquant pour l'event**
 Prérequis du **clustering / GCP**, pas du plan « 1 VPS + L9 + file ». → travail **post-event / migration**,
 ne pas le laisser bloquer le plan event.
