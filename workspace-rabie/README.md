@@ -14,6 +14,7 @@ ce que je fais **maintenant** et ce que je **capture** au vol.
 |---|---|---|
 | [NOW.md](NOW.md) | **Piloter** — focus actif + prochaine action + hors-scope | Quand le focus change |
 | [INBOX.md](INBOX.md) | **Capturer** — tout en vrac, 1 ligne, taggé | En continu, réflexe |
+| [journal/](journal/) | **Historiser** — journal de travail hebdo (1 fichier par semaine ISO) | En fin de journée / semaine |
 
 ## La méthode
 
