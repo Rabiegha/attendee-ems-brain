@@ -14,6 +14,15 @@
 4. Mesurer la latence et le taux d'erreur sur les endpoints critiques.
 5. Identifier les goulots d'étranglement (CPU, RAM, pool DB, queue PDF, queue email).
 
+> 🔴 **Angle mort à couvrir — le PIC COMBINÉ.** Les mesures existantes portent sur l'inscription
+> **isolée**. Le jour J, plusieurs flux d'**écriture** tapent **en même temps** : **inscriptions**
+> (rafale, mises en file), **check-ins session** (`SessionScan`, synchrones) et **check-ins entrée**
+> (`checked_in_at`, synchrones). Le vrai plafond = leur **somme**. Ajouter un scénario k6 **mixte**
+> (inscriptions + scans session + scans entrée simultanés) et vérifier que le **chemin check-in
+> synchrone n'est pas affamé** par la rafale d'inscriptions (isolation via pool pgBouncer réservé).
+> Rappel : le check-in **ne peut pas** être mis en file (personne à la porte → réponse immédiate).
+> Détail conception : [workstream 02 §2e](../workstreams/a-faire/sessions-inscriptions-lfd2026/02-capacite-live-forte-charge.md).
+
 ## 2. Outil recommandé
 
 **k6** (Grafana Labs) — déjà adapté à NestJS, scripts JavaScript/TypeScript, intégration CI

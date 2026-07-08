@@ -24,6 +24,10 @@
    pour l'event.
 6. **Une file d'attente absorbe les pics.** ~33/s **soutenu** peut servir un pic instantané bien plus
    haut (le tampon lisse la rafale).
+7. **Mesurer le pic COMBINÉ, pas isolé.** Le jour J = inscriptions (en file) **+** check-ins session
+   **+** check-ins entrée **simultanés**. Le check-in (personne à la porte) reste **synchrone** et
+   doit être **isolé/priorisé** (pool DB réservé) — faisable jour J **sans clustering** (worker/rôle
+   séparé ≠ cluster).
 
 ---
 

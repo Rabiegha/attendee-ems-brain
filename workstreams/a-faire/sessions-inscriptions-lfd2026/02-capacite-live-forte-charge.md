@@ -109,6 +109,61 @@ initial** (état sessions). Deux pièges :
 
 ---
 
+## 2e. Pic COMBINÉ : inscriptions + check-in session 🔴 angle mort des mesures
+
+Les mesures (~25/s CPU, ~33/s DB) étaient pour l'**inscription isolée**. Le jour J, **plusieurs flux
+d'écriture** tapent **en même temps** — le vrai plafond, c'est leur **somme** :
+
+| Flux | Quoi | Latence tolérée | Chemin |
+|---|---|---|---|
+| **Inscription session** | s'inscrire à une session | ⏳ quelques sec OK | **file BullMQ** |
+| **Check-in session** (`SessionScan`) | scan d'entrée **dans une session** | ⚡ immédiat | **HTTP synchrone** |
+| **Check-in entrée** (`checked_in_at`) | scan d'entrée de l'**event** | ⚡ immédiat | **HTTP synchrone** |
+
+> ⚠️ **Les 3 notions de présence sont distinctes** (déjà acté §3 du README). Le check-in session ≠
+> check-in entrée.
+
+### Conséquences
+1. **La mesure isolée sous-estime la charge réelle** → tester le **scénario combiné** en k6 (trafic
+   mixte : inscriptions + scans session + scans entrée simultanés). Trou dans le plan actuel →
+   [load-test-plan](../../../infra/lfd-2026-load-test-plan.md).
+2. **Le check-in ne peut PAS être mis en file** (personne à la porte → « admis/refusé » immédiat).
+   → il faut **isoler + prioriser** le chemin check-in face à la rafale d'inscriptions.
+
+### Isolation — faisable JOUR J, SANS clustering
+> **Worker séparé ≠ clustering.** Un worker BullMQ (L8) est une **séparation de rôles** mono-machine
+> (l'API sert le HTTP, le worker vide la file). Il ne tient **ni socket ni imprimante** → **aucun**
+> problème d'état. Le clustering (L13, interdit avant tests verts) concerne **plusieurs copies du rôle
+> stateful** — pas ça.
+
+Trois leviers, **tous mono-machine** :
+1. **La file isole déjà** : les inscriptions dans BullMQ n'occupent pas les threads HTTP des check-ins ;
+   le worker draine à ~33/s **en arrière-plan**.
+2. **Budget de connexions DB réservé** au check-in (pools pgBouncer distincts) → une rafale d'inscriptions
+   ne peut pas **assécher** les connexions du check-in. = **config**.
+3. **(Optionnel) process dédié check-in** : OK sur une machine car les endpoints check-in sont
+   **sans état** (insert scan + contrôle capacité Redis). Toujours **pas** du clustering.
+
+---
+
+## 2f. Waitlist & confirmation asynchrone
+
+### Waitlist — back = vérité, front = affichage
+- **Back** (propriétaire) : `DECR < 0` + `waitlist_enabled` → `status=waitlisted` (+ liste Redis) ;
+  gère **position** et **promotion** (annulation → `INCR` → promeut la tête de file → `confirmed` → notifie).
+- **Front** : affiche « en liste, position N » ; écoute le WS → « une place s'est libérée, confirmé ».
+
+### Fin d'inscription — confirmation synchrone, travail async
+- **Immédiat (sync)** : `DECR ≥ 0` **garantit la place** → réponse HTTP « ✅ inscrit » **tout de suite**
+  (pas besoin d'attendre l'écriture DB).
+- **Différé (async)** : persistance Postgres + email + PDF badge → **file BullMQ**.
+- **Pas du fire-and-forget aveugle** : BullMQ **retry** + **dead-letter** → rien perdu silencieusement.
+- **Notif front de fin** : email (billet) et/ou **push WS** « billet prêt » si confort temps réel voulu.
+
+> UX cible : **place confirmée instantanément** (portier), **billet qui arrive juste après** (file).
+
+---
+
 ## 3. Ordre de construction (la vérité avant le tuyau)
 
 | # | Brique | Dépend de |
@@ -120,8 +175,9 @@ initial** (état sessions). Deux pièges :
 | 5 | **Front** : abonnement + MAJ UI | 4 |
 | 6 | **Config infra** : `ulimit`, nginx upgrade/timeout | 4 |
 | 7 | **Endpoint read (snapshot)** servi par Redis + **pré-chauffe** + single-flight | 1 |
-| 8 | **CDN** pour le bundle front | — |
-| 9 | **Test de charge** : N clients WS + rafale d'inscriptions + démarrage à froid | tout |
+| 8 | **CDN** pour le bundle front (ou nginx statique + cache headers — suffit à 3000) | — |
+| 9 | **Isolation check-in** : pool DB réservé (pgBouncer) + priorité sur la rafale inscriptions | levier L2 |
+| 10 | **Test de charge COMBINÉ** : WS + inscriptions (file) + check-ins session/entrée (sync) simultanés | tout |
 
 ---
 
@@ -138,6 +194,10 @@ initial** (état sessions). Deux pièges :
       Postgres pour le read initial (single-flight vérifié).
 - [ ] **Cohérence pull/push** : après un changement, pull et push renvoient la **même** valeur
       (état absolu, écriture Redis avant émission).
+- [ ] **Pic combiné** : sous inscriptions (rafale) **+** check-ins session/entrée simultanés, les
+      check-ins gardent une latence < 1s (le chemin sync n'est pas affamé par la file).
+- [ ] **Waitlist** : session pleine → `waitlisted` ; annulation → promotion auto de la tête de file + notif.
+- [ ] **Confirmation** : place confirmée en sync (portier) ; échec de persistance → retry BullMQ (pas de perte).
 
 ---
 

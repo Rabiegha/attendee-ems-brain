@@ -181,3 +181,35 @@ Redis a **deux casquettes** : **store clé-valeur** (la vérité, lue par le pul
 > Le passage « emit direct » → « écoute pub/sub » **est** exactement le `redis-adapter` de socket.io,
 > **la brique qui débloque le multi-instance**. Rien à faire pour l'event (mono-instance) ; obligatoire
 > après (cf. [scaling horizontal stateless](2026-07-08-scaling-horizontal-stateless.md)).
+
+---
+
+## Le pic COMBINÉ : mesurer la somme, pas les flux isolés
+
+Une mesure de débit sur **un seul flux** (ex. l'inscription) **sous-estime** la charge réelle. Le jour
+J, plusieurs flux d'**écriture** coexistent et **se somment** :
+
+| Flux | Latence tolérée | Chemin |
+|---|---|---|
+| Inscription | ⏳ quelques sec | **file** (async) |
+| Check-in « à la porte » | ⚡ immédiat | **HTTP synchrone** |
+
+> **Deux leçons :**
+> 1. **Tester le scénario COMBINÉ** (trafic mixte), jamais chaque flux isolément.
+> 2. **Ce qui a une personne qui attend physiquement ne se met PAS en file** (besoin d'une réponse
+>    immédiate). On **isole + priorise** ce chemin (pool DB réservé) face aux flux qui, eux, tolèrent
+>    la file.
+
+## Worker séparé ≠ clustering
+
+Séparer un **rôle sans état** (worker qui draine une file, handler qui ne fait qu'écrire) dans un
+process à part est **sûr et mono-machine** — ce **n'est pas** du clustering. Le clustering (risqué,
+post-event) = **plusieurs copies du rôle STATEFUL** (celui qui tient sockets/imprimantes en RAM). La
+séparation de rôles protège un chemin critique (ex. check-in) d'une rafale **sans** débloquer le refacto
+stateless.
+
+## CDN : pas un prérequis à petite échelle
+
+Un CDN se met **devant** l'origine, il ne s'installe pas sur le VPS. Mais à ~3000 users, le bundle front
+est téléchargé **une fois par navigateur** → **nginx en statique + cache headers suffit**. CDN
+(Cloudflare gratuit devant, ou natif) = *nice-to-have* pour la géo/offload, **pas** un blocage.
