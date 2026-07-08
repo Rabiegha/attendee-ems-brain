@@ -205,6 +205,10 @@ PK inchangée (`registration_id, session_id`). Check-in session = **toujours** `
 > reportable post-event. À insérer comme **nouveau Chantier** dans
 > [00-plan-action.md](../../en-cours/lfd2026/00-plan-action.md).
 
+> 🔴 **Forte charge (3000 simultanés + anti-survente + live) :** l'approche « polling + capacité en
+> base » ci-dessus **ne tient pas** sous pic. Design dédié (Redis portier atomique + WebSocket),
+> **à démarrer APRÈS chantier A (les leviers)** → [02-capacite-live-forte-charge.md](02-capacite-live-forte-charge.md).
+
 ---
 
 ## 9. Points de vigilance
@@ -213,6 +217,7 @@ PK inchangée (`registration_id, session_id`). Check-in session = **toujours** `
   ajoute la session) de « déjà inscrit à **cette session** » (idempotent). Ne pas rejouer le rejet actuel.
 - **Course capacité/waitlist** : le `COUNT` capacité est best-effort hors transaction aujourd'hui —
   sous pic LFD, décider si la promotion waitlist doit être sérialisée (advisory lock, comme le scan session).
+  → sous forte charge, remplacé par le **portier atomique Redis** ([02](02-capacite-live-forte-charge.md)).
 - **Ne pas fausser les compteurs** : l'inscription **ne crée pas** de `SessionScan` (décision A).
 - **Perf** : réutiliser les leviers du workstream `infra-scaling-pca` (tx courte, worker BullMQ,
   cache) — ne pas réintroduire une transaction interactive longue dans le register session.
