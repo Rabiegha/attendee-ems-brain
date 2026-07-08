@@ -105,6 +105,10 @@ est un **visualiseur de logs**, pas un système d'alerte.
 
 ## 0. Principe directeur (chantier A — refonte)
 
+> **📎 Fichiers liés (chantier A) :** [01-suivi-leviers.md](./01-suivi-leviers.md) (état vivant par levier) ·
+> [audit branche staging](../infra-scaling-pca/journal/2026-06-26-audit-branche-staging.md) ·
+> [NOW.md](../../../workspace-rabie/NOW.md) · [index des learnings](../../../learnings/README.md).
+
 **Ne rien perdre, tout rejouer proprement.** La branche `staging` reste l'archive de référence
 (mesures réelles + code validé). On repart d'une base propre depuis `main` et on rejoue chaque
 levier dans son propre commit, diff minimal, mesure avant/après.
@@ -228,8 +232,8 @@ levier dans son propre commit, diff minimal, mesure avant/après.
 > l'event. Le détail technique vit dans les docs dédiés ; ici = cadrage + priorité + reste à faire.
 
 ### Chantier B — Chaîne email → billet PDF  🔴 Haute
-> Réf : [diagnostic email/billet/wallet](./diagnostics/email-billet-wallet.md) §2.2 / §3
-> · [décision lib PDF/badge](./decisions/lib-pdf-badge.md) (choix moteur)
+> **📎 Fichiers liés :** [diagnostic email/billet/wallet §2.2 / §3](./diagnostics/email-billet-wallet.md) ·
+> [décision lib PDF/badge (choix moteur)](./decisions/lib-pdf-badge.md)
 
 Aujourd'hui le PDF du billet est généré (Puppeteer→R2) **mais n'est pas joint à l'email**.
 
@@ -269,7 +273,8 @@ préservée (même moteur Chromium), **faisable sans attendre la migration GCP**
 > Le **load test S4** doit inclure un scénario badge (le ~1,5 s/badge est encore une hypothèse).
 
 ### Chantier C — Migration ESP (délivrabilité)  🔴 Haute · ⏳ choix à trancher
-> Réf : diagnostic §1 (ligne « Stack email »)
+> **📎 Fichiers liés :** [diagnostic email/billet/wallet §1](./diagnostics/email-billet-wallet.md) ·
+> [décision ESP — Brevo vs Scaleway](./decisions/esp-brevo-vs-scaleway.md)
 
 Email actuel = **nodemailer SMTP direct** (pas un ESP) → risque de délivrabilité sur ~12 400 envois.
 
@@ -287,7 +292,7 @@ Email actuel = **nodemailer SMTP direct** (pas un ESP) → risque de délivrabil
 **Effort dev : ~moyen** ; **le vrai enjeu = délivrabilité + calendrier de warm-up.** Plus gros risque client.
 
 ### Chantier D — Sécurité QR  🔸 Moyenne
-> Réf : diagnostic §5
+> **📎 Fichiers liés :** [diagnostic email/billet/wallet §5](./diagnostics/email-billet-wallet.md)
 
 Le QR encode l'**UUID brut** de la registration, servi aussi sur une **route publique non
 authentifiée** (`/qrcode/:id`, seule garde : longueur ≥ 10).
@@ -303,7 +308,7 @@ authentifiée** (`/qrcode/:id`, seule garde : longueur ≥ 10).
 Sensible vu les **données nominatives MEAE**.
 
 ### Chantier E — Sauvegarde DB automatique  🔴 Haute · brief prêt
-> Réf : [brief-backup-automatique-db.md](../../../backlog/a-faire/brief-backup-automatique-db.md)
+> **📎 Fichiers liés :** [brief backup automatique DB](../../../backlog/a-faire/brief-backup-automatique-db.md)
 
 Le script `db-dump.sh` existe mais est **manuel**. MVP (le 80/20) :
 
@@ -319,7 +324,8 @@ Le script `db-dump.sh` existe mais est **manuel**. MVP (le 80/20) :
 **Effort : ~demi-journée** pour le MVP.
 
 ### Chantier F — Continuité d'activité  � Partiellement reportée (post-GCP)
-> Réf : [plan-continuite-activite.md](../infra-scaling-pca/plan-continuite-activite.md)
+> **📎 Fichiers liés :** [plan de continuité d'activité](../infra-scaling-pca/plan-continuite-activite.md) ·
+> [PCA LFD 2026](../../../infra/lfd-2026-pca.md) · [stratégie SLA](../../../infra/lfd-2026-sla-strategy.md)
 
 **Pourquoi la continuité est ultra importante :**
 - C'est **la seule protection contre l'erreur humaine et la corruption logique** pendant l'event.
@@ -349,7 +355,7 @@ PITR en plus du backup MVP). La HA complète arrive **avec GCP**, hors périmèt
 > *la continuité est couverte nativement. Sinon, le couple backup MVP + PITR léger est le filet.*
 
 ### Chantier G — Wallet Apple + Google  ⚪ V2 (hors périmètre event)
-> Réf : diagnostic §2.3 / §4
+> **📎 Fichiers liés :** [diagnostic email/billet/wallet §2.3 / §4](./diagnostics/email-billet-wallet.md)
 
 **Reporté en V2.** QR + PDF suffisent pour LFD 2026. À démarrer en V2 (avec délai de validation
 Apple en tête). Prérequis comptes (Apple Developer, Google Wallet API) détenus par Rabiegha, **tout
@@ -359,7 +365,10 @@ Apple en tête). Prérequis comptes (Apple Developer, Google Wallet API) détenu
 file/R2 + tests), **hors délais comptes/certifs** (validation Apple = calendaire, plusieurs jours).
 
 ### Chantier I — ⚡ Levier débit n°1 : compteur capacité dénormalisé + transaction courte  🔴 Haute (perf)
-> Réf : `attendee-ems-back/docs/infra/lfd-2026-load-test-results.md` §5 / §8 (recommandation prio 2)
+> **📎 Fichiers liés :** `attendee-ems-back/docs/infra/lfd-2026-load-test-results.md` §5/§8 ·
+> [carte stratégique 2 chantiers](../../../infra/lfd-2026-strategie-2-chantiers.md) ·
+> [learning — pic inscription temps réel](../../../learnings/2026-07-08-pic-inscription-temps-reel.md) ·
+> [plan de test de charge](../../../infra/lfd-2026-load-test-plan.md)
 
 **Pourquoi ça plafonne à ~30/s — c'est prouvé par nos propres mesures (25/06) :** ce n'est
 **ni le CPU** (2→4 cœurs = même débit : 32,8 → 32,65/s), **ni le pool DB** (1–4 connexions
@@ -389,7 +398,9 @@ verrou DB).
 > À rejouer **après A** (base propre), sur la branche `feat/register-capacity-counter`.
 
 ### Chantier H — Inscriptions par session (refonte sessions)  🔴 Haute (fonctionnel)
-> Réf : [sessions-inscriptions-lfd2026/README.md](../../a-faire/sessions-inscriptions-lfd2026/README.md)
+> **📎 Fichiers liés :** [workstream inscriptions/sessions — spec complète](../../a-faire/sessions-inscriptions-lfd2026/README.md) ·
+> [02 — capacité live forte charge](../../a-faire/sessions-inscriptions-lfd2026/02-capacite-live-forte-charge.md) ·
+> [rabbit-hole — billetterie publique app vs module](../../../rabbit-holes/en-cours/billeterie-publique-app-vs-module.md)
 
 **Besoin (cahier des charges) :** LFD comporte **plusieurs sessions** ; les inscriptions publiques
 doivent pouvoir se faire **au niveau session** (lien public **dédié par session**), avec **capacité +
@@ -414,6 +425,30 @@ lien) vs. avec inscription (lien public + capacité optionnelle + stats complèt
 > autres chantiers pour la capacité du mois. Phases 0–1 = **event-critique** (sans elles, pas
 > d'inscription par session). Phase 2 (front) = **à arbitrer** selon le buffer ; a minima une **V1
 > réduite** (cartes *mode-aware* + config lien/capacité + liste inscrits), le reste en phase 3.
+
+### Chantier J — Capacité live forte charge (portier Redis + WebSocket)  🔴 Haute (event)
+> **📎 Fichiers liés :** [02 — capacité live forte charge (spec)](../../a-faire/sessions-inscriptions-lfd2026/02-capacite-live-forte-charge.md) ·
+> [learning — pic inscription temps réel](../../../learnings/2026-07-08-pic-inscription-temps-reel.md) ·
+> [learning — scaling horizontal stateless](../../../learnings/2026-07-08-scaling-horizontal-stateless.md) ·
+> [carte stratégique 2 chantiers](../../../infra/lfd-2026-strategie-2-chantiers.md) ·
+> [plan de test de charge](../../../infra/lfd-2026-load-test-plan.md)
+
+**Besoin :** tenir **3000 inscriptions quasi simultanées** sur sessions à capacité serrée, avec **statut
+live** (pleine/fermée), **sans survente** ni saturation Postgres. Sépare **lecture** (statut → Redis/cache/
+WebSocket) et **écriture** (inscription → portier Redis atomique → file BullMQ → Postgres), et couvre le
+**pic combiné** inscriptions + check-ins. Inclut le levier candidat **L9.1** (compteur présence session O(1)).
+
+| Action | Temps estimé |
+| --- | --- |
+| Portier Redis atomique (anti-survente) + init/réconciliation | ~1 j |
+| Gateway WebSocket + rooms + émission au changement de statut (back + front) | ~1,5 – 2 j |
+| Endpoint read servi par Redis + pré-chauffe + single-flight | ~1 j |
+| Isolation check-in (pool DB réservé) + L9.1 compteur O(1) | ~1 j |
+| Test de charge **combiné** (insc + check-ins) + critères de gate | ~1 – 1,5 j |
+| **Sous-total J** | **~4 – 7 jours** |
+
+> ⚠️ **À démarrer APRÈS chantier A** (les leviers) et **après mesure** (les leviers + Gotenberg peuvent
+> suffire). Recoupe partiellement **H** (capacité/waitlist) et **I** (compteur capacité) — ne pas double-compter.
 
 ---
 
