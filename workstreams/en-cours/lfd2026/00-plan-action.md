@@ -337,7 +337,8 @@ Le script `db-dump.sh` existe mais est **manuel**. MVP (le 80/20) :
 
 ### Chantier F — Continuité d'activité  � Partiellement reportée (post-GCP)
 > **📎 Fichiers liés :** [plan de continuité d'activité](../infra-scaling-pca/plan-continuite-activite.md) ·
-> [PCA LFD 2026](../../../infra/lfd-2026-pca.md) · [stratégie SLA](../../../infra/lfd-2026-sla-strategy.md)
+> [PCA LFD 2026](../../../infra/lfd-2026-pca.md) · [stratégie SLA](../../../infra/lfd-2026-sla-strategy.md) ·
+> [workstream migration GCP (archi cible B)](../../a-faire/gcp-migration/README.md)
 
 **Pourquoi la continuité est ultra importante :**
 - C'est **la seule protection contre l'erreur humaine et la corruption logique** pendant l'event.

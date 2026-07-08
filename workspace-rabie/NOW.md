@@ -25,7 +25,7 @@ l'**archive de référence** — on ne perd rien.
 1. **L9** — transaction d'inscription allégée (`feat/register-tx-slim`) **+ test de non-régression**.
 2. **L9.1** — compteur présence session O(1) (`feat/session-present-counter`, colonne PG par défaut) **+ test**.
 3. **Chantier Cloud Run — génération PDF billet** (chantier B) : billet PDF joint à l'email (Gotenberg / Cloud Run).
-4. **Prépa du call de demain** : **post-event** + **review du setup Cloud Run** déjà effectué — point clé : [tenir l'event **sans GCP** (+ gate post-L9)](../workstreams/en-cours/lfd2026/decisions/tenir-event-sans-gcp.md).
+4. **Prépa du call de demain** : **post-event** + **review du setup Cloud Run** déjà effectué — points clés : [tenir l'event **sans GCP** (+ gate post-L9)](../workstreams/en-cours/lfd2026/decisions/tenir-event-sans-gcp.md) · [workstream migration GCP (archi cible B + questions Entiovi)](../workstreams/a-faire/gcp-migration/README.md).
 5. **Ensuite seulement** : reste des leviers/étapes du chantier A, workstream capacité live forte charge, **backlog mobile** (cf. « Ensuite »).
 
 > ⚠️ **Validation post-leviers OBLIGATOIRE** : une fois L9 **et** L9.1 appliqués, **re-tester que tout
@@ -73,9 +73,10 @@ l'**archive de référence** — on ne perd rien.
    ➡️ [02-capacite-live-forte-charge](../workstreams/a-faire/sessions-inscriptions-lfd2026/02-capacite-live-forte-charge.md).
 6. **Backlog mobile LFD2026** : pagination sessions, offline scans fiable, perf liste ~20k attendees, refactor check-in/out historique, bug recherche entreprise…
    ➡️ [appli-mobile-lfd2026](../backlog/en-cours/appli-mobile-lfd2026.md).
-7. **API scaling — clustering multi-worker** (post-event) : présence + imprimantes en **Redis**, `redis-adapter`, sticky nginx, tests cross-worker. Fondation du scaling horizontal.
+7. **API scaling — clustering multi-worker** (post-event) : présence + imprimantes en **Redis**, `redis-adapter`, sticky nginx, tests cross-worker. Fondation du scaling horizontal — **le verrou de la migration GCP**.
    ➡️ [workstream api-scaling-clustering](../workstreams/en-cours/api-scaling-clustering/README.md).
-8. **Migration GCP complète** (post-event) — Cloud SQL HA/PITR, Memorystore, LB, Cloud Run.
+8. **Migration GCP complète** (post-event) — **archi cible Stratégie B** (Cloud SQL HA/PITR, Memorystore, LB, MIG, Cloud Run), un seul cutover, mono-instance au début.
+   ➡️ [workstream gcp-migration](../workstreams/a-faire/gcp-migration/README.md).
 
 ---
 
