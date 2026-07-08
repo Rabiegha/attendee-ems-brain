@@ -26,8 +26,10 @@
 | **0-CI** | CI/CD **minimaliste** (build+test PR + deploy staging) | 🔴 Haute | ❌ À créer | §P0 |
 | **E** | Sauvegarde DB automatique (cron + offsite + restore testé) | 🔴 Haute | Brief prêt | §3-E |
 | **D** | Sécurité QR (signature HMAC + durcir route publique) | 🔸 Moyenne | **Gardé** (simple) | §3-D |
-| **B** | Chaîne email → billet PDF (rendu **Gotenberg/Cloud Run**, hors VPS) | 🔴 Haute | ✅ Moteur tranché (D) | §3-B |
+| **B0** | **Email → billet PDF (POC)** — Cloud Run **déjà en place** → rendu Gotenberg → PDF joint (chemin heureux) | 🔴 Haute | 🟡 Cloud Run fait, code à brancher | §3-B |
+| **B1** | **Email → billet PDF (durcissement)** — auth s2s, fallback lien, séquencement, edge cases, tests | 🔴 Haute | ⚪ Après B0 | §3-B |
 | **H** | **Inscriptions par session** (lien public par session + capacité/waitlist + refonte front) | 🔴 Haute (**fonctionnel**) | 🟡 Cadré, prêt à découper | §3-H |
+| **J** | **Capacité live forte charge** — portier Redis (anti-survente) + WebSocket statut live + **pic combiné** insc/check-in | 🔴 Haute (**event**) | 🟡 Cadré (workstream 02) | [ws 02](../../a-faire/sessions-inscriptions-lfd2026/02-capacite-live-forte-charge.md) |
 | **F** | Continuité — **HA réplication** | 🔵 **Reporté → migration GCP** | HA/PITR natifs Cloud SQL | §3-F |
 | **G** | Wallet Apple + Google | ⚪ V2 | Hors périmètre event | §3-G |
 
@@ -235,16 +237,26 @@ Aujourd'hui le PDF du billet est généré (Puppeteer→R2) **mais n'est pas joi
 On sort **totalement** le rendu PDF du VPS (le goulot CPU mesuré) → charge jour-J neutralisée, fidélité
 préservée (même moteur Chromium), **faisable sans attendre la migration GCP**.
 
+> ✂️ **Découpé en B0 (POC, faisable cet aprem) + B1 (durcissement)** — le Cloud Run est **déjà déployé**
+> (à reviewer au call de demain), donc l'item infra ci-dessous est **déjà fait**.
+
+#### B0 — POC (chemin heureux) · **~½ j** (Cloud Run déjà fait)
 | Action | Temps estimé |
 | --- | --- |
-| **Déployer Gotenberg sur Cloud Run** (image + config min-instances) | ~½ j |
-| **Auth service-to-service** (IAM / clé) + egress VPS→GCP sécurisé | ~½ j |
+| ~~Déployer Gotenberg sur Cloud Run~~ — **✅ déjà fait** (review demain) | — |
 | Brancher le back sur le service de rendu (remplacer l'appel Puppeteer local pour le billet) | ~½ – 1 j |
 | Générer (ou réutiliser le cache R2) le PDF à la confirmation + brancher dans le flux | ~1 h 30 |
-| Joindre le PDF à l'email + **lien de secours** (URL R2 signée) | ~1 h |
+| Joindre le PDF à l'email (chemin nominal) | ~1 h |
+
+#### B1 — Durcissement (prod 12 400 envois) · **~1,5 – 2 j**
+| Action | Temps estimé |
+| --- | --- |
+| **Auth service-to-service** (IAM / clé) + egress VPS→GCP sécurisé (ne pas exposer Gotenberg) | ~½ j |
+| **Lien de secours** (URL R2 signée) si le rendu échoue | ~1 h |
 | Séquencer : email envoyé **seulement quand le billet est prêt** (billet → email) | ~1 h |
+| Fidélité template (polices, accents, format badge) + edge cases | ~½ j |
 | Tests (idempotence, échec génération, fallback lien, cold-start) | ~1 h |
-| **Sous-total B** | **~2 – 3 jours** |
+| **Sous-total B (B0 + B1)** | **~2 – 3 jours** |
 
 **Effort : ~moyen-élevé** (nouveau service managé à exploiter, mais charge VPS éliminée).
 
@@ -413,19 +425,26 @@ lien) vs. avec inscription (lien public + capacité optionnelle + stats complèt
 | **I** — ⚡ Levier débit n°1 (compteur capacité + tx courte) | **~1,5 jours** | — |
 | **0-CI** — CI/CD **minimal** | **~2 jours** | — |
 | **0-MON** — Monitoring **minimal** | **~2 jours** | comptes outils (uptime/Sentry) |
-| **B** — Email → billet PDF (**Gotenberg/Cloud Run**) | **~2 – 3 jours** | service Cloud Run (~< 1 – 12 €) |
+| **B0** — Email → billet PDF (**POC**, Cloud Run déjà fait) | **~½ j** | service Cloud Run (déjà déployé) |
+| **B1** — Email → billet PDF (**durcissement**) | **~1,5 – 2 j** | (~< 1 – 12 € compute) |
 | **C** — Migration ESP | **~2 – 3 jours** | propagation DNS + **warm-up (1-2 sem)** |
 | **D** — Sécurité QR HMAC | **~1 – 2 jours** | — (coordination 2 repos clients) |
 | **E** — Backup auto (MVP) + PITR léger | **~1,5 – 2 jours** | — |
 | **H** — Inscriptions par session (phases 0–2) | **~5,5 – 8,5 jours** | — |
+| **J** — Capacité live forte charge (portier Redis + WebSocket + pic combiné) | **~4 – 7 jours** | — (Redis déjà présent) |
 | **F** — HA réplication complète | 🔵 **reporté** | → migration GCP |
 | **G** — Wallet (V2) | ~1 semaine *(hors event)* | validation Apple |
-| **Total périmètre event (mois)** | **~18 – 24 jours-dev** | DNS + warm-up ESP + Cloud Run |
+| **Total périmètre event (mois)** | **~22 – 31 jours-dev** | DNS + warm-up ESP + Cloud Run |
 
-> **⚡ Lecture capacité :** ~18-24 jours-dev sur **2 devs × ~20 j ouvrés = ~40 j-dev de capacité**
-> → **ça rentre encore** (≈ 45-60 % de la capacité), mais le **buffer se réduit** avec l'ajout du
-> Chantier H (fonctionnel). Conditions : **tenir le descope** (HA → GCP, CD complet → post-event,
-> wallet → V2) et traiter **H phase 2 (front) en V1 réduite**, variable d'ajustement du planning.
+> ⚠️ **Chevauchement à arbitrer :** le chantier **J** (capacité live forte charge) recoupe en partie
+> **H** (inscriptions par session : capacité/waitlist) et **I** (compteur capacité). Ne pas double-compter :
+> une fois H/I cadrés, une partie de J est déjà couverte. J = le **sur-ensemble forte charge** (portier
+> Redis anti-survente + WebSocket live + pic combiné insc/check-in), à livrer pour l'event.
+
+> **⚡ Lecture capacité :** ~22-31 jours-dev sur **2 devs × ~20 j ouvrés = ~40 j-dev de capacité**
+> → **ça passe encore mais le buffer est mince** (≈ 55-77 % de la capacité) avec l'ajout de **J**.
+> Conditions impératives : **tenir le descope** (HA → GCP, CD complet → post-event, wallet → V2),
+> traiter **H phase 2 (front) en V1 réduite**, et **prioriser dur** (L9/L9.1 + B0 + J d'abord).
 > Voir le **planning daté** ci-dessous.
 
 ---
