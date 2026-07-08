@@ -15,20 +15,23 @@ l'**archive de référence** — on ne perd rien.
 
 **Plan maître :** [00-plan-action.md](../workstreams/en-cours/lfd2026/00-plan-action.md) (chantier A, §0–§2)
 · **Workstream :** [infra-scaling-pca](../workstreams/en-cours/infra-scaling-pca/README.md)
+· **📌 Suivi vivant (état par levier) :** [01-suivi-leviers.md](../workstreams/en-cours/lfd2026/01-suivi-leviers.md) — **à ouvrir au début de chaque chat**.
 
 **Prochaine action :**
-➡️ **Étape 0 — geler & archiver** : `git tag archive/staging-2026-06-25` sur back **et** brain, puis push des tags.
+➡️ **Levier suivant : L9** (transaction allégée, branche `feat/register-tx-slim`) — + merger la MR [#14](https://github.com/Rabiegha/attendee-ems-back/pull/14) (L1/L2/L10) sur `dev`.
 
 ### Étapes du chantier A (~3 h 35, hors temps k6)
 
-- [ ] **0.** Geler & archiver (2 tags `archive/staging-2026-06-25` poussés).
-- [ ] **1.** Séparer reformatage / logique (couper le prettier-on-save ; commit `style:` isolé si besoin).
-- [ ] **2.** Rejouer les **5 leviers**, 1 branche + 1 commit + 1 mesure chacun :
-  - L9 transaction allégée — `feat/register-tx-slim`
-  - L7 email async BullMQ — `feat/email-async-bullmq`
-  - L8 worker `PROCESS_ROLE` (Voie A) — `feat/process-role-worker`
-  - L3 `directUrl` Prisma — `chore/prisma-directurl`
-  - L1/L2/L10 stack staging + pgBouncer + pool — `infra/staging-stack`
+> État détaillé par levier/branche → [01-suivi-leviers.md](../workstreams/en-cours/lfd2026/01-suivi-leviers.md).
+
+- [x] **0.** Geler & archiver (tag `archive/staging-2026-06-25` + branche `staging-archive-2026-06-25`).
+- [x] **1.** Séparer reformatage / logique (format-on-save vérifié OFF).
+- [ ] **2.** Rejouer les **5 leviers**, 1 branche + 1 commit + 1 mesure chacun — **1/5 fait** :
+  - 🟢 L1/L2/L10 stack staging + pgBouncer + pool — `infra/staging-stack` (codé+testé local, MR #14)
+  - ⚪ L9 transaction allégée — `feat/register-tx-slim`
+  - ⚪ L7 email async BullMQ — `feat/email-async-bullmq`
+  - ⚪ L8 worker `PROCESS_ROLE` (Voie A) — `feat/process-role-worker`
+  - ⚪ L3 `directUrl` Prisma — `chore/prisma-directurl`
 - [ ] **3.** Réconcilier la doc : trancher le chiffre réel (**~25/s plafond CPU** mesuré vs « ~33/s DB » écrit) dans `infra-scaling-pca/README.md`.
 - [ ] **4.** Post-mortem 502 prod → `bugs/2026-06-25-prod-502-collision-compose.md`.
 - [ ] **5.** Isoler le compose prod dans une **PR dédiée** (ne pas merger sans revue).
