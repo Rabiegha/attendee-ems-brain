@@ -24,7 +24,7 @@
 | **C** | Migration ESP (Brevo/Scaleway) — délivrabilité ~12 400 envois | 🔴 Haute | ⚠️ **warm-up à lancer J1** | §3-C |
 | **0-MON** | Monitoring & alerting **minimal** (uptime / Sentry / CPU) | 🔴 Haute | ❌ À créer | §P0 |
 | **0-CI** | CI/CD **minimaliste** (build+test PR + deploy staging) | 🔴 Haute | ❌ À créer | §P0 |
-| **E** | Sauvegarde DB automatique (cron + offsite + restore testé) | 🔴 Haute | Brief prêt | §3-E |
+| **E** | Sauvegarde DB automatique (cron + offsite + restore testé) | 🔴 Haute | ✅ **Terminé** — [PR #15](https://github.com/Rabiegha/attendee-ems-back/pull/15) | §3-E |
 | **D** | Sécurité QR (signature HMAC + durcir route publique) | 🔸 Moyenne | **Gardé** (simple) | §3-D |
 | **B0** | **Email → billet PDF (POC)** — Cloud Run **déjà en place** → rendu Gotenberg → PDF joint (chemin heureux) | 🔴 Haute | 🟡 Cloud Run fait, code à brancher | §3-B |
 | **B1** | **Email → billet PDF (durcissement)** — auth s2s, fallback lien, séquencement, edge cases, tests | 🔴 Haute | ⚪ Après B0 | §3-B |
@@ -319,21 +319,28 @@ authentifiée** (`/qrcode/:id`, seule garde : longueur ≥ 10).
 **Effort : ~faible-moyen**, mais **touche 2 clients** (mobile + print-client) → coordination.
 Sensible vu les **données nominatives MEAE**.
 
-### Chantier E — Sauvegarde DB automatique  🔴 Haute · brief prêt
-> **📎 Fichiers liés :** [brief backup automatique DB](../../../backlog/a-faire/brief-backup-automatique-db.md)
+### Chantier E — Sauvegarde DB automatique  ✅ TERMINÉ · [PR #15](https://github.com/Rabiegha/attendee-ems-back/pull/15)
+> **📎 Fichiers liés :** [brief backup automatique DB](../../../backlog/a-faire/brief-backup-automatique-db.md) ·
+> [scripts/backup/](https://github.com/Rabiegha/attendee-ems-back/tree/feature/db-backup/scripts/backup)
 
-Le script `db-dump.sh` existe mais est **manuel**. MVP (le 80/20) :
+**Livraison complète — dépasse le brief initial sur 3 points.**
 
-| Action | Temps estimé |
-| --- | --- |
-| **Cron** : 1 dump/jour en fenêtre creuse (wrapper autour du script existant) | ~1 h |
-| **Offsite** : push de chaque dump hors VPS (R2) + chiffrement au repos | ~1 h 30 |
-| **Restore testé** : 1 restauration prouvée sur staging + procédure documentée | ~1 h 30 |
-| **Alerte** si un dump échoue | ~1 h |
-| **Sous-total E (MVP)** | **~5 h** |
-| *(Plus tard)* paliers de rétention grand-père/père/fils | ~2 h |
+| Action | Temps estimé | Statut |
+| --- | --- | --- |
+| **Cron** : timer systemd `ems-db-backup` 03:00, `Persistent=true` | ~1 h | ✅ Livré |
+| **Offsite** : gpg AES256 + rclone R2, checksum vérifié post-upload | ~1 h 30 | ✅ Livré |
+| **Restore testé** : test automatisé quotidien 04:00 + exercice sinistre DR (`DROP SCHEMA CASCADE`) + runbook | ~1 h 30 | ✅ **Dépassé** (7 nuits de run, RTO=287–303 s mesuré) |
+| **Alerte** si dump/restore échoue | ~1 h | ✅ Livré (email SMTP, 2 destinataires) |
+| **Sous-total E (MVP)** | **~5 h** | ✅ |
+| ~~*(Plus tard)*~~ paliers rétention GFS locaux (7j/4sem/3mois) + tiering R2 (30j/12sem/~13mois) | ~2 h | ✅ **Anticipé et livré** |
 
-**Effort : ~demi-journée** pour le MVP.
+> **Résultats après 7 jours de run automatique :** 7/7 backups OK · 7/7 restore-tests VERTS ·
+> RTO 287–303 s · 0 échec réel · disque VPS plafonné à ~40 Go (tiering R2 porte le long terme).
+
+> **Non livré dans E (appartient à F) :** archivage WAL / PITR léger — non fait, marqué
+> « si le temps le permet » dans §3-F. Filet de sécurité assuré par le backup MVP.
+
+**Effort réel : ~2 jours** (MVP + paliers + tests + bugs fixes alerting).
 
 ### Chantier F — Continuité d'activité  � Partiellement reportée (post-GCP)
 > **📎 Fichiers liés :** [plan de continuité d'activité](../infra-scaling-pca/plan-continuite-activite.md) ·
@@ -357,7 +364,7 @@ Le script `db-dump.sh` existe mais est **manuel**. MVP (le 80/20) :
 
 | Action | Temps estimé | Statut |
 | --- | --- | --- |
-| **Backup MVP** (cf. chantier E) — dump auto + offsite + restore testé | cf. E | ✅ à faire |
+| **Backup MVP** (cf. chantier E) — dump auto + offsite + restore testé | cf. E | ✅ **Terminé** ([PR #15](https://github.com/Rabiegha/attendee-ems-back/pull/15)) |
 | **Archivage WAL / PITR léger** sur le VPS (sans réplica HA) — « remonter le temps » | ~4 h | ✅ à faire si le temps le permet |
 | ~~Réplication streaming + bascule HA~~ | ~2-3 j | 🔵 **reporté → migration GCP** |
 
@@ -500,7 +507,7 @@ WebSocket) et **écriture** (inscription → portier Redis atomique → file Bul
 | **B1** — Email → billet PDF (**durcissement**) | **~1,5 – 2 j** | (~< 1 – 12 € compute) |
 | **C** — Migration ESP | **~2 – 3 jours** | propagation DNS + **warm-up (1-2 sem)** |
 | **D** — Sécurité QR HMAC | **~1 – 2 jours** | — (coordination 2 repos clients) |
-| **E** — Backup auto (MVP) + PITR léger | **~1,5 – 2 jours** | — |
+| ~~**E** — Backup auto (MVP) + PITR léger~~ | ~~**~1,5 – 2 jours**~~ | ✅ **Backup MVP terminé** (PITR = §3-F, hors scope E) |
 | **H** — Inscriptions par session (phases 0–2) | **~5,5 – 8,5 jours** | — |
 | **J** — Capacité live forte charge (portier Redis + WebSocket + pic combiné) | **~4 – 7 jours** | — (Redis déjà présent) |
 | **K** — Résilience event (checklist protections : saturation/disque/perte/recovery testé) | **~½ – 1 jour** *(surtout vérif + runbooks)* | — |
@@ -532,7 +539,7 @@ WebSocket) et **écriture** (inscription → portier Redis atomique → file Bul
 | 🔴 P0/P1 | **I** — ⚡ Levier débit n°1 (compteur capacité dénormalisé + tx courte) | **Le seul levier qui lève le plafond ~30/s** — juste après A, avant le load test S4 |
 | 🔴 P1 | **0-MON** — Monitoring minimal (uptime + alerte + Sentry) | Gardé (réduit) |
 | 🔴 P1 | **0-CI** — CI/CD **minimaliste** (build+test PR + deploy staging) | Gardé (réduit, **sans CD/rollback auto**) |
-| 🔴 P1 | **E** — Backup auto MVP | Gardé (filet de sécurité event) |
+| ✅ — | **E** — Backup auto MVP | ✅ **Terminé** — [PR #15](https://github.com/Rabiegha/attendee-ems-back/pull/15) |
 | � P1 | **H** — Inscriptions par session | **Nouveau** besoin fonctionnel LFD — ph. 0–1 **event-critique** ; ph. 2 front **à arbitrer** (V1 réduite) |
 | �🔸 P1 | **D** — Sécurité QR HMAC | **Gardé** (simple, données MEAE) |
 | 🟠 P2 | **B** — Email → billet PDF | Gardé **si le client l'exige** pour l'event, sinon V2 |
