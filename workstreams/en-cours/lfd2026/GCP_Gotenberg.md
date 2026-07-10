@@ -358,7 +358,7 @@ observabilité **métier** après mes logs (phase 5/6), préparation architectur
 
 | Date | Call | Points à évoquer |
 |---|---|---|
-| Jeu 09/07 (auj.) | Kickoff / partage dossier | Présenter archi cible + responsabilités ; lancer côté GCP : **rôle Cloud Run Invoker** + **egress OVH→GCP** ; questions ouvertes §10 |
+| Ven 10/07 | Kickoff / partage dossier | Présenter archi cible + responsabilités ; lancer côté GCP : **rôle Cloud Run Invoker** + **egress OVH→GCP** ; questions ouvertes §10 |
 | **Mar 14/07** | **Call validation** | Valider **région** + **archi finale** ; smoke test **connexion service-to-service (egress)** + **auth OIDC** ; GCP confirme Invoker ; = objectif §12 |
 | Jeu 16/07 | Suivi intégration | Avancement plugin/staging ; GCP démarre **observabilité infra** ; caler les logs métier attendus |
 | Mar 21/07 | Résultats staging | Ajuster **max instances / concurrency / min-instances** + **max payload** selon tests ; observabilité **métier** (codes erreur) |
