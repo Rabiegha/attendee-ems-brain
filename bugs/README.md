@@ -27,6 +27,7 @@ Le détail vit dans les workstreams concernés :
 
 | Bug | App | Où c'est traité |
 |---|---|---|
+| **502 prod 25/06 — collision nom de projet Docker Compose** (post-mortem) | back/infra | [fait/2026-06-25-prod-502-collision-compose](fait/2026-06-25-prod-502-collision-compose.md) · garde-fous → [backlog](../backlog/a-faire/garde-fous-deploiement-staging.md) |
 | Éjection au hard restart | mobile | [workstreams/en-cours/mobile-stabilization/01](../workstreams/fait/mobile-eject-socket-resilient-delta-async/01-eject-hard-restart.md) |
 | Éjection à l'ouverture du scan | mobile | [workstreams/en-cours/mobile-stabilization/02](../workstreams/fait/mobile-eject-socket-resilient-delta-async/02-eject-on-scan.md) |
 | Crash écran gris à la reconnexion (check-in + undo offline) | mobile | [workstreams/en-cours/mobile-stabilization/03 §8.3](../workstreams/fait/mobile-eject-socket-resilient-delta-async/03-socket-resilient-delta-sync.md) — `ConflictsBanner.tsx` Rules of Hooks |

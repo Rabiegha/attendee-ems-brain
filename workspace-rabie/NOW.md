@@ -46,7 +46,7 @@ l'**archive de référence** — on ne perd rien.
   - ⚪ L8 worker `PROCESS_ROLE` (Voie A) — `feat/process-role-worker`
   - ⚪ L3 `directUrl` Prisma — `chore/prisma-directurl`
 - [ ] **3.** Réconcilier la doc : trancher le chiffre réel (**~25/s plafond CPU** mesuré vs « ~33/s DB » écrit) dans `infra-scaling-pca/README.md`.
-- [ ] **4.** Post-mortem 502 prod → `bugs/2026-06-25-prod-502-collision-compose.md`.
+- [x] **4.** Post-mortem 502 prod → [bugs/fait/2026-06-25-prod-502-collision-compose.md](../bugs/fait/2026-06-25-prod-502-collision-compose.md) (garde-fous → [backlog](../backlog/a-faire/garde-fous-deploiement-staging.md)).
 - [ ] **5.** Isoler le compose prod dans une **PR dédiée** (ne pas merger sans revue).
 - [ ] **6.** **Cadrer l'interdit** (note, pas de code) — voir bloc ci-dessous.
 

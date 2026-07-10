@@ -20,14 +20,24 @@
 
 ---
 
-## 1. Transférer les fichiers sur le VPS
+## 1. Récupérer le code sur le VPS (répertoire dédié, jamais le dossier prod)
 
-Depuis le repo local :
+> ✅ Garde-fou post-incident 502 : le staging vit dans **son propre checkout**
+> `/opt/ems-attendee/staging/backend` (branche `staging`). Ne jamais lancer le compose
+> staging depuis `/opt/ems-attendee/backend/` (dossier prod).
+
+Première fois (déjà fait le 2026-07-10) :
 
 ```bash
-cd attendee-ems-back
-scp docker-compose.staging.yml .env.staging.example \
-    debian@51.75.252.74:/opt/ems-attendee/backend/
+ssh debian@51.75.252.74
+git clone --branch staging git@github.com:Rabiegha/attendee-ems-back.git \
+    /opt/ems-attendee/staging/backend
+```
+
+Ensuite, à chaque levier mergé sur `staging` :
+
+```bash
+cd /opt/ems-attendee/staging/backend && git pull
 ```
 
 Le dump est déjà sur le serveur : `/opt/ems-attendee/backups/ems-prod-20260624-234323-pre-pgbouncer.dump`.
@@ -36,8 +46,8 @@ Le dump est déjà sur le serveur : `/opt/ems-attendee/backups/ems-prod-20260624
 
 ```bash
 ssh debian@51.75.252.74
-cd /opt/ems-attendee/backend
-cp .env.staging.example .env.staging
+cd /opt/ems-attendee/staging/backend
+cp .env.staging.example .env.staging   # déjà en place (déplacé depuis le dossier prod le 2026-07-10)
 # Éditer .env.staging : remplir STAGING_USER / STAGING_PWD / STAGING_DB,
 # REDIS_PASSWORD, et générer les JWT (openssl rand -base64 64).
 # Laisser SMTP_HOST=mailpit et EMAIL_ENABLED=true (capture Mailpit).

@@ -26,6 +26,7 @@ Sujets pour **plus tard**, toutes apps confondues. Vient de l'inbox `[idea]`.
 | [Backlog technique](a-faire/BACKLOG-TECH.md) | transversal | Chantiers techniques (faux succès scan session, idempotence locale, OTA, print offline…). Contient lui-même ses sections Fait / En cours / À faire. |
 | [Plan CI/CD](a-faire/CI_CD_PLAN.md) | infra | Mise en place de l'intégration / déploiement continu. |
 | [Backup automatique DB](a-faire/brief-backup-automatique-db.md) | back/infra | Cron de dump + rétention sur le VPS. |
+| [Garde-fous déploiement staging](a-faire/garde-fous-deploiement-staging.md) | infra | 6 garde-fous anti-collision prod (post-mortem 502 du 25/06 + résurrection branche du 09/07) — tableau fait/à faire. |
 | [Onboarding multi-tenant](a-faire/onboarding-multi-tenant.md) | back | Création d'organization, premier user, invitations, membership. |
 | [Billing & plan management](a-faire/billing-plan-management.md) | back | Visibilité plan / subscription tenant, compteurs de limites, base Stripe (lecture seule). |
 | [Platform Admin Console](a-faire/platform-admin-console.md) | back | Console plateforme éditeur (section `/platform` MVP). |

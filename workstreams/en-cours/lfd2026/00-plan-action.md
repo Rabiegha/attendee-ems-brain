@@ -16,6 +16,8 @@
 ## Vue d'ensemble des chantiers
 
 > **Cadre :** échéance **1 mois**, **2 devs**. Périmètre **descopé** pour tenir (cf. §4 + planning).
+> **📊 Avancement vivant (%, temps, jalons) → [03-suivi-chantiers.md](./03-suivi-chantiers.md)** ·
+> rapports hebdo manager → [rapports/](./rapports/2026-W28-rapport-hebdo.md).
 
 | # | Chantier | Priorité | Statut | Détail |
 |---|---|---|---|---|
@@ -30,6 +32,7 @@
 | **B1** | **Email → billet PDF (durcissement)** — auth s2s, fallback lien, séquencement, edge cases, tests | 🔴 Haute | ⚪ Après B0 | §3-B |
 | **H** | **Inscriptions par session** (lien public par session + capacité/waitlist + refonte front) | 🔴 Haute (**fonctionnel**) | 🟡 Cadré, prêt à découper | §3-H |
 | **J** | **Capacité live forte charge** — portier Redis (anti-survente) + WebSocket statut live + **pic combiné** insc/check-in | 🔴 Haute (**event**) | 🟡 Cadré (workstream 02) | [ws 02](../../a-faire/sessions-inscriptions-lfd2026/02-capacite-live-forte-charge.md) |
+| **BIL** | **Plateforme billetterie** — gestion billetterie + landing pages + **backoffice client** | 🔴 Haute (**produit**) | 🟡 **En cours ~40 %** (démarré 07/07) — finalisation dépend de H+J | §3-BIL |
 | **K** | **Résilience event** — checklist finale : être sûr que **tout ce qui protège** est en place (saturation, disque, perte, recovery testé) | 🔴 Haute (**event**) | 🔴 À vérifier avant J-7 | [ws résilience](../../a-faire/resilience-event-lfd2026/README.md) |
 | **F** | Continuité — **HA réplication** | 🔵 **Reporté → migration GCP** | HA/PITR natifs Cloud SQL | §3-F |
 | **G** | Wallet Apple + Google — **harnais dans B · onboarding now · Google fast-follow · Apple hors chemin critique** | 🟡 Découpé (was ⚪ V2) | Onboarding à lancer J1 | §3-G |
@@ -493,6 +496,32 @@ WebSocket) et **écriture** (inscription → portier Redis atomique → file Bul
 > ⚠️ **À démarrer APRÈS chantier A** (les leviers) et **après mesure** (les leviers + Gotenberg peuvent
 > suffire). Recoupe partiellement **H** (capacité/waitlist) et **I** (compteur capacité) — ne pas double-compter.
 
+### Chantier BIL — Plateforme billetterie (landing pages + backoffice client)  🔴 Haute (produit)
+
+> **📎 Suivi vivant :** [03-suivi-chantiers.md](./03-suivi-chantiers.md) · **Owner :** Corentin · **Démarré :** 2026-07-07.
+
+**Besoin :** offrir au client une **plateforme billetterie** complète :
+- **Gestion de la billetterie** (billets, offres, inscriptions).
+- **Création de landing pages** par event/session.
+- **Backoffice client** : le client gère lui-même sa billetterie et ses pages sans passer par nous.
+
+**État (2026-07-10) : ~40 %** — socle de la plateforme et du backoffice en place.
+
+**Dépendances bloquantes :** la finalisation attend surtout la fin de **H** (inscriptions par
+session : lien public, capacité/waitlist) et **J** (capacité live : statut plein/fermé temps réel)
+— la billetterie branche ses pages et son backoffice sur ces briques.
+
+| Action | Temps estimé |
+| --- | --- |
+| Socle plateforme + backoffice client (en cours, ~40 %) | — (déjà entamé) |
+| Builder / gestion des landing pages | à estimer |
+| Branchement sur H (sessions publiques + capacité/waitlist) | après H |
+| Branchement sur J (statut live plein/fermé) | après J |
+| **Sous-total BIL** | **à estimer** ⚠️ hors estimation initiale du plan |
+
+> ⚠️ **Impact capacité :** BIL n'était **pas** dans le périmètre estimé (~22–32 j-dev). Il consomme
+> de la capacité Dev 2 — à **estimer et arbitrer** vs 0-CI/0-MON, et à séquencer derrière H/J.
+
 ---
 
 ## Récap des temps — périmètre du mois (fourchettes prudentes)
@@ -510,6 +539,7 @@ WebSocket) et **écriture** (inscription → portier Redis atomique → file Bul
 | ~~**E** — Backup auto (MVP) + PITR léger~~ | ~~**~1,5 – 2 jours**~~ | ✅ **Backup MVP terminé** (PITR = §3-F, hors scope E) |
 | **H** — Inscriptions par session (phases 0–2) | **~5,5 – 8,5 jours** | — |
 | **J** — Capacité live forte charge (portier Redis + WebSocket + pic combiné) | **~4 – 7 jours** | — (Redis déjà présent) |
+| **BIL** — Plateforme billetterie (landing pages + backoffice client) | **à estimer** (~40 % fait) | dépend de H + J |
 | **K** — Résilience event (checklist protections : saturation/disque/perte/recovery testé) | **~½ – 1 jour** *(surtout vérif + runbooks)* | — |
 | **F** — HA réplication complète | 🔵 **reporté** | → migration GCP |
 | **G** — Wallet (V2) | ~1 semaine *(hors event)* | validation Apple |
@@ -541,8 +571,7 @@ WebSocket) et **écriture** (inscription → portier Redis atomique → file Bul
 | 🔴 P1 | **0-CI** — CI/CD **minimaliste** (build+test PR + deploy staging) | Gardé (réduit, **sans CD/rollback auto**) |
 | ✅ — | **E** — Backup auto MVP | ✅ **Terminé** — [PR #15](https://github.com/Rabiegha/attendee-ems-back/pull/15) |
 | � P1 | **H** — Inscriptions par session | **Nouveau** besoin fonctionnel LFD — ph. 0–1 **event-critique** ; ph. 2 front **à arbitrer** (V1 réduite) |
-| �🔸 P1 | **D** — Sécurité QR HMAC | **Gardé** (simple, données MEAE) |
-| 🟠 P2 | **B** — Email → billet PDF | Gardé **si le client l'exige** pour l'event, sinon V2 |
+| �🔸 P1 | **D** — Sécurité QR HMAC | **Gardé** (simple, données MEAE) || 🟠 P1/P2 | **BIL** — Plateforme billetterie (landing pages + backoffice client) | **En cours ~40 %** — finalisation séquencée **après H et J** ; temps à estimer || 🟠 P2 | **B** — Email → billet PDF | Gardé **si le client l'exige** pour l'event, sinon V2 |
 | 🔵 — | **F** — HA réplication complète | **Reporté → après migration GCP** (HA/PITR natifs Cloud SQL) |
 | ⚪ V2 | **G** — Wallet Apple + Google | Hors périmètre event |
 
@@ -579,6 +608,7 @@ WebSocket) et **écriture** (inscription → portier Redis atomique → file Bul
 - ✅ QR signé (HMAC) sécurisé
 - ✅ Email avec billet PDF (rendu **Gotenberg/Cloud Run**, hors VPS) + ESP en délivrabilité maîtrisée
 - ✅ **Inscriptions par session** (lien public dédié, capacité + waitlist, contrôle organisateur) + refonte front sessions *(front phase 2 : V1 réduite selon buffer)*
+- 🟡 **Plateforme billetterie** (landing pages + backoffice client) — livrée **dans la mesure où H et J sont clos à temps** (sinon : socle + backoffice, branchements sessions/live en fast-follow)
 
 **Explicitement reporté (à présenter comme V2 / post-GCP) :**
 - 🔵 Haute dispo (réplication streaming) → **arrive avec la migration GCP**
