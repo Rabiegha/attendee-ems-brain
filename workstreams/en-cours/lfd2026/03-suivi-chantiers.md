@@ -1,17 +1,17 @@
-# 03 — Suivi des chantiers LFD 2026 (avancement %, temps, échéance fin juillet)
+◊# 03 — Suivi des chantiers LFD 2026 (avancement %, temps, échéance fin juillet)
 
 > **À QUOI SERT CE FICHIER :** tableau de bord **transversal** de TOUS les chantiers du
 > [plan d'action](./00-plan-action.md). C'est **le doc de base** pour piloter le mois et
 > alimenter le rapport manager hebdo. À mettre à jour **chaque vendredi** (au minimum).
 >
 > - Le **quoi/pourquoi** de chaque chantier → [00-plan-action.md](./00-plan-action.md)
-> - Le détail levier par levier (chantier A) → [01-suivi-leviers.md](./01-suivi-leviers.md)
+> - Le détail levier par levier (chantier A) → [01-suivi-leviers.md](./A-I-leviers/01-suivi-leviers.md)
 > - Les rapports hebdo manager → [rapports/](./rapports/)
 >
 > **🎯 Objectif : livrer le périmètre event à la FIN DU MOIS (≈ 31 juillet 2026).**
 > Capacité : 2 devs × ~15 j ouvrés restants = **~30 j-dev restants** pour ~20–29 j-dev de reste à faire.
 >
-> **Dernière mise à jour :** 2026-07-10 (fin S28 — semaine 1 sur 4)
+> **Dernière mise à jour :** 2026-07-11 (décision ESP = **Mailgun**, chantier C découpé C1/C2, bloqueur accès OVH)
 
 ---
 
@@ -22,23 +22,24 @@ Avancement global périmètre event : ▓▓▓░░░░░░░░░░░
 Semaines écoulées :                 1 / 4  (S28 faite · reste S29, S30, S31)
 ```
 
-| # | Chantier | Owner | Estimé | Consommé | Avancement | Statut | Échéance visée |
-|---|---|---|---|---|---|---|---|
-| **A** | Refonte propre (rejouer les leviers) | Rabie | ~1–2 j | ~1,5 j | **30 %** `▓▓▓░░░░░░░` | 🟡 En cours — L1/L2/L10 mergé+mesuré, reste L9/L9.1/L7/L8/L3 | S29 |
-| **I** | ⚡ Levier débit n°1 (compteur capacité + tx courte) | Rabie | ~1,5 j | 0 | **10 %** `▓░░░░░░░░░` | 🟡 Diagnostiqué + L9.1 cadré, non codé | S29 |
-| **0-CI** | CI/CD minimal (build+test PR + deploy staging) | Corentin | ~2 j | 0 | **0 %** `░░░░░░░░░░` | ⚪ À démarrer | S29–S30 |
-| **0-MON** | Monitoring minimal (uptime + Sentry + CPU + 🔴 disque) | Corentin | ~2 j | 0 | **0 %** `░░░░░░░░░░` | ⚪ À démarrer | S29–S30 |
-| **B0** | Email → billet PDF (POC Gotenberg/Cloud Run) | Rabie | ~½ j | ~1 j (POC+cadrage+call) | **40 %** `▓▓▓▓░░░░░░` | 🟡 **POC validé** (rendu badge OK, diff police à trancher) + cadrage GCP fait — reste : déploiement Cloud Run + brancher le back | S30 |
-| **B1** | Email → billet PDF (durcissement) | Rabie | ~1,5–2 j | 0 | **0 %** `░░░░░░░░░░` | ⚪ Après B0 | S30–S31 |
-| **C** | Migration ESP (délivrabilité ~12 400 envois) | — | ~2–3 j (+warm-up) | 0 | **0 %** `░░░░░░░░░░` | 🔴 **ALERTE : warm-up toujours pas lancé** (délai calendaire 1–2 sem) | démarrer **S29 J1** |
-| **D** | Sécurité QR (HMAC + durcissement routes) | Corentin | ~1–2 j | ~1,5 j | **80 %** `▓▓▓▓▓▓▓▓░░` | 🟢 Codé back+mobile, sur `staging` (PR #16/#17) — reste E2E + prod | S29 |
-| **E** | Sauvegarde DB auto (dump + GFS + R2 + restore-test + alerting) | Corentin | ~1,5–2 j | ~2 j | **100 %** `▓▓▓▓▓▓▓▓▓▓` | ✅ **Terminé — en prod** ([PR #15](https://github.com/Rabiegha/attendee-ems-back/pull/15)) | ✅ 09/07 |
-| **H** | Inscriptions par session (lien public + capacité/waitlist + front) | à répartir | ~5,5–8,5 j | 0 | **5 %** `▓░░░░░░░░░` | 🟡 Cadré, prêt à découper — **plus gros morceau restant** | S29→S31 |
-| **J** | Capacité live forte charge (portier Redis + WS + pic combiné) | à répartir | ~4–7 j | 0 | **5 %** `▓░░░░░░░░░` | 🟡 Cadré (ws 02) — recoupe H/I, ne pas double-compter | S30–S31 |
-| **K** | Résilience event (checklist protections + runbooks) | binôme | ~½–1 j | 0 | **10 %** `▓░░░░░░░░░` | 🟡 Checklist créée, vérifs à dérouler | S31 (avant J-7) |
-| **BIL** | **Plateforme billetterie** : gestion billetterie + création de landing pages + **backoffice client** ([plan §3-BIL](./00-plan-action.md#chantier-bil--plateforme-billetterie-landing-pages--backoffice-client--haute-produit)) | Corentin | à estimer | ~3 j | **40 %** `▓▓▓▓░░░░░░` | 🟡 En cours (démarré 07/07) — ⚠️ **dépend de H et J** (sessions/capacité) pour finaliser | après H/J |
-| **F** | HA réplication | — | — | — | — | 🔵 **Reporté → migration GCP** (Cloud SQL HA/PITR natifs) | post-event |
-| **G** | Wallet Apple + Google | — | ~1 sem | 0 | — | ⚪ V2 — onboarding stores seul à lancer (calendaire) | post-event |
+| #         | Chantier                                                                                                                                                                                                                       | Owner      | Estimé             | Consommé                | Avancement             | Statut                                                                                                                           | Échéance visée  |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------- | ------------------ | ----------------------- | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------- | --------------- |
+| **A**     | Refonte propre (rejouer les leviers)                                                                                                                                                                                           | Rabie      | ~1–2 j             | ~1,5 j                  | **30 %** `▓▓▓░░░░░░░`  | 🟡 En cours — L1/L2/L10 mergé+mesuré, reste L9/L9.1/L7/L8/L3                                                                     | S29             |
+| **I**     | ⚡ Levier débit n°1 (compteur capacité + tx courte)                                                                                                                                                                            | Rabie      | ~1,5 j             | 0                       | **10 %** `▓░░░░░░░░░`  | 🟡 Diagnostiqué + L9.1 cadré, non codé                                                                                           | S29             |
+| **0-CI**  | CI/CD minimal (build+test PR + deploy staging)                                                                                                                                                                                 | Corentin   | ~2 j               | 0                       | **0 %** `░░░░░░░░░░`   | ⚪ À démarrer                                                                                                                    | S29–S30         |
+| **0-MON** | Monitoring minimal (uptime + Sentry + CPU + 🔴 disque)                                                                                                                                                                         | Corentin   | ~2 j               | 0                       | **0 %** `░░░░░░░░░░`   | ⚪ À démarrer                                                                                                                    | S29–S30         |
+| **B0**    | Email → billet PDF (POC Gotenberg/Cloud Run)                                                                                                                                                                                   | Rabie      | ~½ j               | ~1 j (POC+cadrage+call) | **40 %** `▓▓▓▓░░░░░░`  | 🟡 **POC validé** (rendu badge OK, diff police à trancher) + cadrage GCP fait — reste : déploiement Cloud Run + brancher le back | S30             |
+| **B1**    | Email → billet PDF (durcissement)                                                                                                                                                                                              | Rabie      | ~1,5–2 j           | 0                       | **0 %** `░░░░░░░░░░`   | ⚪ Après B0                                                                                                                      | S30–S31         |
+| **C1**    | Migration Mailgun — prépa & warm-up (mail.attendee.fr + SPF/DKIM/DMARC + warm-up)                                                                                                                                              | —          | calendaire 2-4 sem | 0                       | **0 %** `░░░░░░░░░░`   | ⛔ **BLOQUÉ : accès OVH manquant** → DNS + warm-up impossibles (délai calendaire 2–4 sem)                                        | dès accès OVH   |
+| **C2**    | Migration Mailgun — intégration applicative (API EU + queue BullMQ + webhooks)                                                                                                                                                 | —          | ~2–3 j             | 0                       | **0 %** `░░░░░░░░░░`   | ⏳ ESP décidé (**Mailgun**) — avançable en // (indépendant OVH)                                                                  | S29–S30         |
+| **D**     | Sécurité QR (HMAC + durcissement routes)                                                                                                                                                                                       | Corentin   | ~1–2 j             | ~1,5 j                  | **80 %** `▓▓▓▓▓▓▓▓░░`  | 🟢 Codé back+mobile, sur `staging` (PR #16/#17) — reste E2E + prod                                                               | S29             |
+| **E**     | Sauvegarde DB auto (dump + GFS + R2 + restore-test + alerting)                                                                                                                                                                 | Corentin   | ~1,5–2 j           | ~2 j                    | **100 %** `▓▓▓▓▓▓▓▓▓▓` | ✅ **Terminé — en prod** ([PR #15](https://github.com/Rabiegha/attendee-ems-back/pull/15))                                       | ✅ 09/07        |
+| **H**     | Inscriptions par session (lien public + capacité/waitlist + front)                                                                                                                                                             | à répartir | ~5,5–8,5 j         | 0                       | **5 %** `▓░░░░░░░░░`   | 🟡 Cadré, prêt à découper — **plus gros morceau restant**                                                                        | S29→S31         |
+| **J**     | Capacité live forte charge (portier Redis + WS + pic combiné)                                                                                                                                                                  | à répartir | ~4–7 j             | 0                       | **5 %** `▓░░░░░░░░░`   | 🟡 Cadré (ws 02) — recoupe H/I, ne pas double-compter                                                                            | S30–S31         |
+| **K**     | Résilience event (checklist protections + runbooks)                                                                                                                                                                            | binôme     | ~½–1 j             | 0                       | **10 %** `▓░░░░░░░░░`  | 🟡 Checklist créée, vérifs à dérouler                                                                                            | S31 (avant J-7) |
+| **BIL**   | **Plateforme billetterie** : gestion billetterie + création de landing pages + **backoffice client** ([plan §3-BIL](./00-plan-action.md#chantier-bil--plateforme-billetterie-landing-pages--backoffice-client--haute-produit)) | Corentin   | à estimer          | ~3 j                    | **40 %** `▓▓▓▓░░░░░░`  | 🟡 En cours (démarré 07/07) — ⚠️ **dépend de H et J** (sessions/capacité) pour finaliser                                         | après H/J       |
+| **F**     | HA réplication                                                                                                                                                                                                                 | —          | —                  | —                       | —                      | 🔵 **Reporté → migration GCP** (Cloud SQL HA/PITR natifs)                                                                        | post-event      |
+| **G**     | Wallet Apple + Google                                                                                                                                                                                                          | —          | ~1 sem             | 0                       | —                      | ⚪ V2 — onboarding stores seul à lancer (calendaire)                                                                             | post-event      |
 
 **Légende statut :** ⚪ à démarrer · 🟡 en cours · 🟢 quasi fini (validation restante) · ✅ livré · 🔵 reporté (décision) · 🔴 alerte.
 
@@ -55,21 +56,22 @@ Semaines écoulées :                 1 / 4  (S28 faite · reste S29, S30, S31)
   1. Tenir le **descope** : HA → GCP, CD complet → post-event, wallet → V2, H phase 3 → post-event.
   2. **H phase 2 (front)** en **V1 réduite**.
   3. Prioriser dur : **L9/L9.1 → B0 → H phases 0–1 → J**, le reste suit.
-  4. 🔴 **Lancer le warm-up ESP immédiatement** (S29 J1) — c'est du délai **calendaire**, pas du dev :
-     chaque jour de retard repousse la capacité d'envoi des ~12 400 emails.
+  4. 🔴 **Débloquer l'accès OVH puis lancer le warm-up Mailgun** — c'est du délai **calendaire**, pas du dev :
+     ⛔ **sans accès OVH, ni DNS ni warm-up possibles** ; chaque jour de retard repousse la capacité
+     d'envoi des ~12 400 emails (warm-up ~2-4 sem). **C2 (intégration Mailgun) avançable en parallèle.**
 
 ## Jalons de livraison (fin de mois)
 
-| Jalon | Date cible | Contenu |
-|---|---|---|
-| **J1 — Fondations** | fin S29 (17/07) | Chantier A clos (tous leviers mergés+mesurés) · D en prod · CI+MON posés · warm-up ESP lancé |
-| **J2 — Fonctionnel** | fin S30 (24/07) | B0+B1 (email→billet PDF) · H phases 0–1 (back sessions) · I mesuré |
-| **J3 — Livraison** | fin S31 (31/07) | H phase 2 V1 réduite · J (portier+WS) · K checklist verte · **load test de validation** · runbook event |
+| Jalon                | Date cible      | Contenu                                                                                                                                 |
+| -------------------- | --------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| **J1 — Fondations**  | fin S29 (17/07) | Chantier A clos (tous leviers mergés+mesurés) · D en prod · CI+MON posés · **accès OVH obtenu → warm-up Mailgun (C1) lancé** · C2 en // |
+| **J2 — Fonctionnel** | fin S30 (24/07) | B0+B1 (email→billet PDF) · H phases 0–1 (back sessions) · I mesuré                                                                      |
+| **J3 — Livraison**   | fin S31 (31/07) | H phase 2 V1 réduite · J (portier+WS) · K checklist verte · **load test de validation** · runbook event                                 |
 
 ---
 
 ## Historique hebdo (résumé — détail dans [rapports/](./rapports/))
 
-| Semaine | Fait marquant | Δ avancement |
-|---|---|---|
-| **S28 (6–10/07)** | E ✅ livré en prod · A : L1/L2/L10 mergé + k6 avant/après · D : 80 % (staging) · **BIL plateforme billetterie démarrée (→ 40 %)** · **POC Gotenberg validé** + cadrage GCP + dump anonymisé · décisions structurantes (sans-GCP, workflow git, K, B0/B1, G) | 0 % → ~15 % |
+| Semaine           | Fait marquant                                                                                                                                                                                                                                               | Δ avancement |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| **S28 (6–10/07)** | E ✅ livré en prod · A : L1/L2/L10 mergé + k6 avant/après · D : 80 % (staging) · **BIL plateforme billetterie démarrée (→ 40 %)** · **POC Gotenberg validé** + cadrage GCP + dump anonymisé · décisions structurantes (sans-GCP, workflow git, K, B0/B1, G) · **11/07 : décision ESP = Mailgun (C→C1/C2) · réorg lfd2026 en dossiers chantier · plans 0-CI + 0-MON écrits · backlog mobile restructuré** | 0 % → ~15 %  |

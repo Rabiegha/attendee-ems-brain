@@ -6,8 +6,8 @@
 > **actives, mesurées et documentées**. À passer en revue **avant J-7**.
 > **Date :** 8 juillet 2026 · **Rattachement :** workstream `lfd2026` · **Statut :** 🔴 à vérifier
 > **Réfs :** [00-plan-action.md](../../en-cours/lfd2026/00-plan-action.md) (chantier K) ·
-> [décision — tenir l'event sans GCP](../../en-cours/lfd2026/decisions/tenir-event-sans-gcp.md) ·
-> [02 — capacité live forte charge](./02-capacite-live-forte-charge.md) *(voisin ws sessions)* ·
+> [décision — tenir l'event sans GCP](../../en-cours/lfd2026/K-resilience-event/tenir-event-sans-gcp.md) ·
+> [02 — capacité live forte charge](./02-capacite-live-forte-charge.md) _(voisin ws sessions)_ ·
 > [plan de continuité d'activité](../../en-cours/infra-scaling-pca/plan-continuite-activite.md)
 
 ---
@@ -21,12 +21,12 @@ se règlent **sur le VPS actuel**. Ce workstream est la **checklist de vérifica
 
 ### 🗺️ Carte des risques (rappel)
 
-| Risque | Probabilité | La HA aide ? | Parade (ce workstream vérifie qu'elle est en place) |
-|---|---|---|---|
-| **Saturation CPU/DB** (3000 concurrents) | élevée | ❌ | L9 + file BullMQ + portier Redis (chantiers I / J) |
-| **Disque plein** → API down | moyenne-élevée | ❌ | 0-MON alerte disque + capacité + rotation logs + offload R2 |
-| **Perte / corruption données** | moyenne | ❌ | backup offsite + **restore testé** (chantier E) |
-| **Machine meurt** (hardware) | faible | ✅ | *(HA → GCP, risque assumé — recovery manuel)* |
+| Risque                                   | Probabilité    | La HA aide ? | Parade (ce workstream vérifie qu'elle est en place)         |
+| ---------------------------------------- | -------------- | ------------ | ----------------------------------------------------------- |
+| **Saturation CPU/DB** (3000 concurrents) | élevée         | ❌           | L9 + file BullMQ + portier Redis (chantiers I / J)          |
+| **Disque plein** → API down              | moyenne-élevée | ❌           | 0-MON alerte disque + capacité + rotation logs + offload R2 |
+| **Perte / corruption données**           | moyenne        | ❌           | backup offsite + **restore testé** (chantier E)             |
+| **Machine meurt** (hardware)             | faible         | ✅           | _(HA → GCP, risque assumé — recovery manuel)_               |
 
 ---
 
@@ -45,7 +45,7 @@ se règlent **sur le VPS actuel**. Ce workstream est la **checklist de vérifica
 
 > Disque plein → Postgres ne peut plus écrire le WAL → **API down**. La HA n'aide pas.
 
-- [ ] **Alerte disque 70 / 80 / 90 %** active (SMS/Slack) — *la protection n°1*.
+- [ ] **Alerte disque 70 / 80 / 90 %** active (SMS/Slack) — _la protection n°1_.
 - [ ] **Marge de capacité** dimensionnée pour l'event (volume estimé : ~12 400 inscrits + scans + logs + cache PDF), disque provisionné **bien au-dessus**.
 - [ ] **Rotation des logs** configurée (`logrotate` + Docker `max-size`/`max-file`) — couper le `console.log` par inscription en prod ou le borner.
 - [ ] **Gestion WAL** : `max_wal_size` borné + **surveillance des slots de réplication bloqués** (WAL jamais recyclé = disque qui se remplit seul).
@@ -92,6 +92,7 @@ se règlent **sur le VPS actuel**. Ce workstream est la **checklist de vérifica
 ## 7. Passage en revue final (avant J-7)
 
 Ce workstream est **VERT** quand :
+
 1. Saturation → **L9 mergé + load test combiné au vert**.
 2. Disque → **alerte disque active + logs tournés + offload R2 + capacité dimensionnée**.
 3. Perte → **backup offsite + restore prouvé sur staging**.

@@ -15,7 +15,7 @@ l'**archive de référence** — on ne perd rien.
 
 **Plan maître :** [00-plan-action.md](../workstreams/en-cours/lfd2026/00-plan-action.md) (chantier A, §0–§2)
 · **Workstream :** [infra-scaling-pca](../workstreams/en-cours/infra-scaling-pca/README.md)
-· **📌 Suivi vivant (état par levier) :** [01-suivi-leviers.md](../workstreams/en-cours/lfd2026/01-suivi-leviers.md) — **à ouvrir au début de chaque chat**.
+· **📌 Suivi vivant (état par levier) :** [01-suivi-leviers.md](../workstreams/en-cours/lfd2026/A-I-leviers/01-suivi-leviers.md) — **à ouvrir au début de chaque chat**.
 
 **Prochaine action :**
 ➡️ **Focus du jour : L9 puis L9.1**, **codés ET testés** (non-régression). Merger d'abord la MR [#14](https://github.com/Rabiegha/attendee-ems-back/pull/14) (L1/L2/L10) sur `dev`.
@@ -25,7 +25,7 @@ l'**archive de référence** — on ne perd rien.
 1. **L9** — transaction d'inscription allégée (`feat/register-tx-slim`) **+ test de non-régression**.
 2. **L9.1** — compteur présence session O(1) (`feat/session-present-counter`, colonne PG par défaut) **+ test**.
 3. **Chantier Cloud Run — génération PDF billet** (chantier B) : billet PDF joint à l'email (Gotenberg / Cloud Run).
-4. **Prépa du call de demain** : **post-event** + **review du setup Cloud Run** déjà effectué — points clés : [tenir l'event **sans GCP** (+ gate post-L9)](../workstreams/en-cours/lfd2026/decisions/tenir-event-sans-gcp.md) · [workstream migration GCP (archi cible B + questions Entiovi)](../workstreams/a-faire/gcp-migration/README.md).
+4. **Prépa du call de demain** : **post-event** + **review du setup Cloud Run** déjà effectué — points clés : [tenir l'event **sans GCP** (+ gate post-L9)](../workstreams/en-cours/lfd2026/K-resilience-event/tenir-event-sans-gcp.md) · [workstream migration GCP (archi cible B + questions Entiovi)](../workstreams/a-faire/gcp-migration/README.md).
 5. **Ensuite seulement** : reste des leviers/étapes du chantier A, workstream capacité live forte charge, **backlog mobile** (cf. « Ensuite »).
 
 > ⚠️ **Validation post-leviers OBLIGATOIRE** : une fois L9 **et** L9.1 appliqués, **re-tester que tout
@@ -34,7 +34,7 @@ l'**archive de référence** — on ne perd rien.
 
 ### Étapes du chantier A (~3 h 35, hors temps k6)
 
-> État détaillé par levier/branche → [01-suivi-leviers.md](../workstreams/en-cours/lfd2026/01-suivi-leviers.md).
+> État détaillé par levier/branche → [01-suivi-leviers.md](../workstreams/en-cours/lfd2026/A-I-leviers/01-suivi-leviers.md).
 
 - [x] **0.** Geler & archiver (tag `archive/staging-2026-06-25` + branche `staging-archive-2026-06-25`).
 - [x] **1.** Séparer reformatage / logique (format-on-save vérifié OFF).
@@ -46,7 +46,7 @@ l'**archive de référence** — on ne perd rien.
   - ⚪ L8 worker `PROCESS_ROLE` (Voie A) — `feat/process-role-worker`
   - ⚪ L3 `directUrl` Prisma — `chore/prisma-directurl`
 - [ ] **3.** Réconcilier la doc : trancher le chiffre réel (**~25/s plafond CPU** mesuré vs « ~33/s DB » écrit) dans `infra-scaling-pca/README.md`.
-- [x] **4.** Post-mortem 502 prod → [bugs/fait/2026-06-25-prod-502-collision-compose.md](../bugs/fait/2026-06-25-prod-502-collision-compose.md) (garde-fous → [backlog](../backlog/a-faire/garde-fous-deploiement-staging.md)).
+- [x] **4.** Post-mortem 502 prod → [bugs/fait/2026-06-25-prod-502-collision-compose.md](../bugs/fait/2026-06-25-prod-502-collision-compose.md) (garde-fous → [levier A-I](../workstreams/en-cours/lfd2026/A-I-leviers/garde-fous-deploiement-staging.md)).
 - [ ] **5.** Isoler le compose prod dans une **PR dédiée** (ne pas merger sans revue).
 - [ ] **6.** **Cadrer l'interdit** (note, pas de code) — voir bloc ci-dessous.
 
@@ -66,7 +66,7 @@ l'**archive de référence** — on ne perd rien.
 
 1. **L9 + L9.1** (focus du jour) — codés + **testés** (non-régression), cf. ci-dessus.
 2. **Chantier B — chaîne email → billet PDF** : joindre le **billet PDF** à l'email (moteur **Gotenberg sur Cloud Run**). Une partie à décider.
-   ➡️ [00-plan-action.md §3-B](../workstreams/en-cours/lfd2026/00-plan-action.md) · [décision lib PDF/badge](../workstreams/en-cours/lfd2026/decisions/lib-pdf-badge.md).
+   ➡️ [00-plan-action.md §3-B](../workstreams/en-cours/lfd2026/00-plan-action.md) · [décision lib PDF/badge](../workstreams/en-cours/lfd2026/B-email-billet-pdf/lib-pdf-badge.md).
 3. **Prépa du call de demain** : **post-event** + **review du setup Cloud Run** déjà effectué.
 4. **Reste du chantier A** : merger #14 sur `dev`, puis L7 / L8 / L3, puis étapes 3→6 (réconcilier CPU/DB, post-mortem 502, isoler compose prod, cadrer interdits).
 5. **Workstream capacité live forte charge** (sessions/inscriptions LFD) — portier Redis + WebSocket + pic combiné.

@@ -4,7 +4,7 @@
 > **App :** back / infra (VPS OVH prod).
 > **Impact :** API prod en **502** pendant **quelques minutes** dans la nuit du 25/06,
 > **sans impact sur les sessions** (trafic quasi nul à cette heure).
-> **Garde-fous :** [backlog/a-faire/garde-fous-deploiement-staging.md](../../backlog/a-faire/garde-fous-deploiement-staging.md)
+> **Garde-fous :** [garde-fous-deploiement-staging.md](../../workstreams/en-cours/lfd2026/A-I-leviers/garde-fous-deploiement-staging.md)
 
 ---
 
@@ -30,13 +30,13 @@ API prod indisponible → **502 Bad Gateway** via nginx.
 
 ## 3. Timeline (25/06)
 
-| Heure | Événement |
-|---|---|
-| 01:08 | Premiers commits de la stack staging (`c7247ae`, pgBouncer, dump/restore…). |
-| ~01:15–02:15 | Lancement du compose staging sur le VPS **sans nom de projet** → collision avec le projet prod `backend` → conteneurs prod recréés → **502 prod**. |
-| ~02:15 | **Détection manuelle** (surveillance active pendant la session de nuit — pas d'alerting). |
-| 02:19 | **Correctif `5f72daa`** : `name: ems-staging` dans `docker-compose.staging.yml` → projets Docker distincts. Prod relancée, `health=200`. |
-| Suite de nuit | Prod surveillée pendant les campagnes k6 : intègre (`health=200`, CPU ≈ 0 %). |
+| Heure         | Événement                                                                                                                                          |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 01:08         | Premiers commits de la stack staging (`c7247ae`, pgBouncer, dump/restore…).                                                                        |
+| ~01:15–02:15  | Lancement du compose staging sur le VPS **sans nom de projet** → collision avec le projet prod `backend` → conteneurs prod recréés → **502 prod**. |
+| ~02:15        | **Détection manuelle** (surveillance active pendant la session de nuit — pas d'alerting).                                                          |
+| 02:19         | **Correctif `5f72daa`** : `name: ems-staging` dans `docker-compose.staging.yml` → projets Docker distincts. Prod relancée, `health=200`.           |
+| Suite de nuit | Prod surveillée pendant les campagnes k6 : intègre (`health=200`, CPU ≈ 0 %).                                                                      |
 
 ## 4. Détection
 
@@ -56,7 +56,7 @@ API prod indisponible → **502 Bad Gateway** via nginx.
 ## 6. Garde-fous (pour que ça ne se reproduise pas)
 
 Détail et suivi d'avancement dans
-[backlog/a-faire/garde-fous-deploiement-staging.md](../../backlog/a-faire/garde-fous-deploiement-staging.md) :
+[garde-fous-deploiement-staging.md](../../workstreams/en-cours/lfd2026/A-I-leviers/garde-fous-deploiement-staging.md) :
 
 1. **Isolation compose** (`name:`, `container_name`, réseau dédié, `127.0.0.1`) — ✅ en place.
 2. **Répertoire séparé** sur le VPS pour le checkout staging (jamais dans le dossier prod).
@@ -77,4 +77,4 @@ Détail et suivi d'avancement dans
 
 - Audit détaillé : [journal 2026-06-26 §P3](../../workstreams/en-cours/gcp-migration/infra-scaling-pca/journal/2026-06-26-audit-branche-staging.md)
 - Runbook staging : [infra/staging/staging-setup.md](../../infra/staging/staging-setup.md)
-- Mention durée/impact : [bug 499 §« Pas lié à l'incident 502 »](../a-faire/2026-07-01-eject-mobile-refresh-rotation-499.md)
+- Mention durée/impact : [bug 499 §« Pas lié à l'incident 502 »](../en-cours/2026-07-01-eject-mobile-refresh-rotation-499.md)

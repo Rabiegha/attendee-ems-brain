@@ -8,7 +8,7 @@ Date: 2026-07-03
 > **Contexte client :** un organisateur veut piloter sa **billeterie** et exposer une **page publique
 > par session** (lien public par session). Pic attendu : **~3000 concurrents**. Le plafond d'écriture
 > mesuré d'Attendee est **~33–37 inscriptions/s** (sérialisation DB) — voir
-> [workstreams/en-cours/lfd2026](../../workstreams/en-cours/lfd2026/diagnostics/email-billet-wallet.md).
+> [workstreams/en-cours/lfd2026](../../workstreams/en-cours/lfd2026/B-email-billet-pdf/email-billet-wallet.md).
 
 ---
 
@@ -33,16 +33,16 @@ Chacune de ces pentes mène à une usine à gaz ou à un incident de prod au pic
 
 Voir la billeterie comme **deux couches**, pas « une feature de plus » :
 
-| Sujet | Décision |
-|---|---|
-| Où vit le métier | **Attendee** (event/sessions/badge = billeterie/jauges/billet) |
-| Pilotage organisateur | **Attendee** — onglet Sessions renommé « Jauges/Créneaux » (**un seul endroit**) |
-| Page billeterie publique | **App séparée** = vitrine qui consomme l'API publique Attendee |
-| Ce qu'on ajoute à Attendee | **API billeterie publique** + **cache état jauge** + **compteur atomique Redis** |
-| Temps réel public | **Polling depuis cache (TTL 10–20 s)**, jitteré — **pas de WS public** |
-| WebSocket | Réservé au **dashboard organisateur authentifié** (déjà en place) |
-| Anti-surbooking | À l'**écriture** (Redis DECR + réconciliation) ; affichage « **presque complet** » près de la limite |
-| Périmètre client | Version pragmatique, **pas** de builder générique — garder un **seam propre** (API publique versionnée) |
+| Sujet                      | Décision                                                                                                |
+| -------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Où vit le métier           | **Attendee** (event/sessions/badge = billeterie/jauges/billet)                                          |
+| Pilotage organisateur      | **Attendee** — onglet Sessions renommé « Jauges/Créneaux » (**un seul endroit**)                        |
+| Page billeterie publique   | **App séparée** = vitrine qui consomme l'API publique Attendee                                          |
+| Ce qu'on ajoute à Attendee | **API billeterie publique** + **cache état jauge** + **compteur atomique Redis**                        |
+| Temps réel public          | **Polling depuis cache (TTL 10–20 s)**, jitteré — **pas de WS public**                                  |
+| WebSocket                  | Réservé au **dashboard organisateur authentifié** (déjà en place)                                       |
+| Anti-surbooking            | À l'**écriture** (Redis DECR + réconciliation) ; affichage « **presque complet** » près de la limite    |
+| Périmètre client           | Version pragmatique, **pas** de builder générique — garder un **seam propre** (API publique versionnée) |
 
 ### Principe directeur — découpler lecture et écriture
 
@@ -69,7 +69,7 @@ Voir la billeterie comme **deux couches**, pas « une feature de plus » :
 ## 6. Related docs
 
 - [../../workstreams/a-faire/sessions-inscriptions-lfd2026/README.md](../../workstreams/a-faire/sessions-inscriptions-lfd2026/README.md) — primitives jauge/session (ouvrir/fermer, capacité, token public, stats live).
-- [../../workstreams/en-cours/lfd2026/diagnostics/email-billet-wallet.md](../../workstreams/en-cours/lfd2026/diagnostics/email-billet-wallet.md) — plafond écriture + compteur Redis DECR.
+- [../../workstreams/en-cours/lfd2026/B-email-billet-pdf/email-billet-wallet.md](../../workstreams/en-cours/lfd2026/B-email-billet-pdf/email-billet-wallet.md) — plafond écriture + compteur Redis DECR.
 - [../../workstreams/en-cours/infra-scaling-pca/plan-continuite-activite.md](../../workstreams/en-cours/infra-scaling-pca/plan-continuite-activite.md) — jauges & continuité au pic.
 - [../../bugs/a-faire/cors-origin-security-review.md](../../bugs/a-faire/cors-origin-security-review.md) — CORS/Origin WS (origin `*` aujourd'hui).
 - [../a-faire/full-custom-domains.md](../a-faire/full-custom-domains.md) — piège builder générique / DNS-TLS.

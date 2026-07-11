@@ -7,7 +7,7 @@
 > **Date :** 8 juillet 2026 · **Statut :** 🔵 à faire (**post-event**, aucun rush) · **Partenaire :** Entiovi
 > **Réfs :** [analyse proposition Entiovi](./00-analyse-proposition-entiovi.md) ·
 > [archi cible](./01-archi-cible.md) · [questions Entiovi](./02-questions-entiovi.md) ·
-> [décision — tenir l'event sans GCP](../../en-cours/lfd2026/decisions/tenir-event-sans-gcp.md) ·
+> [décision — tenir l'event sans GCP](../../en-cours/lfd2026/K-resilience-event/tenir-event-sans-gcp.md) ·
 > [chantier clustering (le verrou)](../../en-cours/api-scaling-clustering/README.md) ·
 > [00-plan-action §3-F](../../en-cours/lfd2026/00-plan-action.md)
 > **Journal privé (hors git, credentials) :** `local-files/migration-private/MIGRATION_LOG.md`
@@ -52,11 +52,11 @@
 
 Une fois la prod 100 % sur GCP, OVH n'est **jamais** un nœud live (cross-cloud actif-actif = over-engineering, écarté).
 
-| Rôle | Intérêt | Verdict |
-|---|---|---|
-| **Staging / pré-prod** | env de test isolé, **déjà en place**, pas cher | ✅ **le plus utile** |
-| **Backup offsite / cold DR** | dumps Cloud SQL **hors GCP** → protège d'une catastrophe compte/région/facturation | ✅ défense en profondeur |
-| **Décommission** | Cloud SQL a déjà HA+PITR ; un projet GCP séparé peut servir de staging | 🟡 légitime si on veut tout centraliser |
+| Rôle                         | Intérêt                                                                            | Verdict                                 |
+| ---------------------------- | ---------------------------------------------------------------------------------- | --------------------------------------- |
+| **Staging / pré-prod**       | env de test isolé, **déjà en place**, pas cher                                     | ✅ **le plus utile**                    |
+| **Backup offsite / cold DR** | dumps Cloud SQL **hors GCP** → protège d'une catastrophe compte/région/facturation | ✅ défense en profondeur                |
+| **Décommission**             | Cloud SQL a déjà HA+PITR ; un projet GCP séparé peut servir de staging             | 🟡 légitime si on veut tout centraliser |
 
 > **Défaut recommandé : OVH = staging + cible de backup offsite.** On réutilise l'existant, on gagne un
 > filet **cross-cloud**, sans payer un staging GCP en plus. Décommissionner reste valable si on préfère

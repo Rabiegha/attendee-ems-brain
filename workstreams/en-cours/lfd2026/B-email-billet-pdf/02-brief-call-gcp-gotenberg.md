@@ -21,9 +21,9 @@ managé **Gotenberg sur Cloud Run** — **même moteur Chromium**, charge dépor
 
 ### Rendus du POC (comparaison)
 
-| Puppeteer (prod)                                 | Gotenberg (Cloud Run)                            | Diff (rouge = écart)                   |
-| ------------------------------------------------ | ------------------------------------------------ | -------------------------------------- |
-| ![Puppeteer](assets/gotenberg-poc/puppeteer.png) | ![Gotenberg](assets/gotenberg-poc/gotenberg.png) | ![Diff](assets/gotenberg-poc/diff.png) |
+| Puppeteer (prod)                          | Gotenberg (Cloud Run)                     | Diff (rouge = écart)            |
+| ----------------------------------------- | ----------------------------------------- | ------------------------------- |
+| ![Puppeteer](gotenberg-poc/puppeteer.png) | ![Gotenberg](gotenberg-poc/gotenberg.png) | ![Diff](gotenberg-poc/diff.png) |
 
 ### ⚠️ À VÉRIFIER DEMAIN — différence de rendu (font)
 

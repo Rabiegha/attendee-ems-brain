@@ -8,9 +8,10 @@
 > - Le **focus global** (tous chantiers) → [../../../workspace-rabie/NOW.md](../../../workspace-rabie/NOW.md).
 > - Les **learnings** produits → [../../../learnings/README.md](../../../learnings/README.md).
 >
-> **Principe maître :** *ne rien perdre, tout rejouer proprement*. 1 levier = 1 branche = 1 commit
+> **Principe maître :** _ne rien perdre, tout rejouer proprement_. 1 levier = 1 branche = 1 commit
 > (diff minimal) = 1 PR = 1 mesure avant/après. Archive de référence : branche `staging-archive-2026-06-25`
-> + tag `archive/staging-2026-06-25` (back & brain).
+>
+> - tag `archive/staging-2026-06-25` (back & brain).
 >
 > **Dernière mise à jour :** 2026-07-10
 
@@ -42,14 +43,14 @@
 > Ordre du plan ≠ ordre d'exécution : on a fait **L1/L2/L10 en premier** (fondation qui sert à
 > **tester** tous les autres sur la stack staging). Le reste suit l'ordre du plan.
 
-| Levier | Branche | Nature | Statut | MR | Mesure k6 |
-|---|---|---|---|---|---|
-| **L1/L2/L10** stack staging + pgBouncer + pool | `infra/staging-stack` | infra/config | � **Sur `staging` + mesuré** (2026-07-10) | [#14](https://github.com/Rabiegha/attendee-ems-back/pull/14) **mergée sur `staging`** | ✅ avant/après fait → [détail ci-dessous](#-l1l2l10--stack-staging--pgbouncer--pool) |
-| **L9** transaction allégée (`public.service.ts`) | `feat/register-tx-slim` | **code métier** (chirurgie) | ⚪ À faire | — | — |
-| **L9.1** compteur présence session O(1) (candidat, **priorisé**) | `feat/session-present-counter` | code métier (colonne PG `present_count`) | ⚪ À faire | — | — |
-| **L7** email async BullMQ | `feat/email-async-bullmq` | nouveaux fichiers | ⚪ À faire | — | — |
-| **L8** worker `PROCESS_ROLE` (Voie A) | `feat/process-role-worker` | code (gating `main.ts`) | ⚪ À faire | — | — |
-| **L3** `directUrl` Prisma | `chore/prisma-directurl` | config (+5 lignes) | ⚪ À faire | — | — |
+| Levier                                                           | Branche                        | Nature                                   | Statut                                    | MR                                                                                    | Mesure k6                                                                            |
+| ---------------------------------------------------------------- | ------------------------------ | ---------------------------------------- | ----------------------------------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| **L1/L2/L10** stack staging + pgBouncer + pool                   | `infra/staging-stack`          | infra/config                             | � **Sur `staging` + mesuré** (2026-07-10) | [#14](https://github.com/Rabiegha/attendee-ems-back/pull/14) **mergée sur `staging`** | ✅ avant/après fait → [détail ci-dessous](#-l1l2l10--stack-staging--pgbouncer--pool) |
+| **L9** transaction allégée (`public.service.ts`)                 | `feat/register-tx-slim`        | **code métier** (chirurgie)              | ⚪ À faire                                | —                                                                                     | —                                                                                    |
+| **L9.1** compteur présence session O(1) (candidat, **priorisé**) | `feat/session-present-counter` | code métier (colonne PG `present_count`) | ⚪ À faire                                | —                                                                                     | —                                                                                    |
+| **L7** email async BullMQ                                        | `feat/email-async-bullmq`      | nouveaux fichiers                        | ⚪ À faire                                | —                                                                                     | —                                                                                    |
+| **L8** worker `PROCESS_ROLE` (Voie A)                            | `feat/process-role-worker`     | code (gating `main.ts`)                  | ⚪ À faire                                | —                                                                                     | —                                                                                    |
+| **L3** `directUrl` Prisma                                        | `chore/prisma-directurl`       | config (+5 lignes)                       | ⚪ À faire                                | —                                                                                     | —                                                                                    |
 
 **Légende statut :** ⚪ à faire · 🟡 en cours · 🟢 codé+testé local · 🔵 sur `dev` · 🟣 sur `staging`+mesuré · ✅ clos.
 
@@ -57,21 +58,22 @@
 
 ## Étapes transverses du chantier A
 
-| # | Étape | Statut | Note |
-|---|---|---|---|
-| 0 | Geler & archiver | ✅ Fait | tag `archive/staging-2026-06-25` + branche `staging-archive-2026-06-25` (back). Brain : à vérifier. |
-| 1 | Séparer reformatage / logique | ✅ Fait | format-on-save vérifié OFF (learning créé). |
-| 2 | Rejouer les leviers (chantier A + L9.1) | 🟡 En cours | 1/6 fait — **L1/L2/L10 mergé sur `staging` + mesuré avant/après (2026-07-10)**. Suivants : L9 + L9.1. |
-| 3 | Réconcilier la doc (~25/s CPU vs ~33/s DB) | ⚪ À faire | dans `infra-scaling-pca/README.md`. |
-| 4 | Post-mortem 502 prod | ✅ Fait (2026-07-10) | [bugs/fait/2026-06-25-prod-502-collision-compose.md](../../../bugs/fait/2026-06-25-prod-502-collision-compose.md) + garde-fous suivis dans [backlog/a-faire/garde-fous-deploiement-staging.md](../../../backlog/a-faire/garde-fous-deploiement-staging.md). |
-| 5 | Isoler le compose prod (PR dédiée) | ⚪ À faire | `docker-compose.prod.yml`, ne pas merger sans revue. |
-| 6 | Cadrer l'interdit (L13 cluster, L12 sync_commit) | ⚪ À faire | note, pas de code. |
+| #   | Étape                                            | Statut               | Note                                                                                                                                                                                                                 |
+| --- | ------------------------------------------------ | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0   | Geler & archiver                                 | ✅ Fait              | tag `archive/staging-2026-06-25` + branche `staging-archive-2026-06-25` (back). Brain : à vérifier.                                                                                                                  |
+| 1   | Séparer reformatage / logique                    | ✅ Fait              | format-on-save vérifié OFF (learning créé).                                                                                                                                                                          |
+| 2   | Rejouer les leviers (chantier A + L9.1)          | 🟡 En cours          | 1/6 fait — **L1/L2/L10 mergé sur `staging` + mesuré avant/après (2026-07-10)**. Suivants : L9 + L9.1.                                                                                                                |
+| 3   | Réconcilier la doc (~25/s CPU vs ~33/s DB)       | ⚪ À faire           | dans `infra-scaling-pca/README.md`.                                                                                                                                                                                  |
+| 4   | Post-mortem 502 prod                             | ✅ Fait (2026-07-10) | [bugs/fait/2026-06-25-prod-502-collision-compose.md](../../../bugs/fait/2026-06-25-prod-502-collision-compose.md) + garde-fous suivis dans [garde-fous-deploiement-staging.md](./garde-fous-deploiement-staging.md). |
+| 5   | Isoler le compose prod (PR dédiée)               | ⚪ À faire           | `docker-compose.prod.yml`, ne pas merger sans revue.                                                                                                                                                                 |
+| 6   | Cadrer l'interdit (L13 cluster, L12 sync_commit) | ⚪ À faire           | note, pas de code.                                                                                                                                                                                                   |
 
 ---
 
 ## Détail par levier
 
 ### � L1/L2/L10 — stack staging + pgBouncer + pool
+
 - **Branche :** `infra/staging-stack` · **Commit :** `fd02111` (unique, propre) · **MR :** [#14](https://github.com/Rabiegha/attendee-ems-back/pull/14) **mergée sur `staging`** (2026-07-10, merge `3c418cc`).
 - **Fichiers :** `docker-compose.staging.yml`, `.env.staging.example`, `scripts/staging-make-env.sh`.
 - **Fait :**
@@ -87,12 +89,12 @@
 #### 📊 Mesures k6 avant/après (2026-07-10, `register-baseline.js`, 50 VUs, 3 min, event LFD `published`)
 
 | Métrique (register) | AVANT (code propre, DB **directe** 5432) | APRÈS (pgBouncer 6432 + pool L2/L10) |
-|---|---|---|
-| Succès | 3 595 / 3 595 (**100 %**) | 3 578 / 3 578 (**100 %**) |
-| p95 | 162 ms | **149 ms** |
-| Médiane | 60 ms | 68 ms |
-| Moyenne | 72 ms | 78 ms |
-| Débit | ~19,9 inscr./s | ~19,8 inscr./s |
+| ------------------- | ---------------------------------------- | ------------------------------------ |
+| Succès              | 3 595 / 3 595 (**100 %**)                | 3 578 / 3 578 (**100 %**)            |
+| p95                 | 162 ms                                   | **149 ms**                           |
+| Médiane             | 60 ms                                    | 68 ms                                |
+| Moyenne             | 72 ms                                    | 78 ms                                |
+| Débit               | ~19,9 inscr./s                           | ~19,8 inscr./s                       |
 
 - **Lecture honnête :** à charge douce (~20 req/s, limitée par le think time du script), **équivalent** —
   pgBouncer ajoute un petit hop (+8 ms médiane) mais lisse la queue (p95 −13 ms). Le vrai bénéfice
@@ -113,12 +115,14 @@
 - **Learnings liés :** [stack staging](../../../learnings/2026-07-07-stack-staging-concepts-infra.md) · [pgBouncer/pool](../../../learnings/2026-07-07-pgbouncer-et-pool-db.md) · [directUrl](../../../learnings/2026-07-07-directurl-prisma.md) · [git checkout/reset](../../../learnings/2026-07-07-git-checkout-ref-fichier.md).
 
 ### ⚪ L9 — transaction d'inscription allégée
+
 - **Branche :** `feat/register-tx-slim` · **Fichier :** `src/.../public.service.ts` (~50 lignes utiles).
 - **Nature :** ⚠️ **vraie chirurgie de code** → **test de non-régression obligatoire** (inscriptions identiques, pas de doublon, quota respecté).
 - **Source de rejeu :** archive `staging-archive-2026-06-25` (rejouer à la main, pas cherry-pick du fourre-tout).
 - **Reste :** tout. À démarrer dans un chat dédié.
 
 ### ⚪ L9.1 — compteur de présence session O(1)
+
 - **Branche :** `feat/session-present-counter` · **Fichier :** `src/modules/sessions/sessions.service.ts`.
 - **Problème :** `2× COUNT(*)` sur `session_scans` à chaque scan IN → **O(n)** (coût qui grandit avec la table).
 - **Levier :** compteur incrémental → **O(1)**. **Colonne PG `present_count` par défaut** (suffit, faible concurrence) ; Redis en **bonus « win no effort »** si affichage live voulu (Redis déjà là pour l'inscription).
@@ -128,6 +132,7 @@
 - **Reste :** tout. À démarrer dans un chat dédié (après/avec L9).
 
 ### ⚪ L7 — email async (BullMQ)
+
 - **Branche :** `feat/email-async-bullmq` · **Nature :** nouveaux fichiers (rejeu guidé).
 - **But :** sortir l'envoi d'email du chemin critique de l'inscription (file BullMQ).
 - **Reste :** tout.
@@ -136,11 +141,13 @@
 - **Reste :** tout.
 
 ### ⚪ L8 — worker `PROCESS_ROLE` (Voie A)
+
 - **Branche :** `feat/process-role-worker` · **Nature :** gating dans `main.ts`.
 - **But :** pouvoir lancer un process dédié « worker » (consomme la file) distinct de l'API.
 - **Reste :** tout.
 
 ### ⚪ L3 — `directUrl` Prisma
+
 - **Branche :** `chore/prisma-directurl` · **Nature :** +5 lignes dans `datasource` de `schema.prisma`.
 - **But :** URL directe (port 5432) pour les migrations, l'app passant par pgBouncer (6432).
 - **⚠️ Urgence montée d'un cran (2026-07-10) :** sans `directUrl`, `prisma migrate deploy` via pgBouncer

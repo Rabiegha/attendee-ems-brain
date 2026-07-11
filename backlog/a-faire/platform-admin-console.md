@@ -5,7 +5,7 @@ Initiative: SaaS Foundation
 Workstream: Onboarding & Billing Management
 Status: Backlog
 Priority: Medium
-
+◊
 ## 1. Why this exists
 
 L'équipe éditeur a besoin d'une console pour :

@@ -36,23 +36,25 @@
 > Objectif : tenir **3000 inscriptions quasi simultanées** + affichage temps réel, **sur OVH**, sans
 > survente et sans saturer Postgres.
 
-| Volet | Contenu | Où |
-|---|---|---|
-| **A — Refonte propre (leviers)** | L9 (tx courte) · L7 (email async) · L8 (worker) · L3 (directUrl) — 1 levier = 1 branche = 1 commit + mesure | [00-plan-action.md](../workstreams/en-cours/lfd2026/00-plan-action.md) · [suivi leviers](../workstreams/en-cours/lfd2026/01-suivi-leviers.md) |
-| **Mesure** | Baseline k6 + mesure par levier (réconcilier ~25/s CPU vs ~33/s DB) | [load-test-plan](lfd-2026-load-test-plan.md) |
-| **Offload PDF** | Gotenberg sur **Cloud Run** — sort le rendu badge (gros CPU) du VPS | plan-action §3-B |
-| **Capacité live forte charge** | Redis **portier atomique** (anti-survente) + **file BullMQ** (tampon) + **WebSocket mono-instance** (live) + **pré-chauffe cache** (anti-stampede) | [workstream 02](../workstreams/a-faire/sessions-inscriptions-lfd2026/02-capacite-live-forte-charge.md) |
-| **Inscriptions par session** | Lien public/session + capacité/waitlist + refonte front | [sessions-inscriptions-lfd2026](../workstreams/a-faire/sessions-inscriptions-lfd2026/README.md) |
-| **Fondations minimales** | CI/CD minimal + monitoring/alerting minimal | plan-action §P0 |
-| **Autres** | ESP warm-up (J1) · sauvegarde DB auto · sécurité QR | plan-action §3-C/E/D |
+| Volet                            | Contenu                                                                                                                                            | Où                                                                                                                                                        |
+| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **A — Refonte propre (leviers)** | L9 (tx courte) · L7 (email async) · L8 (worker) · L3 (directUrl) — 1 levier = 1 branche = 1 commit + mesure                                        | [00-plan-action.md](../workstreams/en-cours/lfd2026/00-plan-action.md) · [suivi leviers](../workstreams/en-cours/lfd2026/A-I-leviers/01-suivi-leviers.md) |
+| **Mesure**                       | Baseline k6 + mesure par levier (réconcilier ~25/s CPU vs ~33/s DB)                                                                                | [load-test-plan](lfd-2026-load-test-plan.md)                                                                                                              |
+| **Offload PDF**                  | Gotenberg sur **Cloud Run** — sort le rendu badge (gros CPU) du VPS                                                                                | plan-action §3-B                                                                                                                                          |
+| **Capacité live forte charge**   | Redis **portier atomique** (anti-survente) + **file BullMQ** (tampon) + **WebSocket mono-instance** (live) + **pré-chauffe cache** (anti-stampede) | [workstream 02](../workstreams/a-faire/sessions-inscriptions-lfd2026/02-capacite-live-forte-charge.md)                                                    |
+| **Inscriptions par session**     | Lien public/session + capacité/waitlist + refonte front                                                                                            | [sessions-inscriptions-lfd2026](../workstreams/a-faire/sessions-inscriptions-lfd2026/README.md)                                                           |
+| **Fondations minimales**         | CI/CD minimal + monitoring/alerting minimal                                                                                                        | plan-action §P0                                                                                                                                           |
+| **Autres**                       | ESP warm-up (J1) · sauvegarde DB auto · sécurité QR                                                                                                | plan-action §3-C/E/D                                                                                                                                      |
 
 **Archi cible event (mono-instance) :**
+
 - **Lecture** (statut, 3000 users) → **Redis / cache / WebSocket** (jamais Postgres).
 - **Écriture** (inscription) → **portier `DECR` Redis** → **file BullMQ** → Postgres à son rythme.
 - **Live** → WebSocket **emit direct** (mono-instance, pas de pub/sub).
 - **DB** → OVH, co-localisée. Scaling **vertical** (IOPS/NVMe + tuning) si le débit soutenu l'exige.
 
 **Rôle de GCP pour l'event :**
+
 - ✅ **Cloud Run** (Gotenberg) — le seul usage « event » évident.
 - 🟡 **DR / warm standby** (optionnel) — filet si OVH tombe le jour J.
 - 🔴 Cloud SQL / Memorystore / migration → **post-event**.
@@ -94,25 +96,28 @@ Continuité/HA (chantier F du plan) est **reporté ici** (Cloud SQL fournit HA +
 - **Big-bang GCP-primary à 5 semaines de l'event = risque n°1.** Inverser (OVH primaire, GCP DR) est
   plus prudent → l'event sur une base connue et stabilisée.
 - **Le clustering rushé en solo avant l'event = mode d'échec silencieux** (badges qui ne sortent plus).
-  Le *plan* + un *POC* + un *spec pour l'équipe infra* sont faisables ; un cluster **prod-ready testé**
+  Le _plan_ + un _POC_ + un _spec pour l'équipe infra_ sont faisables ; un cluster **prod-ready testé**
   ne l'est pas dans le temps imparti.
 - **Mesurer d'abord** peut rendre le clustering **inutile pour l'event** : leviers + offload Gotenberg
-  + scaling vertical suffisent probablement pour 3000 simultanés (surtout avec file d'attente + portier
-  Redis qui protègent Postgres).
+  - scaling vertical suffisent probablement pour 3000 simultanés (surtout avec file d'attente + portier
+    Redis qui protègent Postgres).
 
 ---
 
 ## Références (tout est ici)
 
 **Learnings (concepts durables) :**
+
 - [Scaling horizontal : stateless d'abord](../learnings/2026-07-08-scaling-horizontal-stateless.md)
 - [Pic d'inscription temps réel (Redis portier + pull/push + cache)](../learnings/2026-07-08-pic-inscription-temps-reel.md)
 - [pgBouncer vs pool](../learnings/2026-07-07-pgbouncer-et-pool-db.md) · [directUrl Prisma](../learnings/2026-07-07-directurl-prisma.md)
 
 **Workstreams :**
+
 - [lfd2026 — chaîne de livraison](../workstreams/en-cours/lfd2026/README.md) (plan maître : [00-plan-action](../workstreams/en-cours/lfd2026/00-plan-action.md))
 - [Capacité live forte charge (02)](../workstreams/a-faire/sessions-inscriptions-lfd2026/02-capacite-live-forte-charge.md)
 - [infra-scaling-pca](../workstreams/en-cours/infra-scaling-pca/README.md) · [api-scaling-clustering](../workstreams/en-cours/api-scaling-clustering/README.md)
 
 **Infra / décision :**
+
 - [migration-gcp-call](lfd-2026-migration-gcp-call.md) · [capacity-planning](lfd-2026-capacity-planning.md) · [executive-summary](lfd-2026-executive-summary.md)
