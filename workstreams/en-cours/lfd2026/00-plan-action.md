@@ -9,7 +9,7 @@
 > **Références :** [audit-branche-staging.md](../infra-scaling-pca/journal/2026-06-26-audit-branche-staging.md) ·
 > [diagnostic email/billet/wallet](./B-email-billet-pdf/email-billet-wallet.md) ·
 > [plan-continuite-activite.md](../infra-scaling-pca/plan-continuite-activite.md) ·
-> [brief-backup-automatique-db.md](../../../backlog/fait/brief-backup-automatique-db.md)
+> [brief-backup-automatique-db.md](../../../backlog/a-faire/brief-backup-automatique-db.md)
 
 ---
 
@@ -23,8 +23,7 @@
 | --------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
 | **A**     | **Refonte propre (§7 audit)** — rejouer les leviers proprement                                                                          | 🔴 **Priorité n°1**            | À faire                                                                          | §1–§2 ci-dessous                                                                      |
 | **I**     | **⚡ Levier débit n°1 — compteur capacité dénormalisé + transaction courte** (lève le plafond ~30/s)                                    | 🔴 **Haute (perf)**            | 🟡 Diagnostiqué, non codé                                                        | §3-I                                                                                  |
-| **C1**    | **Migration Mailgun — prépa & warm-up** (domaine `mail.attendee.fr`, SPF/DKIM/DMARC, warm-up)                                           | 🔴 Haute                       | ⛔ **bloqué : accès OVH** · warm-up ~2-4 sem                                     | §3-C1                                                                                 |
-| **C2**    | **Migration Mailgun — intégration applicative** (API EU + queue BullMQ + webhooks)                                                      | 🔴 Haute                       | ⏳ avançable en // (indépendant OVH)                                             | §3-C2                                                                                 |
+| **C**     | Migration ESP (Brevo/Scaleway) — délivrabilité ~12 400 envois                                                                           | 🔴 Haute                       | ⚠️ **warm-up à lancer J1**                                                       | §3-C                                                                                  |
 | **0-MON** | Monitoring & alerting **minimal** (uptime / Sentry / CPU)                                                                               | 🔴 Haute                       | ❌ À créer                                                                       | §P0                                                                                   |
 | **0-CI**  | CI/CD **minimaliste** (build+test PR + deploy staging)                                                                                  | 🔴 Haute                       | ❌ À créer                                                                       | §P0                                                                                   |
 | **E**     | Sauvegarde DB automatique (cron + offsite + restore testé)                                                                              | 🔴 Haute                       | ✅ **Terminé** — [PR #15](https://github.com/Rabiegha/attendee-ems-back/pull/15) | §3-E                                                                                  |
@@ -299,46 +298,25 @@ préservée (même moteur Chromium), **faisable sans attendre la migration GCP**
 > Cloud Run n'est pas validé. Comparaison visuelle **pixel-à-pixel** avant de basculer en prod.
 > Le **load test S4** doit inclure un scénario badge (le ~1,5 s/badge est encore une hypothèse).
 
-### Chantier C — Migration Mailgun (délivrabilité) 🔴 Haute · ✅ ESP décidé = **Mailgun**
+### Chantier C — Migration ESP (délivrabilité) 🔴 Haute · ⏳ choix à trancher
 
 > **📎 Fichiers liés :** [diagnostic email/billet/wallet §1](./B-email-billet-pdf/email-billet-wallet.md) ·
-> [décision ESP — Mailgun](./C-migration-esp/esp-choix-mailgun.md) ·
-> [warm-up (C1)](./C-migration-esp/MAILGUN_WARMUP_PLAN.md) ·
-> [migration technique (C2)](./C-migration-esp/mailgun-migration-technique.md)
+> [décision ESP — Brevo vs Scaleway](./C-migration-esp/esp-brevo-vs-scaleway.md)
 
-**Décision (11/07) : Mailgun EU, IP partagée, API HTTP + queue BullMQ.** Sous-domaine `mail.attendee.fr`.
 Email actuel = **nodemailer SMTP direct** (pas un ESP) → risque de délivrabilité sur ~12 400 envois.
-Découpé en **C1 (infra email + warm-up)** et **C2 (intégration applicative)**.
 
-#### C1 — Préparation Mailgun & warm-up ⛔ dépend de l'accès OVH
+| Action                                                               | Temps estimé                           |
+| -------------------------------------------------------------------- | -------------------------------------- |
+| **Trancher l'ESP** (Brevo / Scaleway)                                | décision (non-dev)                     |
+| Créer le compte + configurer le domaine d'envoi (SPF / DKIM / DMARC) | ~2 h _(+ propagation DNS, calendaire)_ |
+| Brancher l'ESP derrière nodemailer (transport)                       | ~1 h                                   |
+| Test d'envoi en masse représentatif + ajustements                    | ~1 h 30                                |
+| **Sous-total C (dev)**                                               | **~4 h 30**                            |
 
-| Action                                                           | Temps                                  |
-| ---------------------------------------------------------------- | -------------------------------------- |
-| Acheter le plan Mailgun + ajouter le domaine (région EU)         | décision/achat (non-dev)               |
-| Créer `mail.attendee.fr` + publier SPF/DKIM/DMARC **(OVH)**      | ~2 h _(+ propagation DNS 24-48 h)_     |
-| Vérifier le domaine « Verified »                                 | calendaire                             |
-| **Warm-up domaine** (montée progressive)                         | **~2 sem min, 3-4 idéal** (calendaire) |
-| **Validation** (inbox Gmail/Outlook/Yahoo, webhooks, monitoring) | ~1 h                                   |
+> ⚠️ **Temps calendaire en plus** (pas du dev) : propagation DNS (~qq h → 24 h) et **warm-up IP/domaine**
+> si gros volume (plusieurs jours d'envois progressifs). À anticiper **bien avant** l'ouverture des inscriptions.
 
-> ⛔ **Bloqueur : pas d'accès OVH aujourd'hui** → impossible de créer le sous-domaine, publier le DNS,
-> vérifier le domaine et **démarrer le warm-up**. **C1 bloqué tant que l'accès OVH n'est pas obtenu.**
-> ⚠️ Warm-up = **délai calendaire** : lancer **~3-4 semaines avant le pic**. Détail → [MAILGUN_WARMUP_PLAN.md](./C-migration-esp/MAILGUN_WARMUP_PLAN.md).
-
-#### C2 — Migration applicative Attendee → Mailgun ⏳ avançable en parallèle (indépendant OVH)
-
-| Action                                                     | Temps      |
-| ---------------------------------------------------------- | ---------- |
-| Client Mailgun EU (`api.eu.mailgun.net`) + secrets         | ~1 h       |
-| Passage envoi → **queue BullMQ** (job idempotent) + worker | ~1 j       |
-| Templates (confirmation + billet PDF joint)                | ~2 h       |
-| **Webhooks** (delivered/bounce/spam) + table de suivi      | ~½ j       |
-| Tests (staging Mailpit / sandbox) + test rafale            | ~½ j       |
-| **Bascule** (dépend de C1 : domaine vérifié)               | ~1 h       |
-| **Sous-total C2 (dev)**                                    | **~2-3 j** |
-
-> Détail technique + snippets → [mailgun-migration-technique.md](./C-migration-esp/mailgun-migration-technique.md).
-
-**Effort dev : ~moyen (C2)** ; **le vrai enjeu = délivrabilité + calendrier de warm-up (C1).** Plus gros risque client.
+**Effort dev : ~moyen** ; **le vrai enjeu = délivrabilité + calendrier de warm-up.** Plus gros risque client.
 
 ### Chantier D — Sécurité QR 🔸 Moyenne
 
@@ -359,7 +337,7 @@ Sensible vu les **données nominatives MEAE**.
 
 ### Chantier E — Sauvegarde DB automatique ✅ TERMINÉ · [PR #15](https://github.com/Rabiegha/attendee-ems-back/pull/15)
 
-> **📎 Fichiers liés :** [brief backup automatique DB](../../../backlog/fait/brief-backup-automatique-db.md) ·
+> **📎 Fichiers liés :** [brief backup automatique DB](../../../backlog/a-faire/brief-backup-automatique-db.md) ·
 > [scripts/backup/](https://github.com/Rabiegha/attendee-ems-back/tree/feature/db-backup/scripts/backup)
 
 **Livraison complète — dépasse le brief initial sur 3 points.**
@@ -578,8 +556,7 @@ session : lien public, capacité/waitlist) et **J** (capacité live : statut ple
 | **0-MON** — Monitoring **minimal**                                                        | **~2 jours**                                 | comptes outils (uptime/Sentry)                        |
 | **B0** — Email → billet PDF (**POC**, Cloud Run déjà fait)                                | **~½ j**                                     | service Cloud Run (déjà déployé)                      |
 | **B1** — Email → billet PDF (**durcissement**)                                            | **~1,5 – 2 j**                               | (~< 1 – 12 € compute)                                 |
-| **C1** — Mailgun prépa + warm-up                                                          | calendaire (**warm-up 2-4 sem**)             | ⛔ bloqué **accès OVH** · propagation DNS 24-48 h     |
-| **C2** — Mailgun intégration applicative                                                  | **~2 – 3 jours**                             | avançable en // (indépendant OVH)                     |
+| **C** — Migration ESP                                                                     | **~2 – 3 jours**                             | propagation DNS + **warm-up (1-2 sem)**               |
 | **D** — Sécurité QR HMAC                                                                  | **~1 – 2 jours**                             | — (coordination 2 repos clients)                      |
 | ~~**E** — Backup auto (MVP) + PITR léger~~                                                | ~~**~1,5 – 2 jours**~~                       | ✅ **Backup MVP terminé** (PITR = §3-F, hors scope E) |
 | **H** — Inscriptions par session (phases 0–2)                                             | **~5,5 – 8,5 jours**                         | —                                                     |
@@ -610,8 +587,7 @@ session : lien public, capacité/waitlist) et **J** (capacité live : statut ple
 | Priorité | Chantier                                                                | Décision                                                                                                  |
 | -------- | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | --- | -------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------ | --- | ----- | -------------------------- | ----------------------------------------------------- |
 | 🔴 P0    | **A** — Refonte propre §7                                               | **Priorité n°1** — débloque le déploiement propre du reste                                                |
-| 🔴 P0    | **C1** — Mailgun prépa + warm-up                                        | ⛔ **débloquer l'accès OVH** puis lancer le **warm-up** (délai calendaire ~2-4 sem)                       |
-| 🔴 P1    | **C2** — Mailgun intégration applicative                                | Avançable **en parallèle** (indépendant OVH) — API EU + queue BullMQ + webhooks                           |
+| 🔴 P0    | **C** — ESP (Brevo/Scaleway)                                            | ⚠️ **lancer le warm-up tout de suite** (délai calendaire)                                                 |
 | 🔴 P0/P1 | **I** — ⚡ Levier débit n°1 (compteur capacité dénormalisé + tx courte) | **Le seul levier qui lève le plafond ~30/s** — juste après A, avant le load test S4                       |
 | 🔴 P1    | **0-MON** — Monitoring minimal (uptime + alerte + Sentry)               | Gardé (réduit)                                                                                            |
 | 🔴 P1    | **0-CI** — CI/CD **minimaliste** (build+test PR + deploy staging)       | Gardé (réduit, **sans CD/rollback auto**)                                                                 |

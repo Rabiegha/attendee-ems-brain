@@ -6,7 +6,7 @@
 
 - **Plan maître :** [../00-plan-action.md](../00-plan-action.md) (§P0 — Fondations minimales)
 - **Avancement (%) :** [../03-suivi-chantiers.md](../03-suivi-chantiers.md) (lignes **0-CI** et **0-MON**)
-- **Owner :** Corentin — **Statut :** ⚪ à démarrer (S29–S30)
+- **Owner :** Rabie — **Statut :** ⚪ à démarrer (S29–S30)
 
 ## Fichiers du dossier
 
