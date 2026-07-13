@@ -47,6 +47,7 @@
 - [x] **🔧 Fix CI e2e #2 : seed manquant** ✅ 2026-07-13 : sur base CI vierge, 12/18 tests échouaient en 401 — les specs supposent des users pré-existants (`admin@acme.test`, `admin@acme.com`) **jamais créés par aucun seeder du repo** (le hash de `seed-dev.sql` ne correspond même pas à `password123`). Fix : `test/seed-e2e.ts` (réutilise les seeders dev + rôle `staff` + les 2 users e2e en ADMIN@Acme) + step `Seed E2E` dans `ci.yml`. Commits : `a84f59b` (chore/ci-cd) + `ef9eff3` (staging).
 - [x] **🔧 Fix CI e2e #3 : tests obsolètes + throttler** ✅ 2026-07-13 : 3 derniers échecs — (a) le throttler `@Throttle(10/min)` de `/auth/login` déclenchait des 429 (les suites enchaînent >10 logins) → `skipIf: NODE_ENV === 'test'` dans le ThrottlerModule ; (b) assertions cookie obsolètes (`Path=/auth/refresh` vs `Path=/` réel, `Max-Age=0` vs `Expires=1970` réel) → alignées sur le code. Commits : `72b9be1` (chore/ci-cd) + `28eb5d2` (staging). → **CI verte 18/18** ✅
 - [x] **⚠️ Workflows portés sur `main`** ✅ 2026-07-13 : découverte — GitHub n'active `workflow_run` ET `workflow_dispatch` que si le workflow existe sur la **branche par défaut**. Le cherry-pick sélectif partait en conflits en cascade (main très en retard) → **merge `staging` → `main`** (commit `4362745`, validé par Rabie). Aucun déploiement auto déclenché (CD prod = dispatch + confirm DEPLOY).
+
 1. [x] **CD staging back** ✅ 2026-07-13 : dispatch manuel → run `29266715214` **success**. Vérifié sur le VPS : `ems-staging-api` tourne sur `ghcr.io/rabiegha/ems-api:28eb5d2…` (healthy), `https://staging.attendee.fr/api/health` → status ok, db ok, redis ok, migrations ok, version = sha déployé. **Chaîne complète CI → GHCR → CD → VPS validée.** (Note : le déclenchement auto `workflow_run` sera actif dès le prochain push staging, maintenant que le workflow est sur main.)
 2. [ ] ⏸ **CD prod back — EN ATTENTE** (décision 13/07 soir) : à faire dans la fenêtre 22h-06h ou avec `hotfix=true`. ⚠️ Depuis le merge `staging → main`, un deploy prod déploie le **nouveau code** (plus un no-op) — à assumer consciemment. Rappel dans l'[INBOX](../../../../workspace-rabie/INBOX.md).
 3. [ ] ⏸ **CD prod front — EN ATTENTE** — après validation du CD prod back.
@@ -56,6 +57,12 @@
 - [x] **Back** : cherry-pick prettier `8b53222` → `staging` (`0aa540f`) puis merge `staging → main` (`b50339a`). `staging` ⊇ `chore/ci-cd` (seul écart résiduel : le vhost nginx staging, présent dans staging/main uniquement — normal).
 - [x] **Front** : merge `chore/ci-cd → staging` (`c274cf4`, conflits `eventsApi.ts`/`EventSessionsTab.tsx` résolus : version sessions conservée + prettier réappliqué, tsc/build/eslint verts) puis fast-forward `staging → main`. **La chaîne CI/CD front est désormais sur `main`** (workflows actifs sur la branche par défaut).
 - [x] Résultat : **staging = main sur les deux repos** (au commit près), stack staging (`infra/staging-stack`) intégrée partout. Branches `chore/ci-cd` (back+front) et `infra/staging-stack` supprimables.
+
+### 3ter. Rodage CI + CD staging front en conditions réelles (2026-07-13 nuit) ✅
+
+- [x] **Premier vrai run CI front = 2 échecs corrigés** (commit `498dd45`, staging+main) : (a) vitest ramassait les specs **Playwright** de `tests/e2e/` (« test.describe() not expected ») → `exclude` + `passWithNoTests` (constat : **0 test unitaire vitest dans le repo**, les 2 specs sont Playwright — à combler via chantier T) ; (b) directive `eslint-disable react-hooks/exhaustive-deps` devenue inutile dans `AdvancedExportModal.tsx` → supprimée.
+- [x] **Chaîne auto front validée de bout en bout** : push staging → CI verte → `workflow_run` → **CD staging front success** (bundle → VPS, swap atomique `dist/staging`, healthcheck public OK). staging.attendee.fr **200**, prod **200** (intacte).
+- [x] Confirmé au passage : le **CD staging back auto** s'est aussi déclenché sur le push staging de la soirée — l'API staging tourne sur `0aa540f` (`/api/health` : db/redis/migrations ok). Le `workflow_run` auto est rodé **des deux côtés**.
 
 ## 4. Nettoyage (seulement une fois le CD rodé)
 
@@ -68,6 +75,7 @@
   ```
 
   → si le front public reste OK après quelques jours, supprimer le dossier legacy.
+
 - [ ] Corriger les scripts legacy (`deploy-front.sh`, `deploy.sh`, `deploy-logs.sh`, `deploy-back-logs.sh`) : supprimer la copie morte vers `backend/frontend`, mais **les garder comme fallback manuel** pendant l'event (reco Codex, validée).
 - [ ] Rangement `scripts/deploy-from-registry.sh` → `scripts/deploy/` : cosmétique. Si fait, mettre à jour `cd-prod.yml` / `cd-staging.yml` **dans le même commit** + vérifier les chemins docs et les commandes VPS.
 

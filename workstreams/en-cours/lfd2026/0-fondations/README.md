@@ -10,10 +10,10 @@
 
 ## Fichiers du dossier
 
-| Fichier                          | Sujet                                                                                            |
-| -------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Fichier                                                                    | Sujet                                                                                                                   |
+| -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | [finalisation-ci-cd-et-livraison.md](./finalisation-ci-cd-et-livraison.md) | 🎯 **Checklist d'exécution VIVANTE** — prérequis ops, validation pipeline, alignement branches, nettoyage, verrouillage |
-| [0-CI-plan.md](./0-CI-plan.md)   | **Plan CI/CD ACTIF** — staging + prod (prod prioritaire), arbitrages actés, ordre de livraison   |
-| [CI_CD_PLAN.md](./CI_CD_PLAN.md) | Annexe — squelette détaillé (jobs CI, tests E2E, fichiers à créer, plan de vérif)                |
-| [0-MON-plan.md](./0-MON-plan.md) | **Plan Monitoring ACTIF** — Sentry (déjà câblé) + uptime (fait) + Netdata/alertes disque à poser |
-| [ci-cd-post-event.md](./ci-cd-post-event.md) | 📦 **Post-event** — gestion des tests en CI à l'échelle (étagement, parallélisation, déclencheurs) |
+| [0-CI-plan.md](./0-CI-plan.md)                                             | **Plan CI/CD ACTIF** — staging + prod (prod prioritaire), arbitrages actés, ordre de livraison                          |
+| [CI_CD_PLAN.md](./CI_CD_PLAN.md)                                           | Annexe — squelette détaillé (jobs CI, tests E2E, fichiers à créer, plan de vérif)                                       |
+| [0-MON-plan.md](./0-MON-plan.md)                                           | **Plan Monitoring ACTIF** — Sentry (déjà câblé) + uptime (fait) + Netdata/alertes disque à poser                        |
+| [ci-cd-post-event.md](./ci-cd-post-event.md)                               | 📦 **Post-event** — gestion des tests en CI à l'échelle (étagement, parallélisation, déclencheurs)                      |
