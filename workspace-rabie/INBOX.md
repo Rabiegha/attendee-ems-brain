@@ -5,6 +5,8 @@
 
 ## À trier
 
+- ⏸ [ops] **CD prod back + CD prod front : EN ATTENTE** (validés côté staging le 13/07) — fenêtre 22h-06h ou `hotfix=true`. ⚠️ `main` contient désormais tout `staging` (merge 13/07) : un deploy prod déploiera le nouveau code, pas un no-op. → reprendre depuis [finalisation-ci-cd-et-livraison.md](./finalisation-ci-cd-et-livraison.md) §3.
+- 🔴 [ops] **MERCREDI 15/07 (très important) : purchase du plan Mailgun (32 €/mois)** — bloqué le 13/07 par un bug billing Mailgun (404 sur `/v1/mailforce/*`, bouton Purchase désactivé). Pas bloquant : le warm-up démarre en compte starter en attendant. Si toujours KO mercredi → support Mailgun. Détail → journal [2026-W29](./journal/2026-W29.md).
 - 🚨 [bug][security] **Webshells PHP injectés dans `choyou.fr/_/attendee/`** (mutualisé legacy, PAS le VPS). Vérifier l'arborescence + supprimer les fichiers non désirés ; ils réapparaissent → persistance probable (changer creds FTP/SSH/DB, vérifier crons OVH). 2 fichiers déjà supprimés le 03/07. → `bugs/a-faire/2026-07-03-webshell-php-choyou-attendee.md`
 - [archi] back/LFD : **plafond inscription ≈ 33–37 reg/s = sérialisation écriture DB** (prouvé : 4 cœurs = même débit que 2). Levier = sortir le COUNT capacité de la transaction. → workstream infra-scaling-pca
 - [trap] back/LFD : cluster N instances **casse l'impression temps réel silencieusement** (registres en mémoire) → JAMAIS en prod sans clustering (redis-adapter+sticky+présence Redis).

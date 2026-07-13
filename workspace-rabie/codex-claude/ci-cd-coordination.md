@@ -27,6 +27,25 @@ Le reste de ce doc (secrets, PAT GHCR, clé SSH, branch protection, scripts lega
 
 ---
 
+## ⚡ MISE À JOUR 2026-07-13 (soir) — pipeline VALIDÉ de bout en bout (staging back)
+
+Exécution pilotée par la checklist [finalisation-ci-cd-et-livraison.md](../finalisation-ci-cd-et-livraison.md) :
+
+| Sujet | État |
+| --- | --- |
+| Prérequis ops (§ « ce que Rabie doit faire ») | ✅ TOUS faits : clé SSH GHA, secrets `VPS_HOST`/`VPS_USER`/`VPS_SSH_KEY` (back+front), PAT GHCR loggé root+debian sur le VPS |
+| CI back | ✅ **Verte 18/18 e2e** après 3 fixes : `REDIS_HOST` manquant (job pendu 3h49) · seed e2e inexistant (`test/seed-e2e.ts` créé — les specs supposaient des users jamais seedés) · throttler 429 + assertions cookie obsolètes |
+| CD staging back | ✅ **Validé en conditions réelles** : run `29266715214` → `ems-staging-api` sur image GHCR `28eb5d2…`, `/api/health` full ok, version = sha |
+| Workflows sur `main` | ✅ Découverte : `workflow_run`/`workflow_dispatch` exigent le workflow sur la **branche par défaut** → merge `staging → main` (`4362745`). Rien ne se déploie en auto (CD prod = dispatch + confirm) |
+| CD staging front | ✅ Créé (`bca6eca`) + 🔴 bug swap prod corrigé (`dist/staging` survivait pas au deploy prod). ⚠️ Même règle : devra être sur `main` du repo front pour être déclenchable |
+| CD prod back / front | ⏸ **EN ATTENTE** (fenêtre 22h-06h ou hotfix). ⚠️ `main` = tout staging désormais : plus un no-op |
+| Vhost staging | 🔴→✅ Incident découvert à l'audit : vhost **disparu du VPS** (404 ~3 j, commit orphelin balayé) — restauré + commité sur dev/staging/main |
+
+**Point de coordination humain** : ✅ point fait avec Corentin (13/07) — explication de la nouvelle
+méthode de travail CI/CD, revue de ce qui était fait, répartition des tâches de la semaine.
+
+---
+
 ## 1. Contexte rapide
 
 Claude a code une premiere version du chantier CI/CD sur les branches `chore/ci-cd` :
