@@ -10,6 +10,25 @@
 
 ---
 
+## ✅ Avancement (maj 2026-07-13)
+
+Branche `feat/sessions-public-registration` (attendee-ems-back, partie de `staging`) — **non push / non déployée**, PR en fin de chantier.
+
+- **Phase 0 — Fondations data : FAIT.** Migration `20260713120000_sessions_public_registration`
+  (hand-written, à appliquer via `prisma migrate deploy`) : champs `Session`
+  (`registration_enabled`, `public_token`, `public_registration_open`, `capacity_enforced`,
+  `waitlist_enabled`) + `RegistrationSessionChoice` (`status` enum `SessionRegistrationStatus`,
+  `source`, `created_at`, `updated_at`). **Bug `session_choice_ids` corrigé** (persisté en create + restore).
+- **Phase 1 — Inscription publique par session (back) : FAIT (base).** `GET /public/sessions/:token`
+  + `POST /public/sessions/:token/register` (anti-doublon assoupli, capacité + waitlist, idempotent) ;
+  admin `POST|PATCH /events/:eventId/sessions/:id/public-token` (générer/ouvrir/stopper). `tsc` clean.
+- **Back-office billetterie (BIL) câblé** : le formulaire public appelle la route publique par session
+  → **suppression des credentials de service** (plus aucun secret dans le code du back-office).
+- **🚧 En cours** : `registration_opens_at` (ouverture programmée des inscriptions) — voir §4.1 / §5.1.
+- **Reste** : Phase 2 front (refonte sessions), tests H-T1→H-T14, déploiement + `migrate deploy`, PR.
+
+---
+
 ## 0. Flux cible
 
 ```
@@ -110,6 +129,7 @@ physique — le `SessionScan admitted` reste le check-in réel, fait sur site le
 | `registration_enabled` | `Boolean @default(false)` | **Mode** de la session (§1) |
 | `public_token` | `String? @unique` | Lien public dédié (généré quand inscription publique activée) |
 | `public_registration_open` | `Boolean @default(false)` | **Stopper/ouvrir** les inscriptions sans supprimer le token |
+| `registration_opens_at` | `DateTime?` | **Ouverture programmée** des inscriptions : avant cette date, le lien public refuse l'inscription (état `scheduled`). `null` = ouvert dès que `public_registration_open`. |
 | `waitlist_enabled` | `Boolean @default(false)` | Comportement quand la capacité est atteinte |
 | `capacity_enforced` | `Boolean @default(true)` | Pouvoir **désactiver le blocage** capacité |
 | `speakers` | `Json?` | Contenu riche (intervenants) — *phase 3* |
@@ -143,7 +163,7 @@ PK inchangée (`registration_id, session_id`). Check-in session = **toujours** `
 - `GET  /public/sessions/:sessionToken` — métadonnées session pour le formulaire public.
 - `POST /public/sessions/:sessionToken/register` — inscription :
   1. résoudre session + event via `Session.public_token` ;
-  2. vérifier `public_registration_open` + event ouvert ;
+  2. vérifier `public_registration_open` + **`registration_opens_at`** (avant l'heure → `scheduled`/refus) + event ouvert ;
   3. **anti-doublon assoupli** : upsert attendee → registration event **réutilisée si existante**
      (on **ajoute** la session), sinon créée ;
   4. capacité **event + session** ; si session pleine → `waitlisted` (si activé) sinon `409` ;

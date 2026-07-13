@@ -5,6 +5,7 @@
 
 - **Plan maître :** [../00-plan-action.md](../00-plan-action.md) (§3-H)
 - **Avancement (%) :** [../03-suivi-chantiers.md](../03-suivi-chantiers.md) (ligne **H**)
-- **Statut :** 🟡 cadré, prêt à découper (S29→S31)
+- **Statut :** � Phases 0-1 (back) faites — back-office câblé (credentials supprimés) · reste front (ph.2) + tests + `registration_opens_at`
+- **Détail avancement :** [workstream dédié — §Avancement](../../../a-faire/sessions-inscriptions-lfd2026/README.md)
 - **Tests à livrer avec le chantier :** [tests-sessions.md](./tests-sessions.md) — scan session,
   inscriptions, CRUD sessions (déplacé depuis le [chantier T](../T-tests-event/README.md) le 13/07, liste à valider)
