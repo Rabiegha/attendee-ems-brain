@@ -6,6 +6,27 @@
 
 ---
 
+## ⚡ MISE À JOUR 2026-07-13 — la partie « tests » de ce doc est désormais pilotée ailleurs
+
+La section « Tests critiques a ajouter ou verifier » (§2) a été transformée en **chantier T dédié**,
+avec des décisions qui **amendent la demande initiale à Claude** :
+
+| Sujet | Décision 13/07 | Où c'est piloté |
+| --- | --- | --- |
+| Liste des tests event-critical | Chantier **T** créé : P0 (health, scan QR event, permissions) / P1 (PDF-badges, auth KO, BullMQ) / P2 — **liste à valider avant de coder** | [T-tests-event/README.md](../../workstreams/en-cours/lfd2026/T-tests-event/README.md) |
+| `registration.e2e-spec.ts` + tests scan **session** + « user sans droit scanner » | **Déplacés au chantier H** (owner Corentin) — dépendent des règles métier H (privé/public, event vs session). **La V1 du CI/CD est livrée sans.** | [H · tests-sessions.md](../../workstreams/en-cours/lfd2026/H-inscriptions-session/tests-sessions.md) (tests H-T1→T14 + devs H-D1→D7) |
+| Tests paiement/webhook | **Supprimés — pas de paiement pour cet event** | — |
+| État réel du code scan (vérifié) | HMAC **strict et branché** sur `checkInByCode` ✅ (mais 0 E2E route) · déjà scanné = **409 `ALREADY_CHECKED_IN` + état serveur** (réconciliation offline mobile — reco : garder) · 🔴 **le re-scan n'est PAS loggé** (`AuditLog` Prisma jamais appelé) → dev à ajouter (H-D1) | [T §5bis](../../workstreams/en-cours/lfd2026/T-tests-event/README.md) |
+| Charge des tests en CI | **Tout lancer à chaque PR** (échelle ~2-5 min, aucun souci) ; étagement/optimisations = post-event | [0-fondations/ci-cd-post-event.md](../../workstreams/en-cours/lfd2026/0-fondations/ci-cd-post-event.md) |
+
+**Conséquence pour la demande à Claude (§2)** : garder T1 `health`, T2 `scan-qr` (scan principal
+event uniquement, contrat 409 à figer, cas « token HMAC falsifié »), T3 `permissions-event` ;
+**retirer** `registration.e2e-spec.ts` (→ H) et tout ce qui touche paiement.
+
+Le reste de ce doc (secrets, PAT GHCR, clé SSH, branch protection, scripts legacy) reste valable tel quel.
+
+---
+
 ## 1. Contexte rapide
 
 Claude a code une premiere version du chantier CI/CD sur les branches `chore/ci-cd` :
