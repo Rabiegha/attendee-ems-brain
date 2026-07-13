@@ -54,7 +54,11 @@
    - **Fixes commités (`4dd9092`)** : reload nginx intégré à `deploy_image()` dans `deploy-from-registry.sh` + healthcheck compose sans `-4`. `deployed_sha` écrit manuellement sur le VPS (rollback désormais possible).
    - **Run 2 (`8963315`) : deploy VPS OK** (reload nginx efficace) mais step « Healthcheck public » KO — URL erronée `api.attendee.fr/health` (il manque le préfixe global `/api`) → 404. Fix : `/api/health` (`aca1b49`).
    - **Run 3 (`aca1b49`) : 100 % VERT** — guard, risky-migration-check, verify-ci, deploy (1m20), notify. Prod : `https://api.attendee.fr/api/health` → status ok, version = sha exact. **La chaîne CD prod back est rodée, rollback armé.**
-3. [ ] ⏸ **CD prod front — EN ATTENTE** — le CD prod back est validé, plus de bloqueur. Fenêtre 22h-06h.
+3. [x] **CD prod front ✅ 2026-07-13 ~23h15** — validé en 3 runs :
+   - **Run 1 : bloqué par `verify-ci` (403)** — le `GITHUB_TOKEN` par défaut du repo front n'a pas `actions:read` (contrairement au back) → bloc `permissions: {contents: read, actions: read}` ajouté au workflow (`5c2abe3`). Garde-fou sain : le deploy n'a jamais démarré.
+   - **Run 2 : échec healthcheck + ROLLBACK AUTO RÉUSSI** 🎯 — le curl `https://127.0.0.1/` sans SNI/Host tombait sur le vhost par défaut (api) → 404 alors que le front était bien servi. Le rollback a restauré `dist.previous` proprement (prod ET staging intacts) — **le mécanisme de rollback front est donc validé en réel**. Fix : `--resolve attendee.fr:443:127.0.0.1` (même technique que le CD staging).
+   - **Run 3 : 100 % VERT** — guard, verify-ci, deploy 1m50 (build GHA → tar → swap atomique, `dist/staging` préservé), notify. Vérifié : prod front 200, staging front 200, API 200.
+   - **→ CHAÎNE CI/CD COMPLÈTE VALIDÉE : staging + prod × back + front.**
 
 ### 3bis. Alignement des branches (2026-07-13 soir) ✅
 
