@@ -49,8 +49,12 @@
 - [x] **⚠️ Workflows portés sur `main`** ✅ 2026-07-13 : découverte — GitHub n'active `workflow_run` ET `workflow_dispatch` que si le workflow existe sur la **branche par défaut**. Le cherry-pick sélectif partait en conflits en cascade (main très en retard) → **merge `staging` → `main`** (commit `4362745`, validé par Rabie). Aucun déploiement auto déclenché (CD prod = dispatch + confirm DEPLOY).
 
 1. [x] **CD staging back** ✅ 2026-07-13 : dispatch manuel → run `29266715214` **success**. Vérifié sur le VPS : `ems-staging-api` tourne sur `ghcr.io/rabiegha/ems-api:28eb5d2…` (healthy), `https://staging.attendee.fr/api/health` → status ok, db ok, redis ok, migrations ok, version = sha déployé. **Chaîne complète CI → GHCR → CD → VPS validée.** (Note : le déclenchement auto `workflow_run` sera actif dès le prochain push staging, maintenant que le workflow est sur main.)
-2. [ ] ⏸ **CD prod back — EN ATTENTE** (décision 13/07 soir) : à faire dans la fenêtre 22h-06h ou avec `hotfix=true`. ⚠️ Depuis le merge `staging → main`, un deploy prod déploie le **nouveau code** (plus un no-op) — à assumer consciemment. Rappel dans l'[INBOX](../../../../workspace-rabie/INBOX.md).
-3. [ ] ⏸ **CD prod front — EN ATTENTE** — après validation du CD prod back.
+2. [x] **CD prod back ✅ 2026-07-13 ~23h** — validé en 3 runs, avec un incident instructif :
+   - **Run 1 (`b50339a`) : ÉCHEC + prod 502 ~7 min.** L'API démarrait parfaitement mais 2 bugs latents : (a) le **healthcheck compose** utilisait `wget -4` (flag inexistant en BusyBox → conteneur `unhealthy` à vie — fix qui existait dans `staging-archive-2026-06-25` mais avait été perdu) ; (b) **nginx ne re-résout pas l'upstream `api`** après recréation du conteneur (nouvelle IP) → 502. Le healthcheck du script (via nginx) échouait donc alors que l'API était saine, et « premier deploy registry » = **pas de SHA de rollback** → exit 1, intervention manuelle. Restauré par `nginx -s reload` (prod re-up immédiatement).
+   - **Fixes commités (`4dd9092`)** : reload nginx intégré à `deploy_image()` dans `deploy-from-registry.sh` + healthcheck compose sans `-4`. `deployed_sha` écrit manuellement sur le VPS (rollback désormais possible).
+   - **Run 2 (`8963315`) : deploy VPS OK** (reload nginx efficace) mais step « Healthcheck public » KO — URL erronée `api.attendee.fr/health` (il manque le préfixe global `/api`) → 404. Fix : `/api/health` (`aca1b49`).
+   - **Run 3 (`aca1b49`) : 100 % VERT** — guard, risky-migration-check, verify-ci, deploy (1m20), notify. Prod : `https://api.attendee.fr/api/health` → status ok, version = sha exact. **La chaîne CD prod back est rodée, rollback armé.**
+3. [ ] ⏸ **CD prod front — EN ATTENTE** — le CD prod back est validé, plus de bloqueur. Fenêtre 22h-06h.
 
 ### 3bis. Alignement des branches (2026-07-13 soir) ✅
 
