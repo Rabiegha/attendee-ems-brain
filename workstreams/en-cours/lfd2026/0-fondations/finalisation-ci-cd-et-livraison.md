@@ -1,7 +1,7 @@
 # Finalisation CI/CD et livraison
 
-> Date : 2026-07-13
-> Contexte : la partie « tests » du doc [ci-cd-coordination.md](codex-claude/ci-cd-coordination.md) est désormais pilotée par le chantier T (et H pour les sessions). Ce fichier trace l'ordre de travail pour **le reste** : prérequis ops, validation du pipeline, nettoyage, verrouillage.
+> Date : 2026-07-13 (déplacé le 13/07 depuis `workspace-rabie/` vers le dossier du chantier 0-fondations)
+> Contexte : la partie « tests » du doc [ci-cd-coordination.md](../../../../workspace-rabie/codex-claude/ci-cd-coordination.md) est désormais pilotée par le chantier T (et H pour les sessions). Ce fichier trace l'ordre de travail pour **le reste** : prérequis ops, validation du pipeline, nettoyage, verrouillage.
 >
 > Logique : **débloquer les prérequis ops d'abord, valider le pipeline ensuite, nettoyer en dernier.**
 
@@ -48,8 +48,14 @@
 - [x] **🔧 Fix CI e2e #3 : tests obsolètes + throttler** ✅ 2026-07-13 : 3 derniers échecs — (a) le throttler `@Throttle(10/min)` de `/auth/login` déclenchait des 429 (les suites enchaînent >10 logins) → `skipIf: NODE_ENV === 'test'` dans le ThrottlerModule ; (b) assertions cookie obsolètes (`Path=/auth/refresh` vs `Path=/` réel, `Max-Age=0` vs `Expires=1970` réel) → alignées sur le code. Commits : `72b9be1` (chore/ci-cd) + `28eb5d2` (staging). → **CI verte 18/18** ✅
 - [x] **⚠️ Workflows portés sur `main`** ✅ 2026-07-13 : découverte — GitHub n'active `workflow_run` ET `workflow_dispatch` que si le workflow existe sur la **branche par défaut**. Le cherry-pick sélectif partait en conflits en cascade (main très en retard) → **merge `staging` → `main`** (commit `4362745`, validé par Rabie). Aucun déploiement auto déclenché (CD prod = dispatch + confirm DEPLOY).
 1. [x] **CD staging back** ✅ 2026-07-13 : dispatch manuel → run `29266715214` **success**. Vérifié sur le VPS : `ems-staging-api` tourne sur `ghcr.io/rabiegha/ems-api:28eb5d2…` (healthy), `https://staging.attendee.fr/api/health` → status ok, db ok, redis ok, migrations ok, version = sha déployé. **Chaîne complète CI → GHCR → CD → VPS validée.** (Note : le déclenchement auto `workflow_run` sera actif dès le prochain push staging, maintenant que le workflow est sur main.)
-2. [ ] ⏸ **CD prod back — EN ATTENTE** (décision 13/07 soir) : à faire dans la fenêtre 22h-06h ou avec `hotfix=true`. ⚠️ Depuis le merge `staging → main`, un deploy prod déploie le **nouveau code** (plus un no-op) — à assumer consciemment. Rappel dans l'[INBOX](./INBOX.md).
+2. [ ] ⏸ **CD prod back — EN ATTENTE** (décision 13/07 soir) : à faire dans la fenêtre 22h-06h ou avec `hotfix=true`. ⚠️ Depuis le merge `staging → main`, un deploy prod déploie le **nouveau code** (plus un no-op) — à assumer consciemment. Rappel dans l'[INBOX](../../../../workspace-rabie/INBOX.md).
 3. [ ] ⏸ **CD prod front — EN ATTENTE** — après validation du CD prod back.
+
+### 3bis. Alignement des branches (2026-07-13 soir) ✅
+
+- [x] **Back** : cherry-pick prettier `8b53222` → `staging` (`0aa540f`) puis merge `staging → main` (`b50339a`). `staging` ⊇ `chore/ci-cd` (seul écart résiduel : le vhost nginx staging, présent dans staging/main uniquement — normal).
+- [x] **Front** : merge `chore/ci-cd → staging` (`c274cf4`, conflits `eventsApi.ts`/`EventSessionsTab.tsx` résolus : version sessions conservée + prettier réappliqué, tsc/build/eslint verts) puis fast-forward `staging → main`. **La chaîne CI/CD front est désormais sur `main`** (workflows actifs sur la branche par défaut).
+- [x] Résultat : **staging = main sur les deux repos** (au commit près), stack staging (`infra/staging-stack`) intégrée partout. Branches `chore/ci-cd` (back+front) et `infra/staging-stack` supprimables.
 
 ## 4. Nettoyage (seulement une fois le CD rodé)
 
@@ -67,7 +73,7 @@
 
 ## 5. Verrouillage final
 
-- [ ] **Branch protection** sur `main` (une fois la CI verte et fiable, sinon on se bloque soi-même).
+- [ ] 🔴 **Branch protection sur `main` : BLOQUÉE par le plan GitHub Free** (constat 13/07 : branch protection ET rulesets → HTTP 403 « Upgrade to GitHub Pro » sur repo privé). Options : **GitHub Pro ~4 $/mois sur le compte Rabiegha** (recommandé, débloque tous les repos privés) · org Team (~4 $/user/mois, transfert des repos) · repos publics (non recommandé). Les commandes `gh api` sont prêtes (checks requis identifiés : back `lint-typecheck`/`unit-tests`/`e2e-tests`/`build-image`, front `lint-typecheck`/`unit-tests`/`build`/`e2e-smoke`). `gh` CLI installé + authentifié le 13/07.
 - [ ] Chantier **0-MON / monitoring** si pas encore actif.
 
 ---

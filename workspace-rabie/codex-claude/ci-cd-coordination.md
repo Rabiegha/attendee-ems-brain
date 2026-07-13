@@ -29,7 +29,7 @@ Le reste de ce doc (secrets, PAT GHCR, clé SSH, branch protection, scripts lega
 
 ## ⚡ MISE À JOUR 2026-07-13 (soir) — pipeline VALIDÉ de bout en bout (staging back)
 
-Exécution pilotée par la checklist [finalisation-ci-cd-et-livraison.md](../finalisation-ci-cd-et-livraison.md) :
+Exécution pilotée par la checklist [finalisation-ci-cd-et-livraison.md](../../workstreams/en-cours/lfd2026/0-fondations/finalisation-ci-cd-et-livraison.md) :
 
 | Sujet | État |
 | --- | --- |
