@@ -4,6 +4,10 @@
 > des ~12 400 envois. Découpé en **C1 (prépa Mailgun + warm-up)** et **C2 (migration applicative)**.
 > 🔴 **Warm-up domaine à lancer tôt** (~2 sem min, 3-4 idéal) — délai calendaire incompressible.
 > ⛔ **Bloqueur C1 : accès OVH (DNS)** requis pour SPF/DKIM/DMARC + vérif du domaine `mail.attendee.fr`.
+> ⚙️ **Décision 14/07 : C2 doit intégrer un rate-limit email pilotable à chaud** (Redis/DB,
+> sans restart API), les webhooks Mailgun (`accepted`, `delivered`, `deferred`, `bounce`,
+> `complained`/`spam`, `blocked`/`failed`) et un monitoring par domaine destinataire
+> (Gmail, Outlook/Hotmail, Yahoo, domaines pro).
 
 - **Plan maître :** [../00-plan-action.md](../00-plan-action.md) (§3-C1 / §3-C2)
 - **Avancement (%) :** [../03-suivi-chantiers.md](../03-suivi-chantiers.md) (lignes **C1** et **C2**)

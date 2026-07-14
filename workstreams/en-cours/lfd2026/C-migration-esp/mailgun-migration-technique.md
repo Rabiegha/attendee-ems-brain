@@ -26,7 +26,7 @@ Front inscription → API NestJS → DB
                                    │
                                    └─► Worker email NestJS ──API HTTP──► Mailgun EU
                                                                             │
-                                            Webhooks (delivered/bounce/spam) ◄┘
+                       Webhooks (accepted/delivered/deferred/bounce/spam) ◄┘
                                                    │
                                           Table de suivi des événements → back-office
 ```
@@ -37,7 +37,54 @@ Front inscription → API NestJS → DB
 - **API HTTP** privilégiée au SMTP (plus fiable à l'échelle chez Mailgun).
 - **Idempotence** via `jobId` déterministe (anti double-submit).
 - **Webhooks** pour le suivi (pas de polling).
-- **Débit worker plafonné** au throughput Mailgun pour ne pas déclencher d'anti-abus.
+- **Débit worker pilotable à chaud** (Redis/DB), sans restart API.
+- **Monitoring par domaine destinataire** pour distinguer Gmail, Outlook/Hotmail, Yahoo et domaines pro.
+- **Mailgun gère les retries de livraison** côté `deferred`, mais Attendee doit observer les events
+  et adapter son débit.
+
+### Décision 14/07 — Option B : throttle dynamique hors process
+
+Ne pas se limiter à un `limiter` BullMQ statique lu au démarrage du worker. Ce serait simple, mais
+changer le débit pendant l'event imposerait un redémarrage du worker, voire une intervention ops au
+mauvais moment.
+
+Option retenue : **throttle applicatif dynamique**.
+
+```txt
+Redis / DB
+  email:rate_limit_per_second
+  email:paused
+  email:rate_limit:gmail
+  email:rate_limit:outlook
+  email:rate_limit:yahoo
+
+Worker email
+  lit le réglage courant avant d'envoyer
+  attend son slot d'envoi
+  appelle Mailgun
+  enregistre accepted / erreur API
+
+Webhooks Mailgun
+  enregistrent delivered / deferred / bounce / complained / complaint / failed
+  alimentent monitoring + décisions de ralentissement
+```
+
+Débit cible LFD à valider avec Mailgun :
+
+```txt
+Besoin pic : 3 000 confirmations email en 3-4 min
+Débit submit : ~13-17 emails/s
+Plafond initial demandé : 20 emails/s pendant 3-5 min
+```
+
+Règles de contrôle :
+
+- si `deferred` augmente fortement sur Gmail → ralentir Gmail si possible, sinon débit global ;
+- si `deferred` augmente partout → pause courte / backoff global ;
+- si `bounce` hard → pas de retry applicatif ;
+- si `complained` / spam → alerte critique, ne pas monter le débit ;
+- si Mailgun renvoie une erreur de rate limit/API temporaire → backoff worker immédiat ;
+- les jobs restent en queue, l'inscription ne doit pas échouer à cause de l'email.
 
 ## 3. Tâches backend
 
@@ -47,9 +94,11 @@ Front inscription → API NestJS → DB
 | **Variables d'env**  | `MAILGUN_API_KEY`, `MAILGUN_DOMAIN=mail.attendee.fr`, (SMTP : `MG_SMTP_HOST/PORT/USER/PASSWORD`) → **EAS Secrets / .env prod**, jamais en clair |
 | **Service d'envoi**  | `MailgunEmailService` injectable (voir §5)                                                                                                      |
 | **Queue**            | job `email.send` + processor, `jobId` déterministe, retry + backoff                                                                             |
+| **Throttle dynamique** | réglage Redis/DB du débit global + pause/reprise ; idéalement seuils par domaine destinataire                                                  |
 | **Templates**        | migrer les emails (confirmation + billet PDF joint) ; vérifier taille attachment                                                                |
-| **Webhooks**         | endpoint recevant `delivered`/`soft_bounce`/`hard_bounce`/`spam`/`blocked` → table de suivi                                                     |
-| **Tests**            | staging via Mailpit ou domaine sandbox Mailgun ; test rafale (500-1000)                                                                         |
+| **Webhooks**         | endpoint recevant `accepted`/`delivered`/`deferred`/`bounce`/`complained`/`blocked`/`failed` → table de suivi                                    |
+| **Monitoring domaine** | agrégation par domaine destinataire : Gmail, Outlook/Hotmail, Yahoo, domaines pro                                                              |
+| **Tests**            | staging via Mailpit ou domaine sandbox Mailgun ; test technique 3 000 en test mode ; test réel progressif sur seed list                         |
 | **Bascule**          | basculer le transport une fois `mail.attendee.fr` vérifié (fin de C1)                                                                           |
 
 ## 4. Templates & pièce jointe
@@ -110,8 +159,15 @@ export const mailgunTransport = nodemailer.createTransport({
 
 - [ ] Domaine `mail.attendee.fr` **Verified** (dépend de C1 / accès OVH)
 - [ ] Secrets Mailgun en prod (pas en clair)
-- [ ] Worker email branché sur la queue, débit plafonné
+- [ ] Worker email séparé de l'API, branché sur la queue
+- [ ] Débit email pilotable à chaud (Redis/DB) sans restart API
+- [ ] Pause/reprise email disponible pendant l'event
 - [ ] Webhooks reçus et enregistrés en base
-- [ ] Test rafale OK (500-1000 sans throttling)
+- [ ] Events Mailgun tracés : `accepted`, `delivered`, `deferred`, `bounce`, `complained`/`spam`, `blocked`/`failed`
+- [ ] Retry Mailgun observé sur cas `deferred`
 - [ ] Monitoring délivrabilité + file BullMQ en place
+- [ ] Monitoring par domaine destinataire en place (Gmail, Outlook/Hotmail, Yahoo, domaines pro)
+- [ ] Test technique 3 000 envois en `o:testmode=true`
+- [ ] Test réel progressif OK (seed list + quelques centaines si audience légitime)
+- [ ] Confirmation support Mailgun : 12 400 emails / 2 jours, pic submit ~20 emails/s, région EU, PDF attaché
 - [ ] Bascule du transport prod → Mailgun

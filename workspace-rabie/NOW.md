@@ -20,6 +20,19 @@ l'**archive de référence** — on ne perd rien.
 **Prochaine action :**
 ➡️ **Focus du jour : L9 puis L9.1**, **codés ET testés** (non-régression). Merger d'abord la MR [#14](https://github.com/Rabiegha/attendee-ems-back/pull/14) (L1/L2/L10) sur `dev`.
 
+### 📌 Priorités demain (15/07)
+
+- Warm-up Mailgun dès l'arrivée + petite montée en charge.
+- Retry souscription plan Mailgun + prise GitHub Pro si besoin.
+- Protéger `main` et `staging` avec checks requis.
+- Demander/clarifier les certificats iOS + Android.
+- Valider les modifications déjà livrées sur T et C2.
+- Finaliser 0-MON côté VPS (runbook exécutable + checklist).
+- Prépa call GCP jeudi 11h30 (infra actuelle, archi actuelle, questions event).
+- Fin de journée: MAJ suivi + journal + rapport manager Cem.
+
+➡️ Détail exécutable : [journal/2026-07-15-todo.md](./journal/2026-07-15-todo.md)
+
 ### 🎯 Ordre de priorité (à jour 2026-07-08)
 
 1. **L9** — transaction d'inscription allégée (`feat/register-tx-slim`) **+ test de non-régression**.

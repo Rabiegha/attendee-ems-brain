@@ -1,13 +1,13 @@
 # Chantier T — Tests event-critical (LFD 2026)
 
-> **Statut : 🔴 LISTE À VALIDER — rien n'est codé, rien n'est acté.**
+> **Statut : 🟢 P0 LIVRÉ — P1/P2 en backlog.**
 > Ce chantier découle de l'audit Codex sur le chantier 0-CI ([coordination Codex/Claude](../../../workspace-rabie/codex-claude/ci-cd-coordination.md)) :
 > les tests actuels suffisent pour faire tourner la CI, mais **ne couvrent pas les chemins qui
 > casseraient l'exploitation pendant l'event** (scan QR, permissions, inscription, health réel).
 
 - **Plan maître :** [../00-plan-action.md](../00-plan-action.md)
 - **Avancement (%) :** [../03-suivi-chantiers.md](../03-suivi-chantiers.md) (ligne **T**)
-- **Owner :** à répartir — **Statut :** ⚪ à démarrer (validation de la liste d'abord)
+- **Owner :** réparti (Rabie + Corentin selon périmètre) — **Statut :** 🟢 P0 fait (T1/T2/T3), P1/P2 à prioriser
 - **Lié à :** 0-CI (les tests deviennent le filet de la CI) · D-securite-qr (E2E HMAC) · H (inscriptions)
 
 ---
@@ -25,18 +25,18 @@ tests de charge (déjà couverts par le chantier J / load test k6).
 
 ### Back ([attendee-ems-back/test/](../../../../attendee-ems-back/test/))
 
-| Fichier | Type | Couvre |
-| --- | --- | --- |
-| `app.e2e-spec.ts` | E2E API | auth basique, `/users`, `/organizations/me`, création user |
-| `auth-refresh.e2e-spec.ts` | E2E API | refresh token, logout |
-| `users.service.spec.ts` | unitaire | CRUD UsersService (mocké) |
-| `src/**/qr-token.service.spec.ts` | unitaire | sign/verify/isToken HMAC QR |
-| `src/**/condition-evaluator.spec.ts` | unitaire | conditions badges |
+| Fichier                              | Type     | Couvre                                                     |
+| ------------------------------------ | -------- | ---------------------------------------------------------- |
+| `app.e2e-spec.ts`                    | E2E API  | auth basique, `/users`, `/organizations/me`, création user |
+| `auth-refresh.e2e-spec.ts`           | E2E API  | refresh token, logout                                      |
+| `users.service.spec.ts`              | unitaire | CRUD UsersService (mocké)                                  |
+| `src/**/qr-token.service.spec.ts`    | unitaire | sign/verify/isToken HMAC QR                                |
+| `src/**/condition-evaluator.spec.ts` | unitaire | conditions badges                                          |
 
 ### Front ([attendee-ems-front/tests/](../../../../attendee-ems-front/tests/))
 
-| Fichier | Type | Couvre |
-| --- | --- | --- |
+| Fichier             | Type       | Couvre      |
+| ------------------- | ---------- | ----------- |
 | `e2e/login.spec.ts` | Playwright | smoke login |
 
 ### Verdict Codex
@@ -73,11 +73,11 @@ E2E API = intégration (supertest + Postgres/Redis réels) → smoke front Playw
 
 ### P0 — bloquant avant validation du chantier 0-CI
 
-| # | Fichier proposé | Cas couverts | Effort |
-| --- | --- | --- | --- |
-| T1 | `test/health.e2e-spec.ts` | `/health` → `status=ok` avec Postgres/Redis/migrations réels · présence `version` · dégradé si dépendance KO | ~¼ j |
-| T2 | `test/scan-qr.e2e-spec.ts` — **scan principal de l'event** (check-in entrée) | QR valide accepté · **re-scan au même point de contrôle ≠ refus dur** : répond `already_scanned` (2xx) **et l'action est conservée dans les logs** · multi-scan légitime (points de contrôle différents) accepté · billet inconnu/invalide rejeté · **token HMAC falsifié** rejeté (voir note) | ~½ j |
-| T3 | `test/permissions-event.e2e-spec.ts` | admin/staff/scanner autorisés selon rôle · non-autorisé refusé · isolation tenant/event | ~½ j |
+| #   | Fichier proposé                                                              | Cas couverts                                                                                                                                                                                                                                                                                   | Effort |
+| --- | ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| T1  | `test/health.e2e-spec.ts`                                                    | `/health` → `status=ok` avec Postgres/Redis/migrations réels · présence `version` · dégradé si dépendance KO                                                                                                                                                                                   | ~¼ j   |
+| T2  | `test/scan-qr.e2e-spec.ts` — **scan principal de l'event** (check-in entrée) | QR valide accepté · **re-scan au même point de contrôle ≠ refus dur** : répond `already_scanned` (2xx) **et l'action est conservée dans les logs** · multi-scan légitime (points de contrôle différents) accepté · billet inconnu/invalide rejeté · **token HMAC falsifié** rejeté (voir note) | ~½ j   |
+| T3  | `test/permissions-event.e2e-spec.ts`                                         | admin/staff/scanner autorisés selon rôle · non-autorisé refusé · isolation tenant/event                                                                                                                                                                                                        | ~½ j   |
 
 > **Note T2 — cycle de vie d'un QR :** un même QR est scanné **plusieurs fois légitimement**
 > pendant l'event (entrée principale → session 1 → session 2 → checkout → éventuel re-checkin).
@@ -98,18 +98,18 @@ E2E API = intégration (supertest + Postgres/Redis réels) → smoke front Playw
 
 ### P1 — fortement recommandé avant l'event
 
-| # | Fichier proposé | Cas couverts | Effort |
-| --- | --- | --- | --- |
-| T4 | PDF / badges (unitaire + intégration) | génération billet PDF OK (Gotenberg/pipeline B0) · badge généré avec bonnes conditions (complète `condition-evaluator.spec.ts`) · QR présent et valide dans le rendu | ~½ j |
-| T5 | Auth critique (compléter `auth-refresh`) | login KO (mauvais mdp, compte inconnu) · session expirée refusée proprement | ~¼ j |
-| T6 | `test/email-queue.e2e-spec.ts` (intégration BullMQ) | job billet/email enqueued · échec → retry · queue visible dans `/health/queues` | ~½ j |
+| #   | Fichier proposé                                     | Cas couverts                                                                                                                                                         | Effort |
+| --- | --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| T4  | PDF / badges (unitaire + intégration)               | génération billet PDF OK (Gotenberg/pipeline B0) · badge généré avec bonnes conditions (complète `condition-evaluator.spec.ts`) · QR présent et valide dans le rendu | ~½ j   |
+| T5  | Auth critique (compléter `auth-refresh`)            | login KO (mauvais mdp, compte inconnu) · session expirée refusée proprement                                                                                          | ~¼ j   |
+| T6  | `test/email-queue.e2e-spec.ts` (intégration BullMQ) | job billet/email enqueued · échec → retry · queue visible dans `/health/queues`                                                                                      | ~½ j   |
 
 ### P2 — si le temps le permet / selon avancement des chantiers
 
-| # | Fichier proposé | Cas couverts | Condition |
-| --- | --- | --- | --- |
-| T7 | Compteur capacité Redis (unitaire + intégration) | décrément atomique · refus à capacité 0 · pas de sur-vente en concurrence | avec chantier I/J |
-| T8 | Front Playwright : parcours scan/checkin staff | login staff → scan → résultat affiché | si UI scan web utilisée pendant l'event |
+| #   | Fichier proposé                                  | Cas couverts                                                              | Condition                               |
+| --- | ------------------------------------------------ | ------------------------------------------------------------------------- | --------------------------------------- |
+| T7  | Compteur capacité Redis (unitaire + intégration) | décrément atomique · refus à capacité 0 · pas de sur-vente en concurrence | avec chantier I/J                       |
+| T8  | Front Playwright : parcours scan/checkin staff   | login staff → scan → résultat affiché                                     | si UI scan web utilisée pendant l'event |
 
 ### → Déplacé chantier H (owner Corentin) — voir [tests-sessions.md](../H-inscriptions-session/tests-sessions.md)
 
@@ -143,12 +143,12 @@ E2E API = intégration (supertest + Postgres/Redis réels) → smoke front Playw
 
 ## 5bis. État réel du code scan (vérifié 13/07 dans `registrations.service.ts`)
 
-| Exigence | Code actuel | Verdict |
-| --- | --- | --- |
-| HMAC branché sur la route de scan | `checkInByCode` → `ScanCodeResolverService` : vérif HMAC stricte, signature invalide → 400, UUID brut refusé | ✅ conforme, mais **aucun E2E** sur la route (unitaire seulement) → c'est le rôle de T2 |
-| Déjà scanné | **409 `ConflictException`** `code: ALREADY_CHECKED_IN` + état serveur complet (pour réconciliation **offline mobile**) | ⚠️ pas un 2xx — choix délibéré mobile ; **reco : garder 409**, T2 teste ce contrat |
-| Re-scan conservé dans les logs | Exception levée, **rien n'est persisté**. `AuditLog` existe dans Prisma mais jamais appelé ici | 🔴 **non respecté** — dev à ajouter (brancher la persistance sur le chemin `ALREADY_CHECKED_IN`) |
-| Multi-scan par point de contrôle | Un seul `checked_in_at` global par inscription + checkout ; pas de scan par session | ⏳ chantier H |
+| Exigence                          | Code actuel                                                                                                            | Verdict                                                                                          |
+| --------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| HMAC branché sur la route de scan | `checkInByCode` → `ScanCodeResolverService` : vérif HMAC stricte, signature invalide → 400, UUID brut refusé           | ✅ conforme, mais **aucun E2E** sur la route (unitaire seulement) → c'est le rôle de T2          |
+| Déjà scanné                       | **409 `ConflictException`** `code: ALREADY_CHECKED_IN` + état serveur complet (pour réconciliation **offline mobile**) | ⚠️ pas un 2xx — choix délibéré mobile ; **reco : garder 409**, T2 teste ce contrat               |
+| Re-scan conservé dans les logs    | Exception levée, **rien n'est persisté**. `AuditLog` existe dans Prisma mais jamais appelé ici                         | 🔴 **non respecté** — dev à ajouter (brancher la persistance sur le chemin `ALREADY_CHECKED_IN`) |
+| Multi-scan par point de contrôle  | Un seul `checked_in_at` global par inscription + checkout ; pas de scan par session                                    | ⏳ chantier H                                                                                    |
 
 ## 6. Definition of done
 

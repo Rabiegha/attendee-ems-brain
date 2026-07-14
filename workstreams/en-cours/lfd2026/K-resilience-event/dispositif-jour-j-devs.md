@@ -16,14 +16,14 @@
 **Particularité LFD : PAS d'impression de badges sur place** (billets numériques, QR dans le mail).
 Le poste « physique » classique (imprimantes, print-client) n'existe pas pour cet event.
 
-| Risque | Nature | Où ça se gère |
-| --- | --- | --- |
-| 🔴 **Pics d'inscription jour même** — créneaux ouvrant à 9h/11h/14h, ≥3 000 connexions simultanées (exigence cahier des charges MEAE) | Backend pur (capacité, portier Redis, DB) | **War-room / à distance** : SSH, dashboards, hotfix CI/CD |
-| 🔴 API down / 5xx / saturation | Backend | War-room |
-| 🟡 App de scan (bénévoles + agents MEAE, mode hors-ligne exigé) | Terrain : formation, assistance, remplacement d'appareil | **Sur place** |
-| 🟡 Wifi/4G du lieu saturé pour les scans | Terrain + réseau | Sur place (constat) + backend (mode offline) |
-| 🟡 Fermeture de jauge / ajustement de créneaux en urgence | Back-office | Les deux (back-office accessible partout) |
-| ⚪ Astreinte SLA 99,9 % exigée (J-15 → J+1) | Contractuel | Nécessite quelqu'un **en capacité d'intervenir serveur** |
+| Risque                                                                                                                                | Nature                                                   | Où ça se gère                                             |
+| ------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- | --------------------------------------------------------- |
+| 🔴 **Pics d'inscription jour même** — créneaux ouvrant à 9h/11h/14h, ≥3 000 connexions simultanées (exigence cahier des charges MEAE) | Backend pur (capacité, portier Redis, DB)                | **War-room / à distance** : SSH, dashboards, hotfix CI/CD |
+| 🔴 API down / 5xx / saturation                                                                                                        | Backend                                                  | War-room                                                  |
+| 🟡 App de scan (bénévoles + agents MEAE, mode hors-ligne exigé)                                                                       | Terrain : formation, assistance, remplacement d'appareil | **Sur place**                                             |
+| 🟡 Wifi/4G du lieu saturé pour les scans                                                                                              | Terrain + réseau                                         | Sur place (constat) + backend (mode offline)              |
+| 🟡 Fermeture de jauge / ajustement de créneaux en urgence                                                                             | Back-office                                              | Les deux (back-office accessible partout)                 |
+| ⚪ Astreinte SLA 99,9 % exigée (J-15 → J+1)                                                                                           | Contractuel                                              | Nécessite quelqu'un **en capacité d'intervenir serveur**  |
 
 **Conclusion de l'analyse** : sans impression, le risque dominant est **backend** (pics
 d'inscription du jour même). Or un incident backend ne se diagnostique pas debout dans un hall

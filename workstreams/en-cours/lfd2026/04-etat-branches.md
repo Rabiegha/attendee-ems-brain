@@ -38,8 +38,8 @@
 | `staging`                                | Base d'intégration · CD staging auto à chaque push                     | —                                       |
 | `chore/ci-cd`                            | ~~4 patches, tous équivalents dans staging~~                           | 🗑️ **Supprimée 14/07**                  |
 | `chore/gotenberg-cloudrun-poc`           | = staging (`72d97f6`) — aucun commit propre (le POC vit dans le brain) | Prête pour B0                           |
-| `chore/monitoring`                       | Resynchronisée avec `staging` (`c426a7a`) après merge C2                | ✅ À jour                               |
-| `feat/c2-mailgun-integration`            | Mergée via PR #20 puis supprimée (locale + remote)                       | ✅ Clos                                 |
+| `chore/monitoring`                       | Resynchronisée avec `staging` (`c426a7a`) après merge C2               | ✅ À jour                               |
+| `feat/c2-mailgun-integration`            | Mergée via PR #20 puis supprimée (locale + remote)                     | ✅ Clos                                 |
 | `infra/staging-stack`                    | Entièrement mergée (PR #14 → partout)                                  | 🗑️ Supprimable                          |
 | `feature/db-backup`                      | Mergée (PR #15)                                                        | 🗑️ Supprimable                          |
 | `feat/qr-hmac-security`                  | Mergée (PR #16/#17)                                                    | 🗑️ Supprimable                          |
@@ -94,13 +94,13 @@
 
 ## Historique des opérations
 
-| Date       | Opération                                                                                                                                     |
-| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-07-13 | Back : cherry-pick prettier `8b53222` → staging (`0aa540f`) · merge staging → main (`b50339a`)                                                |
-| 2026-07-13 | Front : merge `chore/ci-cd` → staging (`c274cf4`, 2 conflits sessions résolus) · ff staging → main                                            |
-| 2026-07-13 | Fixes CI/CD mergés au fil de l'eau (vitest exclude, permissions actions:read, healthchecks, nginx reload) — staging et main maintenus alignés |
-| 2026-07-13 | Rangement `scripts/` + `test/` back (`72d97f6`) — validé par CD staging auto                                                                  |
-| 2026-07-14 | 🗑️ Suppression `chore/ci-cd` (back + front) · réalignement gotenberg = staging                                                                |
-| 2026-07-14 | Back : création `chore/monitoring` depuis staging (`72d97f6`) — finalisation 0-MON + rangement tests éventuel                                 |
-| 2026-07-14 | Mobile : état des lieux ajouté · décision **release mobile en stand-by** (attendre fin du chantier mobile à venir)                            |
+| Date       | Opération                                                                                                                                         |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-07-13 | Back : cherry-pick prettier `8b53222` → staging (`0aa540f`) · merge staging → main (`b50339a`)                                                    |
+| 2026-07-13 | Front : merge `chore/ci-cd` → staging (`c274cf4`, 2 conflits sessions résolus) · ff staging → main                                                |
+| 2026-07-13 | Fixes CI/CD mergés au fil de l'eau (vitest exclude, permissions actions:read, healthchecks, nginx reload) — staging et main maintenus alignés     |
+| 2026-07-13 | Rangement `scripts/` + `test/` back (`72d97f6`) — validé par CD staging auto                                                                      |
+| 2026-07-14 | 🗑️ Suppression `chore/ci-cd` (back + front) · réalignement gotenberg = staging                                                                    |
+| 2026-07-14 | Back : création `chore/monitoring` depuis staging (`72d97f6`) — finalisation 0-MON + rangement tests éventuel                                     |
+| 2026-07-14 | Mobile : état des lieux ajouté · décision **release mobile en stand-by** (attendre fin du chantier mobile à venir)                                |
 | 2026-07-14 | Back : merge PR #20 (`feat/c2-mailgun-integration`) vers `staging` puis suppression de branche · merge `staging` → `chore/monitoring` (`c426a7a`) |

@@ -48,6 +48,7 @@ Chaque chantier a son dossier (lettre + nom parlant) avec un `README.md` d'entr�
 | [E-sauvegarde-db/](./E-sauvegarde-db/README.md)               | E — sauvegarde DB auto ✅                                          |
 | [H-inscriptions-session/](./H-inscriptions-session/README.md) | H — inscriptions par session                                       |
 | [J-capacite-live/](./J-capacite-live/README.md)               | J — capacité live forte charge                                     |
+| [M-appli-mobile-lfd2026/](./M-appli-mobile-lfd2026/README.md) | M — stabilisation appli mobile pour l'event                        |
 | [BIL-billetterie/](./BIL-billetterie/README.md)               | BIL — plateforme billetterie                                       |
 | [K-resilience-event/](./K-resilience-event/README.md)         | K — résilience event (+ décision « tenir sans GCP »)               |
 | [F-continuite-ha/](./F-continuite-ha/README.md)               | F — continuité HA (reporté → GCP)                                  |

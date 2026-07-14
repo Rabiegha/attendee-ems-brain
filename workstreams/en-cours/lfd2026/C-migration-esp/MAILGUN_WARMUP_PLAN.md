@@ -64,6 +64,89 @@
 - Envoyer via la **queue BullMQ** en plafonnant le débit worker (ne pas déclencher d'anti-abus).
 - Garder le **lien R2 signé** du billet comme secours si un email tarde.
 
+### Décision 14/07 — débit email pilotable à chaud
+
+Contexte CDC LFD : les inscriptions publiques ouvrent par créneaux courts, avec pics soudains
+possibles. Les emails sont **transactionnels** (confirmation + billet), mais le débit vers Mailgun
+et vers les mailbox providers doit rester pilotable sans bloquer l'inscription.
+
+Décision retenue : **Option B — throttle applicatif dynamique**, pas uniquement un limiter BullMQ
+statique lu au démarrage.
+
+Objectif :
+
+```txt
+API inscription rapide
+-> billet/QR disponible immédiatement côté confirmation
+-> job email en queue
+-> worker email avec débit modifiable à chaud
+```
+
+Le débit cible à valider avec Mailgun n'est pas "1000/s" mais le besoin réel LFD :
+
+```txt
+3 000 emails en 3-4 min ~= 13-17 emails/s
+Débit cible initial à faire confirmer : 20 emails/s pendant 3-5 min
+```
+
+Paramètres de pilotage souhaités (Redis ou DB, modifiables sans restart API) :
+
+```txt
+email:rate_limit_per_second = 10 | 20 | 5 | 1
+email:paused = true | false
+email:rate_limit:gmail = ...
+email:rate_limit:outlook = ...
+email:rate_limit:yahoo = ...
+```
+
+Règles jour J :
+
+- **ne pas redémarrer l'API** pour changer le débit email ;
+- au pire, redémarrer uniquement le worker email, mais l'objectif est de modifier le débit via Redis/DB ;
+- si Mailgun ou un provider destinataire renvoie beaucoup de `deferred`, baisser le débit à chaud ;
+- si la file email grossit, les inscriptions continuent : le billet doit rester disponible hors email.
+
+### Visibilité Mailgun indispensable
+
+Mailgun doit rester la source d'observation et de retry côté livraison :
+
+- `accepted` : Mailgun a accepté le message depuis Attendee ;
+- `delivered` : le mailbox provider a accepté/livré le message ;
+- `deferred` : refus temporaire / "réessaie plus tard" côté provider destinataire ;
+- `bounce` hard : échec définitif, ne pas insister ;
+- `complained` / `spam` / `complaint` : plainte utilisateur, signal critique ;
+- `blocked` / `failed` : rejet à analyser selon raison.
+
+Point important : `deferred` n'est pas un échec définitif. Mailgun retente la livraison selon sa
+politique, mais Attendee doit **voir** ces événements et adapter son rythme d'envoi si un domaine
+destinataire ralentit.
+
+### Monitoring par domaine destinataire
+
+Pendant les tests et pendant l'event, surveiller séparément :
+
+- Gmail / Google Workspace ;
+- Outlook / Hotmail / Microsoft 365 ;
+- Yahoo / AOL ;
+- domaines professionnels/institutionnels.
+
+Si Gmail deferred mais Outlook passe, ne pas conclure que "Mailgun est KO" : ralentir surtout le
+flux Gmail si l'implémentation le permet, sinon réduire le débit global temporairement.
+
+Indicateurs minimum :
+
+```txt
+emails queued
+emails accepted by Mailgun
+emails delivered
+emails deferred
+hard bounces
+complaints/spam
+temps moyen entre inscription -> accepted
+temps moyen entre accepted -> delivered
+répartition par domaine destinataire
+```
+
 ---
 
 ## Phase 3 — Validation (avant l'event)
@@ -85,8 +168,12 @@
 
 **Exploitation**
 
-- [ ] **Webhooks** fonctionnels (`delivered`, `bounce`, `spam`, `blocked`)
+- [ ] **Webhooks** fonctionnels (`accepted`, `delivered`, `deferred`, `bounce`, `complained`/`spam`, `blocked`/`failed`)
 - [ ] **Monitoring** opérationnel (taux de livraison, file BullMQ, alertes)
+- [ ] **Monitoring par domaine destinataire** (Gmail, Outlook/Hotmail, Yahoo, domaines pro)
+- [ ] **Rate-limit email modifiable à chaud** (pause/reprise + débit global, idéalement débit par domaine)
+- [ ] **Retry Mailgun observé** sur cas `deferred` / temporaire
+- [ ] **Runbook jour J** : quand ralentir, quand pauser, quand contacter support Mailgun
 
 ---
 

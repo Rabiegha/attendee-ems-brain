@@ -9,7 +9,7 @@
 
 ## Fichiers du dossier
 
-| Fichier                                              | Sujet                                                            |
-| ---------------------------------------------------- | ---------------------------------------------------------------- |
-| [tenir-event-sans-gcp.md](./tenir-event-sans-gcp.md) | Décision — tenir l'event **sans** migration GCP (+ gate post-L9) |
+| Fichier                                                  | Sujet                                                                               |
+| -------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| [tenir-event-sans-gcp.md](./tenir-event-sans-gcp.md)     | Décision — tenir l'event **sans** migration GCP (+ gate post-L9)                    |
 | [dispositif-jour-j-devs.md](./dispositif-jour-j-devs.md) | DRAFT — présence des devs le jour J (1+1 recommandé vs 2 sur place avec conditions) |
