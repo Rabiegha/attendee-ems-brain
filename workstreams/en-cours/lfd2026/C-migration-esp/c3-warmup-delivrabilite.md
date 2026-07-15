@@ -38,6 +38,15 @@ les inscriptions, tout en surveillant les signaux mailbox providers.
 - [ ] Ajuster J2/J3 selon signaux réels.
 - [ ] Écrire le runbook jour J : pause, baisse débit, contact support Mailgun, fallback billet hors email.
 
+## Leviers éventuels — à voir / détailler
+
+- [ ] **Découpler les webhooks Mailgun de l'écriture DB directe** si le volume `opened` devient bruité :
+      aujourd'hui le controller webhook persiste directement dans `email_events`. Pour LFD, ce n'est pas
+      censé bloquer l'inscription si `EMAIL_QUEUE_ENABLED=true`, mais chaque email peut générer plusieurs
+      événements (`accepted`, `delivered`, `opened`, réouvertures). À détailler si les métriques montrent une
+      pression DB : queue `email.events`, worker dédié, batch insert, déduplication/agrégation des `opened`,
+      et priorité basse par rapport aux flux d'inscription/check-in.
+
 ## Critères de succès
 
 - Bounce hard très faible.
@@ -52,3 +61,5 @@ les inscriptions, tout en surveillant les signaux mailbox providers.
 - Utiliser une base newsletter non alignée avec le domaine Attendee peut créer des plaintes.
 - Envoyer trop vite sur Gmail/Outlook au J1 peut déclencher des ralentissements.
 - Un deuxième domaine d'envoi non warmé n'aide pas le jour J ; il peut même fragmenter la réputation.
+- Les webhooks `opened` peuvent multiplier les écritures `email_events` après les envois ; à surveiller via
+  DB/queue/API, avec le levier de découplage ci-dessus si nécessaire.

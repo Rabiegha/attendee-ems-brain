@@ -7,6 +7,7 @@
 > - Le **quoi/pourquoi** (cadrage, temps estimés) → [00-plan-action.md](./00-plan-action.md) §0–§2.
 > - Le **focus global** (tous chantiers) → [../../../workspace-rabie/NOW.md](../../../workspace-rabie/NOW.md).
 > - Les **learnings** produits → [../../../learnings/README.md](../../../learnings/README.md).
+> - Les **leviers éventuels si L9/L9.1 ne suffisent pas** → [leviers-eventuels-capacite.md](./leviers-eventuels-capacite.md).
 >
 > **Principe maître :** _ne rien perdre, tout rejouer proprement_. 1 levier = 1 branche = 1 commit
 > (diff minimal) = 1 PR = 1 mesure avant/après. Archive de référence : branche `staging-archive-2026-06-25`
@@ -67,6 +68,13 @@
 | 4   | Post-mortem 502 prod                             | ✅ Fait (2026-07-10) | [bugs/fait/2026-06-25-prod-502-collision-compose.md](../../../bugs/fait/2026-06-25-prod-502-collision-compose.md) + garde-fous suivis dans [garde-fous-deploiement-staging.md](./garde-fous-deploiement-staging.md). |
 | 5   | Isoler le compose prod (PR dédiée)               | ⚪ À faire           | `docker-compose.prod.yml`, ne pas merger sans revue.                                                                                                                                                                 |
 | 6   | Cadrer l'interdit (L13 cluster, L12 sync_commit) | ⚪ À faire           | note, pas de code.                                                                                                                                                                                                   |
+
+### Note capacite — plans B
+
+Le chemin nominal reste **L9 puis L9.1 puis mesure k6**. Si le plafond reste trop bas, les leviers a
+considerer sont documentes dans [leviers-eventuels-capacite.md](./leviers-eventuels-capacite.md), avec
+une option de paquet livrable en 10 jours : portier Redis, cache public, queues/mode degrade, puis test
+combine.
 
 ---
 
