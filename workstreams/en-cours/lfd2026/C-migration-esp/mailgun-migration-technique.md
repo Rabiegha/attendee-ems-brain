@@ -157,17 +157,23 @@ export const mailgunTransport = nodemailer.createTransport({
 
 ## 6. Checklist de bascule (fin C2, après C1 vérifié)
 
-- [ ] Domaine `mail.attendee.fr` **Verified** (dépend de C1 / accès OVH)
-- [ ] Secrets Mailgun en prod (pas en clair)
-- [ ] Worker email séparé de l'API, branché sur la queue
-- [ ] Débit email pilotable à chaud (Redis/DB) sans restart API
-- [ ] Pause/reprise email disponible pendant l'event
-- [ ] Webhooks reçus et enregistrés en base
-- [ ] Events Mailgun tracés : `accepted`, `delivered`, `deferred`, `bounce`, `complained`/`spam`, `blocked`/`failed`
-- [ ] Retry Mailgun observé sur cas `deferred`
-- [ ] Monitoring délivrabilité + file BullMQ en place
-- [ ] Monitoring par domaine destinataire en place (Gmail, Outlook/Hotmail, Yahoo, domaines pro)
+> **✅ BASCULE PROD EFFECTUÉE LE 15/07** — staging et prod tournent sur Mailgun
+> (`EMAIL_TRANSPORT=mailgun`, queue ON). Tests e2e validés le 15/07 sur les deux envs
+> (register → queue BullMQ → Mailgun accepted → webhooks accepted+delivered → `email_events`).
+> Throttle prod réglé à **1 email/s** pour le warm-up. Restent : les items
+> volume/observation ci-dessous, à traiter pendant le warm-up **C3**.
+
+- [x] Domaine `mail.attendee.fr` **Verified** — validé de fait le 15/07 : DKIM `s1._domainkey.mail.attendee.fr` OK, delivered Google Workspace 1ère tentative
+- [x] Secrets Mailgun en prod (pas en clair) — `.env.vps` sur le VPS (backup `.env.vps.bak.avant-mailgun`), rien dans le repo
+- [ ] Worker email séparé de l'API, branché sur la queue — **non fait** : le processor BullMQ tourne dans le process API (suffisant au volume actuel ; à séparer si besoin avant LFD)
+- [x] Débit email pilotable à chaud (Redis/DB) sans restart API — `EmailThrottleService` (clé `ems:email:rate_limit_per_second`) + `PUT /api/email/queue/settings` ; réglé à 1/s le 15/07
+- [x] Pause/reprise email disponible pendant l'event — clé `ems:email:paused` (jobs restent en queue)
+- [x] Webhooks reçus et enregistrés en base — signature vérifiée, validé staging + prod le 15/07 ; URLs multiples par event type (staging + prod sur le même domaine — ⚠️ chaque env reçoit aussi les events de l'autre)
+- [~] Events Mailgun tracés : `accepted`, `delivered`, `deferred`, `bounce`, `complained`/`spam`, `blocked`/`failed` — code en place pour tous ; **observés en réel : `accepted` + `delivered` seulement** (15/07)
+- [ ] Retry Mailgun observé sur cas `deferred` — pas encore observé
+- [~] Monitoring délivrabilité + file BullMQ en place — endpoint stats OK + Bull Board ; dashboards 0-MON à brancher dessus
+- [x] Monitoring par domaine destinataire en place (Gmail, Outlook/Hotmail, Yahoo, domaines pro) — `GET /api/email/events/stats` (agrégat event × `recipient_domain`, fenêtre glissante)
 - [ ] Test technique 3 000 envois en `o:testmode=true`
-- [ ] Test réel progressif OK (seed list + quelques centaines si audience légitime)
-- [ ] Confirmation support Mailgun : 12 400 emails / 2 jours, pic submit ~20 emails/s, région EU, PDF attaché
-- [ ] Bascule du transport prod → Mailgun
+- [~] Test réel progressif OK — 2 envois réels validés e2e le 15/07 (staging + prod) ; montée en volume = suivre le plan warm-up C3
+- [ ] Confirmation support Mailgun : 12 400 emails / 2 jours, pic submit ~20 emails/s, région EU, PDF attaché — plan acheté le 15/07, demande support à envoyer si besoin
+- [x] Bascule du transport prod → Mailgun — **fait le 15/07** (`main` `feb719b`, `EMAIL_FROM=no-reply@mail.attendee.fr` aligné DKIM)

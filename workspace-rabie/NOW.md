@@ -23,7 +23,7 @@ l'**archive de référence** — on ne perd rien.
 ### 📌 Priorités demain (15/07)
 
 - Warm-up Mailgun dès l'arrivée + petite montée en charge.
-- Retry souscription plan Mailgun + prise GitHub Pro si besoin.
+- Retry souscription plan Mailgun. GitHub Pro/branch protection **reporté post-event** : option propre retenue = organisation GitHub Attendee + transfert repos après LFD.
 - Protéger `main` et `staging` avec checks requis.
 - Demander/clarifier les certificats iOS + Android.
 - Valider les modifications déjà livrées sur T et C2.

@@ -46,9 +46,15 @@ feature/* ──PR + CI──► staging ──deploy──► ENV STAGING (dock
 
 ---
 
-## 2. Protection des branches (gratuit, sans org)
+## 2. Protection des branches (report post-event)
 
-**Aucune organisation requise** (branch protection gratuite sur repo privé perso depuis 2023).
+> **Décision 15/07/2026 : report post-event.** Le constat réel du 13/07 est que les tentatives
+> branch protection / rulesets sur les repos privés du compte perso `Rabiegha` ont renvoyé
+> `403 Upgrade to GitHub Pro`. On ne prend pas GitHub Pro dans le rush : l'option propre retenue
+> est de migrer après LFD vers une organisation GitHub Attendee, puis de poser teams/secrets/rulesets.
+> Raison : ne pas toucher ownership, remotes, GHCR, secrets GitHub Actions et CD pendant la fenêtre event.
+
+**Cible post-event** (à appliquer après migration org, ou équivalent GitHub Team/Pro si re-décidé) :
 
 | Règle                            | `staging`    | `main`               |
 | -------------------------------- | ------------ | -------------------- |

@@ -7,7 +7,8 @@
 > **Réfs :** [diagnostic email/billet/wallet](../B-email-billet-pdf/email-billet-wallet.md) (§1 stack email, §6 Q2) ·
 > [00-plan-action.md](../00-plan-action.md) (chantier C1/C2) ·
 > [rapport source (PDF)](./ChoixESP-transactionnel-pour-Attendee-LFD.pdf) ·
-> [warm-up (C1)](./MAILGUN_WARMUP_PLAN.md) · [migration technique (C2)](./mailgun-migration-technique.md)
+> [setup/warm-up (C1)](./MAILGUN_WARMUP_PLAN.md) · [migration technique (C2)](./mailgun-migration-technique.md) ·
+> [warm-up opérationnel (C3)](./c3-warmup-delivrabilite.md)
 >
 > ⚠️ **Les tarifs ci-dessous sont des ordres de grandeur** — à revérifier sur les sites des
 > fournisseurs au moment du choix (les grilles changent souvent).
@@ -31,7 +32,8 @@
 - 🟢 **Coût bas** (~$33 Basic / ~$35 Foundation) — non discriminant.
 - 🟡 **Warm-up quand même** : même en IP partagée, on **chauffe le domaine** `mail.attendee.fr`
   (~2 sem min, 3-4 idéal) → voir [MAILGUN_WARMUP_PLAN.md](./MAILGUN_WARMUP_PLAN.md).
-- ⛔ **Bloqueur : accès OVH (DNS)** pour SPF/DKIM/DMARC + vérif domaine → conditionne C1.
+- ✅ **C1 terminé le 15/07** : accès OVH obtenu, plan acheté, DNS/vérification Mailgun OK.
+  Le risque restant est le warm-up réel / délivrabilité → suivi dans C3.
 
 ### Comparatif compact (source : rapport PDF)
 

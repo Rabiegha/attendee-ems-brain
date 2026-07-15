@@ -5,11 +5,27 @@
 > **Décision ESP :** [esp-choix-mailgun.md](./esp-choix-mailgun.md) · **Plan maître :** [../00-plan-action.md](../00-plan-action.md) (§3-C1)
 > **Sous-domaine d'envoi retenu :** `mail.attendee.fr` · **Région :** EU (`api.eu.mailgun.net`).
 >
-> ⚠️ **Dépendance bloquante : accès OVH (DNS).** Sans accès à la zone DNS OVH d'`attendee.fr`,
-> impossible de créer le sous-domaine, publier SPF/DKIM/DMARC, vérifier le domaine et **démarrer
-> le warm-up**. → **C1 est bloqué tant que l'accès OVH n'est pas obtenu.** (C2 avançable en parallèle.)
+> ✅ **C1 terminé le 15/07/2026** : accès OVH obtenu, plan Mailgun acheté, domaine EU créé,
+> DNS publiés/vérifiés et tests d'envoi staging/prod OK. Le warm-up réel est suivi dans **C3**.
 
 ---
+
+## État au 15/07/2026
+
+✅ **Setup Mailgun débloqué et opérationnel :**
+
+- Plan Mailgun acheté.
+- Domaine Mailgun EU créé : `mail.attendee.fr`.
+- DNS OVH publiés : SPF, DKIM, DMARC, MX, CNAME tracking.
+- Domaine vérifié dans Mailgun.
+- Clé API générée puis rotatée.
+- Webhooks Mailgun créés pour staging et prod.
+- Variables d'env posées en staging et prod.
+- Envoi testé en staging et en prod.
+
+➡️ Le reste n'est plus du setup DNS : c'est l'exploitation warm-up / délivrabilité.
+Suivi opérationnel séparé : [c3-warmup-delivrabilite.md](./c3-warmup-delivrabilite.md).
+Stratégie d'envoi : [warm-up-strategie.md](./warm-up-strategie.md).
 
 ## ⏱️ Durées de référence (IP partagée)
 
@@ -27,19 +43,19 @@
 
 ## Phase 1 — Prérequis (setup Mailgun + DNS)
 
-> ⛔ **Nécessite l'accès OVH.**
+> ✅ Terminé le 15/07/2026.
 
-- [ ] **Acheter le plan Mailgun** retenu (Basic ~$33/mois, ou Foundation ~$35 pour + de rétention logs)
-- [ ] **Ajouter le domaine** d'envoi dans Mailgun → **choisir la région EU** (message data region-bound EU)
-- [ ] Créer le **sous-domaine d'envoi** `mail.attendee.fr` (séparé du domaine principal pour isoler la réputation)
-- [ ] **Générer les clés API** (région EU) + clé SMTP si transport nodemailer
-- [ ] Publier les DNS **chez OVH** :
-  - [ ] **SPF** (TXT)
-  - [ ] **DKIM** (clé fournie par Mailgun)
-  - [ ] **DMARC** (politique minimale au départ : `p=none`, puis durcir)
-  - [ ] **CNAME de tracking** + **MX / Return-Path** si demandés par Mailgun
-- [ ] **Vérifier la propagation DNS** (Mailgun annonce **24-48 h**)
-- [ ] Domaine **« Verified »** dans le dashboard Mailgun
+- [x] **Acheter le plan Mailgun** retenu (Basic ~$33/mois, ou Foundation ~$35 pour + de rétention logs)
+- [x] **Ajouter le domaine** d'envoi dans Mailgun → **choisir la région EU** (message data region-bound EU)
+- [x] Créer le **sous-domaine d'envoi** `mail.attendee.fr` (séparé du domaine principal pour isoler la réputation)
+- [x] **Générer les clés API** (région EU) + rotation après première exposition écran
+- [x] Publier les DNS **chez OVH** :
+  - [x] **SPF** (TXT)
+  - [x] **DKIM** (clé fournie par Mailgun)
+  - [x] **DMARC** (politique minimale au départ : `p=none`, puis durcir)
+  - [x] **CNAME de tracking** + **MX / Return-Path** demandés par Mailgun
+- [x] **Vérifier la propagation DNS** (Mailgun annonce **24-48 h**)
+- [x] Domaine **« Verified »** dans le dashboard Mailgun
 
 ---
 
@@ -153,10 +169,13 @@ répartition par domaine destinataire
 
 **Authentification & config**
 
-- [ ] SPF OK
-- [ ] DKIM OK
-- [ ] DMARC OK
-- [ ] Domaine **vérifié**
+- [x] SPF OK
+- [x] DKIM OK
+- [x] DMARC OK
+- [x] Domaine **vérifié**
+- [x] Variables staging/prod posées (`EMAIL_TRANSPORT=mailgun`, `EMAIL_QUEUE_ENABLED=true`, `MAILGUN_*`)
+- [x] Envoi test staging OK
+- [x] Envoi test prod OK
 
 **Délivrabilité (inbox placement)**
 

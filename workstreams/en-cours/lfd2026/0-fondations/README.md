@@ -6,7 +6,7 @@
 
 - **Plan maître :** [../00-plan-action.md](../00-plan-action.md) (§P0 — Fondations minimales)
 - **Avancement (%) :** [../03-suivi-chantiers.md](../03-suivi-chantiers.md) (lignes **0-CI** et **0-MON**)
-- **Owner :** Rabie — **Statut :** 🟢 quasi fini (13/07 : pipeline validé, staging = main back+front · reste CD prod ⏸ + branch protection 🔴 bloquée GitHub Free)
+- **Owner :** Rabie — **Statut :** 🟢 quasi fini (13/07 : pipeline validé, staging = main back+front · reste nettoyage/NOTIFY_WEBHOOK · branch protection/gouvernance GitHub 🔵 reportée post-event via organisation Attendee)
 
 ## Fichiers du dossier
 

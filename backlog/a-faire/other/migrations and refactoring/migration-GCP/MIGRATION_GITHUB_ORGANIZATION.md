@@ -3,6 +3,18 @@
 > **Date** : 2 avril 2026  
 > **Contexte** : Repos actuels sous le compte personnel `Rabiegha`  
 > **Objectif** : Migrer vers une organisation GitHub pour une meilleure gestion des accès
+> **Décision 15/07/2026** : **report post-event LFD 2026**. Pendant le rush, ne pas prendre GitHub Pro
+> sur le compte perso et ne pas transférer les repos. Reprendre après l'event avec une migration propre
+> vers une organisation Attendee.
+
+## Statut
+
+🔵 **À faire post-event**.
+
+Raison du report : la migration touche l'ownership GitHub, les remotes, les permissions, les secrets
+GitHub Actions, GHCR et potentiellement la chaîne CD. Même si GitHub conserve des redirections, ce n'est
+pas un changement à introduire pendant la fenêtre de stabilisation LFD 2026. Pour l'event, on garde les
+repos sous `Rabiegha` et la chaîne CI/CD validée telle quelle.
 
 ---
 

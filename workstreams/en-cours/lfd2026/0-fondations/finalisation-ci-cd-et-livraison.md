@@ -89,7 +89,7 @@
 
 ## 5. Verrouillage final
 
-- [ ] 🔴 **Branch protection sur `main` : BLOQUÉE par le plan GitHub Free** (constat 13/07 : branch protection ET rulesets → HTTP 403 « Upgrade to GitHub Pro » sur repo privé). Options : **GitHub Pro ~4 $/mois sur le compte Rabiegha** (recommandé, débloque tous les repos privés) · org Team (~4 $/user/mois, transfert des repos) · repos publics (non recommandé). Les commandes `gh api` sont prêtes (checks requis identifiés : back `lint-typecheck`/`unit-tests`/`e2e-tests`/`build-image`, front `lint-typecheck`/`unit-tests`/`build`/`e2e-smoke`). `gh` CLI installé + authentifié le 13/07.
+- [ ] 🔵 **Branch protection / gouvernance GitHub : REPORTÉE POST-EVENT** (décision 15/07). Constat 13/07 : branch protection/rulesets sur repos privés du compte perso `Rabiegha` demandent un upgrade. Décision : **ne pas prendre GitHub Pro maintenant** et ne pas changer l'ownership des repos pendant le rush LFD. Option retenue après event : créer une **organisation GitHub Attendee**, transférer les repos, centraliser teams/secrets/rulesets/branch protection. Raison : éviter de risquer les accès, remotes, GHCR, secrets Actions et CD pendant la fenêtre event. Les commandes `gh api` restent prêtes (checks requis identifiés : back `lint-typecheck`/`unit-tests`/`e2e-tests`/`build-image`, front `lint-typecheck`/`unit-tests`/`build`/`e2e-smoke`). Voir backlog : `MIGRATION_GITHUB_ORGANIZATION.md`.
 - [ ] Chantier **0-MON / monitoring** si pas encore actif.
 
 ---
