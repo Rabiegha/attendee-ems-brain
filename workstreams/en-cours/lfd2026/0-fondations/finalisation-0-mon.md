@@ -27,26 +27,23 @@
 
 ## 1. Prérequis côté Rabie (bloquants — rien ne se déploie sans)
 
-- [ ] **Clé SSH VPS sur le MacBook** 🔴 LE bloquant n°1 (vérifié 14/07 : `BatchMode` → `Permission denied`,
-      la clé n'existe que sur l'iMac). 2 minutes :
+- [~] **Clé SSH VPS sur le MacBook** — vérif 16/07 : la clé `~/.ssh/ems_staging_ed25519`
+      fonctionne vers `debian@51.75.252.74`, mais l'alias `ems-vps` n'existe pas encore
+      dans `~/.ssh/config`. À faire : ajouter l'alias pour éviter les commandes fragiles.
 
   ```bash
-  ssh-keygen -t ed25519 -f ~/.ssh/ems_vps -C "rabie-macbook-ems" -N ""
-  # puis (mot de passe demandé une dernière fois) :
-  ssh-copy-id -i ~/.ssh/ems_vps.pub debian@51.75.252.74
-  # et dans ~/.ssh/config :
+  # dans ~/.ssh/config :
   #   Host ems-vps
   #     HostName 51.75.252.74
   #     User debian
-  #     IdentityFile ~/.ssh/ems_vps
+  #     IdentityFile ~/.ssh/ems_staging_ed25519
   ```
 
-- [ ] **Canal d'alerte choisi + webhook créé** (Slack incoming webhook ou équivalent email→webhook).
-      Réutiliser le canal de l'uptime si possible. → la valeur ira dans `.env.monitoring` sur le VPS,
-      **jamais dans le chat**.
-- [ ] **Projets Sentry créés** (1 back + 1 front, ou 1 projet 2 environnements) → récupérer les **DSN**.
-      À poser directement sur le VPS (`.env.production` / `.env.staging`) et en secret GitHub si besoin
-      (`gh secret set SENTRY_DSN`), **jamais dans le chat**.
+- [x] **Canal d'alerte choisi + webhook créé** — vérif 16/07 : `.env.monitoring` présent sur le VPS
+      (valeur non affichée). Rabie a reçu au moins une alerte disque.
+- [x] **Projets Sentry créés + DSN posés** — vérif 16/07 : `SENTRY_DSN` présent dans les env prod/staging
+      et injecté dans les conteneurs `ems-api` / `ems-staging-api`. Reste à confirmer visuellement qu'un
+      event remonte bien dans Sentry back + front.
 
 ## 2. Déploiement Netdata + alertes disque/CPU (dès le prérequis SSH levé)
 
@@ -67,17 +64,23 @@
 - [ ] ⚠️ Leçon 0-CI : `name: ems-monitoring` isole le projet compose — ne PAS lancer depuis un autre
       dossier ni sans le `-f` explicite (incident 502 du 25/06).
 
+> Vérif 16/07 : `docker ps -a` ne montre aucun conteneur Netdata/monitoring et
+> `docker compose -f docker-compose.monitoring.yml --env-file .env.monitoring ps` est vide.
+> Conclusion : Netdata n'est pas lancé actuellement, même si `.env.monitoring` et le compose sont présents.
+
 ## 3. Test d'alerte EN RÉEL (ne pas sauter — une alerte jamais testée n'existe pas)
 
-- [ ] Baisser temporairement le seuil warning disque à ≤ 40 % (le disque est à ~44 %) dans
+- [~] Baisser temporairement le seuil warning disque à ≤ 40 % (le disque est à ~44 %) dans
       `monitoring/netdata/health.d/ems-disk.conf` sur le VPS → `docker restart ems-netdata` →
       **l'alerte doit arriver sur le canal choisi** → remettre le seuil → restart.
-- [ ] Consigner ici la date du test et le canal : **\_\_**
+- [ ] Consigner ici la date du test et le canal : **alerte disque reçue par Rabie, à rattacher au test exact
+      et au canal utilisé**.
 
 ## 4. Sentry actif (config pure, zéro code)
 
-- [ ] Poser `SENTRY_DSN` (+ `SENTRY_ENVIRONMENT=production`) dans `.env.production` VPS → recreate API.
-- [ ] Idem staging (`SENTRY_ENVIRONMENT=staging`).
+- [x] Poser `SENTRY_DSN` (+ `SENTRY_ENVIRONMENT=production`) dans `.env.production` VPS → vérif 16/07 :
+      présent dans `ems-api`.
+- [x] Idem staging (`SENTRY_ENVIRONMENT=staging`) → vérif 16/07 : présent dans `ems-staging-api`.
 - [ ] Front : `SENTRY_DSN` en secret GitHub → le build CI injecte + upload source maps.
 - [ ] **Vérifier qu'un event remonte** (back : déclencher une exception de test ; front : idem).
       Tant que ce n'est pas vu dans Sentry, ce n'est pas fait.
@@ -94,6 +97,11 @@
 - [ ] Vérifier `/health/queues` en prod : `curl -s https://api.attendee.fr/api/health/queues | jq`
 - [ ] Rotation logs : vérifier qu'elle est effective (`docker inspect ems-api | grep -A3 LogConfig`).
 - [ ] Purge legacy 912 Mo (checklist [0-CI §4](./finalisation-ci-cd-et-livraison.md)) — libère la marge disque.
+
+> Vérif 16/07 :
+> - `/api/health/queues` prod OK, toutes les queues à 0 (`email.send`, exports).
+> - Aucun cron BullMQ trouvé via `sudo crontab -l` ni `/etc/cron*`.
+> - `/opt/ems-attendee/backend/frontend` existe toujours et pèse 912M.
 
 ## 6. Clôture du chantier
 

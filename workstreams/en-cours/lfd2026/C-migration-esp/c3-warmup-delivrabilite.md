@@ -7,7 +7,9 @@
 ## Objectif
 
 Amener `mail.attendee.fr` à une réputation suffisante pour tenir le pic LFD 2026 sans bloquer
-les inscriptions, tout en surveillant les signaux mailbox providers.
+les inscriptions, tout en surveillant les signaux mailbox providers. Le besoin à garder en tête :
+absorber des **pics autour de 3 000 emails** (vagues inscriptions / billets / notifications), pas
+seulement quelques lots de test.
 
 ## État de départ
 
@@ -36,6 +38,8 @@ les inscriptions, tout en surveillant les signaux mailbox providers.
 - [ ] Envoyer J1 en petits lots, observer inbox/spam, bounce, complaint, deferred.
 - [ ] Documenter les résultats J1 dans ce fichier.
 - [ ] Ajuster J2/J3 selon signaux réels.
+- [ ] Après J7, planifier des paliers vers 1 500 / 2 000 / 3 000 emails par jour si les signaux restent propres.
+- [ ] Réaliser au moins un test contrôlé proche de 3 000 emails avant l'event, avec observation queue/webhooks/providers.
 - [ ] Écrire le runbook jour J : pause, baisse débit, contact support Mailgun, fallback billet hors email.
 
 ## Leviers éventuels — à voir / détailler
@@ -55,6 +59,7 @@ les inscriptions, tout en surveillant les signaux mailbox providers.
 - Webhooks `accepted`, `delivered`, `temporary failure`, `permanent failure`, `spam complaints`
   visibles côté Mailgun et côté Attendee.
 - Queue email stable, débit modifiable sans restart.
+- Capacité validée à encaisser une vague proche de 3 000 emails sans backlog durable ni blocage provider.
 
 ## Risques spécifiques
 
