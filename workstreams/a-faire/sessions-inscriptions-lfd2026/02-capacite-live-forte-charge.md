@@ -5,6 +5,8 @@
 > avec **statut live** (pleine/fermée) affiché aux participants — **sans survente** et **sans saturer
 > Postgres**.
 > **Date :** 2026-07-08 · **Statut :** 🟡 cadré, **à démarrer APRÈS chantier A (les leviers)**.
+>
+> **Mise à jour 2026-07-16 :** l'implémentation livrée sur `attendee-ems-back` (PR #27) fait de l'API attendee la source de vérité pour la capacité publique et diffuse les stats en WebSocket. Le portier Redis décrit ci-dessous reste la cible de cadrage si on décide de déporter encore le hot path.
 
 ---
 
