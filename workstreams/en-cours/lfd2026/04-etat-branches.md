@@ -11,14 +11,15 @@
 ## Status
 
 - **Type :** SNAPSHOT (photo datée — à confirmer contre `git fetch` avant toute décision)
-- **Dernière vérification :** 2026-07-14 (soir, après merge PR #20 et resync `chore/monitoring`)
+- **Dernière vérification :** 2026-07-16 soir (après merge `chore/monitoring` → `staging`, back `63c2bd6`)
 
 ---
 
 ## Synthèse
 
-- ✅ **`staging` = `main` sur les deux repos** (contenu strictement identique, vérifié par diff d'arbres —
-  `main` back porte juste les commits de merge en plus).
+- ⚠️ **Back : `staging` est en avance sur `main`** depuis le merge 0-MON (`63c2bd6`) ; à promouvoir en prod
+  uniquement après validation VPS/alertes.
+- ✅ **Front : `staging` = `main`** (contenu strictement identique à la dernière photo connue).
 - ✅ **`chore/ci-cd` supprimée** (back + front) le 14/07 — tous les patches vérifiés présents dans staging
   (`git cherry` : 0 patch manquant).
 - ✅ **`chore/gotenberg-cloudrun-poc` réalignée** = staging (`72d97f6`, fast-forward) — prête pour le code B0.
@@ -32,13 +33,14 @@
 
 ## Back — `attendee-ems-back`
 
-| Branche                                  | État (14/07)                                                           | Action                                  |
+| Branche                                  | État (16/07)                                                           | Action                                  |
 | ---------------------------------------- | ---------------------------------------------------------------------- | --------------------------------------- |
-| `main`                                   | = staging (contenu identique) · prod déployée dessus (`aca1b49`+)      | —                                       |
-| `staging`                                | Base d'intégration · CD staging auto à chaque push                     | —                                       |
+| `main`                                   | En retard sur `staging` du merge 0-MON (`63c2bd6`)                     | Garder stable jusqu'aux vérifs VPS      |
+| `staging`                                | Base d'intégration · contient 0-MON monitoring ops (`63c2bd6`)         | Déployer/vérifier VPS avant promotion   |
 | `chore/ci-cd`                            | ~~4 patches, tous équivalents dans staging~~                           | 🗑️ **Supprimée 14/07**                  |
 | `chore/gotenberg-cloudrun-poc`           | = staging (`72d97f6`) — aucun commit propre (le POC vit dans le brain) | Prête pour B0                           |
-| `chore/monitoring`                       | Resynchronisée avec `staging` (`c426a7a`) après merge C2               | ✅ À jour                               |
+| `chore/monitoring`                       | Mergée dans `staging` (`63c2bd6`) · diff contenu nul vs `staging`      | ✅ Livrée staging                        |
+| `feat/internal-mailing-wave1`            | Diff contenu nul vs `staging` (le warm-up est déjà dans staging via PR #26) | ✅ Rien à merger                         |
 | `feat/c2-mailgun-integration`            | Mergée via PR #20 puis supprimée (locale + remote)                     | ✅ Clos                                 |
 | `infra/staging-stack`                    | Entièrement mergée (PR #14 → partout)                                  | 🗑️ Supprimable                          |
 | `feature/db-backup`                      | Mergée (PR #15)                                                        | 🗑️ Supprimable                          |
@@ -104,3 +106,4 @@
 | 2026-07-14 | Back : création `chore/monitoring` depuis staging (`72d97f6`) — finalisation 0-MON + rangement tests éventuel                                     |
 | 2026-07-14 | Mobile : état des lieux ajouté · décision **release mobile en stand-by** (attendre fin du chantier mobile à venir)                                |
 | 2026-07-14 | Back : merge PR #20 (`feat/c2-mailgun-integration`) vers `staging` puis suppression de branche · merge `staging` → `chore/monitoring` (`c426a7a`) |
+| 2026-07-16 | Back : `feat/internal-mailing-wave1` vérifiée sans diff vs `staging` · `chore/monitoring` mergée dans `staging` (`63c2bd6`) pour livrer 0-MON     |

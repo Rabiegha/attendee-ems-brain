@@ -1,11 +1,14 @@
 # Finalisation 0-MON (monitoring) et livraison
 
-> Date : 2026-07-14 · Chantier : **0-MON** ([plan](./0-MON-plan.md) · [suivi ligne 0-MON](../03-suivi-chantiers.md))
+> Date : 2026-07-14 · mise à jour : 2026-07-16 soir · Chantier : **0-MON**
+> ([plan](./0-MON-plan.md) · [suivi ligne 0-MON](../03-suivi-chantiers.md))
 > Même logique que [finalisation-ci-cd-et-livraison.md](./finalisation-ci-cd-et-livraison.md) :
 > checklist d'exécution ordonnée, cochée au fur et à mesure, avec les commandes exactes.
 >
-> **État au 14/07 : LE CODE EST 100 % FAIT** (branche `chore/monitoring` back, +2 commits E2E du 14/07).
-> **Tout ce qui reste est de l'ops VPS** — bloqué par 3 prérequis côté Rabie (§1).
+> **État au 16/07 soir : LE CODE EST 100 % FAIT ET MERGÉ `staging`** (`attendee-ems-back`
+> `63c2bd6`, merge de `chore/monitoring`).
+> **Tout ce qui reste est de l'ops VPS** — pull/déploiement, activation Netdata/timer BullMQ,
+> test d'alerte réel et confirmation Sentry.
 
 ---
 
@@ -15,9 +18,9 @@
 | --------------------------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------ |
 | Netdata compose (name `ems-monitoring`)       | ✅ code                      | `attendee-ems-back/docker-compose.monitoring.yml` (dashboard 127.0.0.1:19999, non exposé — tunnel SSH) |
 | Alertes disque 70/80/85 % + CPU/RAM           | ✅ code                      | `monitoring/netdata/health.d/ems-disk.conf`, `ems-cpu-ram.conf`                                        |
-| Notifications webhook (Slack-compatible)      | ✅ code                      | `monitoring/netdata/health_alarm_notify.conf` (custom_sender, lit `NETDATA_WEBHOOK_URL`)               |
+| Notifications webhook (Slack/Discord-compatible) | ✅ code mergé `staging`   | `monitoring/netdata/health_alarm_notify.conf` (custom_sender, lit `NETDATA_WEBHOOK_URL`/`WEBHOOK_URL`) |
 | Métrique files BullMQ                         | ✅ code + **E2E 14/07**      | endpoint `/health/queues` (`src/health/health.controller.ts`) + `test/health.e2e-spec.ts`              |
-| Cron de surveillance BullMQ                   | ✅ code                      | `monitoring/check-bullmq-queues.sh` (alerte si waiting gonfle)                                         |
+| Timer systemd de surveillance BullMQ          | ✅ code mergé `staging`      | `monitoring/systemd/ems-bullmq-check.*` + `monitoring/check-bullmq-queues.sh` (alerte si waiting gonfle) |
 | Rotation logs Docker (json-file 50m × 3)      | ✅ code                      | `docker-compose.prod.yml` (mergé)                                                                      |
 | Sentry back (init si `SENTRY_DSN`)            | ✅ code                      | `src/instrument.ts` — s'active tout seul dès que le DSN est posé                                       |
 | Sentry front                                  | ✅ code                      | `src/shared/lib/logger.ts` + `@sentry/vite-plugin` (source maps prod)                                  |
@@ -47,16 +50,16 @@
 
 ## 2. Déploiement Netdata + alertes disque/CPU (dès le prérequis SSH levé)
 
-- [ ] Pousser `chore/monitoring` → PR → `staging` (la CI valide les 31 E2E) — le dossier `monitoring/`
-      et le compose arrivent sur le VPS par le `git pull` du checkout.
+- [x] Pousser `chore/monitoring` → `staging` — fait le 16/07 soir (`attendee-ems-back`
+      `63c2bd6`). Le dossier `monitoring/` et le compose arriveront sur le VPS par le `git pull`
+      du checkout.
 - [ ] Sur le VPS :
 
   ```bash
   cd /opt/ems-attendee/backend
   git pull --ff-only
-  # webhook (ne pas committer) :
-  echo 'NETDATA_WEBHOOK_URL=<le webhook>' > .env.monitoring && chmod 600 .env.monitoring
-  docker compose -f docker-compose.monitoring.yml --env-file .env.monitoring up -d
+  ./monitoring/apply-netdata-system-bind.sh
+  ./monitoring/apply-netdata-system-health.sh
   ```
 
 - [ ] Vérifier le dashboard : `ssh -L 19999:127.0.0.1:19999 ems-vps` → http://localhost:19999
@@ -87,11 +90,14 @@
 
 ## 5. Cron BullMQ + garde-fous disque
 
-- [ ] Installer le cron sur le VPS :
+- [ ] Installer/activer le timer systemd BullMQ sur le VPS :
 
   ```bash
-  crontab -e   # en debian
-  */5 * * * * /opt/ems-attendee/backend/monitoring/check-bullmq-queues.sh >> /var/log/ems-bullmq-check.log 2>&1
+  sudo install -m 0644 monitoring/systemd/ems-bullmq-check.service /etc/systemd/system/ems-bullmq-check.service
+  sudo install -m 0644 monitoring/systemd/ems-bullmq-check.timer /etc/systemd/system/ems-bullmq-check.timer
+  sudo systemctl daemon-reload
+  sudo systemctl enable --now ems-bullmq-check.timer
+  sudo systemctl list-timers ems-bullmq-check.timer
   ```
 
 - [ ] Vérifier `/health/queues` en prod : `curl -s https://api.attendee.fr/api/health/queues | jq`
@@ -100,14 +106,14 @@
 
 > Vérif 16/07 :
 > - `/api/health/queues` prod OK, toutes les queues à 0 (`email.send`, exports).
-> - Aucun cron BullMQ trouvé via `sudo crontab -l` ni `/etc/cron*`.
+> - Aucun ancien cron BullMQ trouvé via `sudo crontab -l` ni `/etc/cron*`.
 > - `/opt/ems-attendee/backend/frontend` existe toujours et pèse 912M.
 
 ## 6. Clôture du chantier
 
 - [ ] Mettre la ligne **0-MON à 100 %** dans le [suivi](../03-suivi-chantiers.md) UNIQUEMENT quand :
       Netdata up + alerte disque **testée en réel** + Sentry reçoit des events (back ET front) +
-      cron BullMQ en place.
+      timer BullMQ en place.
 - [ ] Reporter la config dans la checklist K (résilience event) : qui reçoit les alertes pendant l'event,
       qui a accès au dashboard.
 
@@ -118,7 +124,7 @@
 ```txt
 1 (prérequis Rabie : clé SSH ▸ webhook ▸ DSN) → 2 (Netdata) → 3 (test alerte réel)
                                               → 4 (Sentry) en parallèle de 2-3
-                                              → 5 (cron BullMQ + garde-fous) → 6 (clôture)
+                                              → 5 (timer BullMQ + garde-fous) → 6 (clôture)
 ```
 
 **Résultat cible** : être **prévenu avant la panne** — alerte disque avant que Postgres bloque le WAL
