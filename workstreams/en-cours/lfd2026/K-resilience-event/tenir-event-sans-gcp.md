@@ -146,6 +146,11 @@ couverte sur le VPS.** La contrainte « même serveur » bloque **l'HA**, pas le
 > (3) **rotation des logs**, (4) **gestion WAL / slots**, (5) **offload PDF+backups → R2**,
 > (6) **autovacuum réglé**, (7) **runbook « libérer / redimensionner le volume à chaud »** (OVH).
 > → C'est du ressort de **0-MON + hygiène**, pas de la HA. Consolidé dans le workstream **résilience event**.
+>
+> **Mise à jour 2026-07-16 — 0-MON effectif :** Netdata prod sécurisé (`:19999` direct fermé,
+> accès `/netdata/` basic auth), alertes disque/CPU/RAM chargées, webhook Discord branché et alerte
+> disque testée (`ems_disk_webhook_test` sur `disk_space./`), surveillance BullMQ active via
+> `ems-bullmq-check.timer`, rotation Docker vérifiée sur API/nginx/Postgres/Redis.
 
 ### 4.4 Statelessness — **non-bloquant pour l'event**
 

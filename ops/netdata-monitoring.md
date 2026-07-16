@@ -86,6 +86,86 @@ ss -tlnp | grep 19999
 sudo journalctl -u netdata -n 50 --no-pager
 ```
 
+### Vérifier que le port direct n'est pas public
+
+Depuis une machine externe :
+
+```bash
+curl -sS --connect-timeout 5 -o /dev/null -w "%{http_code}\n" http://51.75.252.74:19999/
+```
+
+Résultat attendu : échec de connexion / `000`. L'accès public doit passer uniquement par
+`https://api.attendee.fr/netdata/` avec basic auth.
+
+Sur le VPS, Netdata doit écouter seulement en local et sur le bridge Docker :
+
+```bash
+sudo ss -tlnp | grep 19999
+# attendu : 127.0.0.1:19999 et 172.17.0.1:19999, pas 0.0.0.0:19999
+```
+
+La configuration attendue est versionnée dans le backend :
+
+```bash
+cd /opt/ems-attendee/backend
+./monitoring/apply-netdata-system-bind.sh --check
+```
+
+Pour réappliquer la configuration après réinstallation/update Netdata :
+
+```bash
+cd /opt/ems-attendee/backend
+./monitoring/apply-netdata-system-bind.sh
+```
+
+### Alertes EMS et webhook
+
+Les alertes EMS sont installées dans le Netdata système :
+
+```bash
+cd /opt/ems-attendee/backend
+./monitoring/apply-netdata-system-health.sh --check
+```
+
+Alarmes attendues :
+
+- `ems_disk_usage`
+- `ems_disk_usage_80`
+- `ems_cpu_sustained`
+- `ems_ram_usage`
+
+Le canal d'alerte doit être posé sur le VPS, jamais dans Git :
+
+```bash
+cd /opt/ems-attendee/backend
+echo 'NETDATA_WEBHOOK_URL=<webhook>' > .env.monitoring
+chmod 600 .env.monitoring
+./monitoring/apply-netdata-system-health.sh
+```
+
+Le même fichier est aussi lu par `monitoring/check-bullmq-queues.sh`.
+
+Canal actuel : Discord `EMS Monitoring`.
+
+Test validé le 2026-07-16 : alarme temporaire `ems_disk_webhook_test` sur `disk_space./`, passée en
+`WARNING`, puis supprimée et Netdata redémarré.
+
+### BullMQ queue check
+
+Le VPS n'a pas `crontab`; la surveillance `/health/queues` utilise donc un timer systemd :
+
+```bash
+systemctl list-timers --all ems-bullmq-check.timer --no-pager
+sudo systemctl status ems-bullmq-check.service --no-pager -n 20
+sudo tail -n 50 /var/log/ems-bullmq-check.log
+```
+
+Le timer exécute toutes les 5 minutes :
+
+```bash
+/opt/ems-attendee/backend/monitoring/check-bullmq-queues.sh
+```
+
 ---
 
 ## 4. Configuration technique (référence)
@@ -94,6 +174,12 @@ sudo journalctl -u netdata -n 50 --no-pager
 |---|---|
 | Version Netdata | `v2.10.3` |
 | Port local | `19999` (host VPS, hors Docker) |
+| Configuration | `/opt/netdata/etc/netdata/netdata.conf` (`[web] bind to = 127.0.0.1:19999 172.17.0.1:19999`) |
+| Script de garde-fou | `monitoring/apply-netdata-system-bind.sh` |
+| Script alertes EMS | `monitoring/apply-netdata-system-health.sh` |
+| Canal webhook | `/opt/ems-attendee/backend/.env.monitoring` (`NETDATA_WEBHOOK_URL=...`) |
+| Canal actuel | Discord `EMS Monitoring` |
+| BullMQ timer | `ems-bullmq-check.timer` → `ems-bullmq-check.service` |
 | Reverse proxy | `ems-nginx` (container) → `http://172.17.0.1:19999` |
 | Bloc nginx | `nginx/conf.d/api.attendee.fr.conf`, location `/netdata/` |
 | Fichier auth | `/opt/ems-attendee/backend/nginx/.htpasswd` |

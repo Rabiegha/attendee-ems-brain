@@ -25,6 +25,16 @@
 > **Conclusion :** l'error-tracking (Sentry) et l'uptime sont **déjà là**. Le **vrai trou** = pas de
 > **métriques système** ni d'**alerte seuils** (disque en premier). C'est ça qu'il reste à poser.
 
+### Mise à jour 2026-07-16
+
+| Brique                                               | État                                  | Détail                                                                                                      |
+| ---------------------------------------------------- | ------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| **Sentry back/front**                                | ✅ **activé + testé**                 | DSN posés prod/staging, events vérifiés                                                                     |
+| **Netdata prod**                                     | ✅ **actif + sécurisé**               | service système `v2.10.3`, port direct `19999` fermé, accès `/netdata/` via basic auth                       |
+| **Alertes CPU/RAM/disque**                           | ✅ **chargées dans Netdata**          | `ems_disk_usage`, `ems_disk_usage_80`, `ems_cpu_sustained`, `ems_ram_usage`                                  |
+| **File BullMQ**                                      | ✅ **surveillée toutes les 5 min**    | `ems-bullmq-check.timer` systemd, `/health/queues` OK                                                       |
+| **Canal d'alerte + test réel**                       | ✅ **fait**                           | webhook Discord posé dans `.env.monitoring`, alerte disque temporaire `ems_disk_webhook_test` testée le 16/07 |
+
 ---
 
 ## 1. Reste à faire (le vrai gap)

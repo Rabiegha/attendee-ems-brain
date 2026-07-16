@@ -41,7 +41,7 @@
   #     IdentityFile ~/.ssh/ems_vps
   ```
 
-- [ ] **Canal d'alerte choisi + webhook créé** (Slack incoming webhook ou équivalent email→webhook).
+- [x] **Canal d'alerte choisi + webhook créé** (Slack incoming webhook ou équivalent email→webhook).
       Réutiliser le canal de l'uptime si possible. → la valeur ira dans `.env.monitoring` sur le VPS,
       **jamais dans le chat**.
 - [ ] **Projets Sentry créés** (1 back + 1 front, ou 1 projet 2 environnements) → récupérer les **DSN**.
@@ -50,57 +50,69 @@
 
 ## 2. Déploiement Netdata + alertes disque/CPU (dès le prérequis SSH levé)
 
-- [ ] Pousser `chore/monitoring` → PR → `staging` (la CI valide les 31 E2E) — le dossier `monitoring/`
+- [x] Pousser `chore/monitoring` → PR → `staging` (la CI valide les 31 E2E) — le dossier `monitoring/`
       et le compose arrivent sur le VPS par le `git pull` du checkout.
-- [ ] Sur le VPS :
+- [x] Sur le VPS : Netdata existait déjà en **service système** (`netdata v2.10.3`, claim Netdata Cloud).
+      Le port direct public `:19999` a été fermé le 16/07 : Netdata écoute uniquement sur
+      `127.0.0.1:19999` et `172.17.0.1:19999`.
 
   ```bash
   cd /opt/ems-attendee/backend
-  git pull --ff-only
-  # webhook (ne pas committer) :
-  echo 'NETDATA_WEBHOOK_URL=<le webhook>' > .env.monitoring && chmod 600 .env.monitoring
-  docker compose -f docker-compose.monitoring.yml --env-file .env.monitoring up -d
+  ./monitoring/apply-netdata-system-bind.sh --check
+  ./monitoring/apply-netdata-system-health.sh --check
   ```
 
-- [ ] Vérifier le dashboard : `ssh -L 19999:127.0.0.1:19999 ems-vps` → http://localhost:19999
-- [ ] Vérifier que les seuils custom sont chargés : onglet Alerts → `ems_disk_*` présents.
+- [x] Vérifier le dashboard : `https://api.attendee.fr/netdata/` répond `401` sans auth, `200` avec auth.
+- [x] Vérifier que les seuils custom sont chargés : `ems_disk_usage`, `ems_disk_usage_80`,
+      `ems_cpu_sustained`, `ems_ram_usage` présents dans l'API Netdata.
 - [ ] ⚠️ Leçon 0-CI : `name: ems-monitoring` isole le projet compose — ne PAS lancer depuis un autre
       dossier ni sans le `-f` explicite (incident 502 du 25/06).
+      Note 16/07 : prod utilise pour l'instant le service système Netdata ; les scripts
+      `apply-netdata-system-*` versionnent cet état.
 
 ## 3. Test d'alerte EN RÉEL (ne pas sauter — une alerte jamais testée n'existe pas)
 
-- [ ] Baisser temporairement le seuil warning disque à ≤ 40 % (le disque est à ~44 %) dans
-      `monitoring/netdata/health.d/ems-disk.conf` sur le VPS → `docker restart ems-netdata` →
-      **l'alerte doit arriver sur le canal choisi** → remettre le seuil → restart.
-- [ ] Consigner ici la date du test et le canal : **\_\_**
+- [x] Créer le canal d'alerte et poser sur le VPS :
+
+  ```bash
+  cd /opt/ems-attendee/backend
+  echo 'NETDATA_WEBHOOK_URL=<le webhook>' > .env.monitoring
+  chmod 600 .env.monitoring
+  ./monitoring/apply-netdata-system-health.sh
+  ```
+
+- [x] Tester une alerte disque réelle : alarme temporaire `ems_disk_webhook_test` sur `disk_space./`,
+      passée en `WARNING` à 71.4 %, puis supprimée et Netdata redémarré.
+- [x] Consigner ici la date du test et le canal : **2026-07-16 — Discord `EMS Monitoring`**.
 
 ## 4. Sentry actif (config pure, zéro code)
 
-- [ ] Poser `SENTRY_DSN` (+ `SENTRY_ENVIRONMENT=production`) dans `.env.production` VPS → recreate API.
-- [ ] Idem staging (`SENTRY_ENVIRONMENT=staging`).
-- [ ] Front : `SENTRY_DSN` en secret GitHub → le build CI injecte + upload source maps.
-- [ ] **Vérifier qu'un event remonte** (back : déclencher une exception de test ; front : idem).
+- [x] Poser `SENTRY_DSN` (+ `SENTRY_ENVIRONMENT=production`) dans `.env.production` VPS → recreate API.
+- [x] Idem staging (`SENTRY_ENVIRONMENT=staging`).
+- [x] Front : `SENTRY_DSN` en secret GitHub → le build CI injecte + upload source maps.
+- [x] **Vérifier qu'un event remonte** (back : déclencher une exception de test ; front : idem).
       Tant que ce n'est pas vu dans Sentry, ce n'est pas fait.
 
 ## 5. Cron BullMQ + garde-fous disque
 
-- [ ] Installer le cron sur le VPS :
+- [x] Installer la surveillance BullMQ sur le VPS.
+      Note 16/07 : `crontab` absent sur le VPS ; remplacé par un timer systemd versionné.
 
   ```bash
-  crontab -e   # en debian
-  */5 * * * * /opt/ems-attendee/backend/monitoring/check-bullmq-queues.sh >> /var/log/ems-bullmq-check.log 2>&1
+  systemctl list-timers --all ems-bullmq-check.timer --no-pager
   ```
 
-- [ ] Vérifier `/health/queues` en prod : `curl -s https://api.attendee.fr/api/health/queues | jq`
-- [ ] Rotation logs : vérifier qu'elle est effective (`docker inspect ems-api | grep -A3 LogConfig`).
+- [x] Vérifier `/health/queues` en prod : `curl -s https://api.attendee.fr/api/health/queues | jq`
+- [x] Rotation logs : vérifier qu'elle est effective (`docker inspect ems-api | grep -A3 LogConfig`).
+      Vérifié 16/07 : `ems-api`, `ems-nginx`, `ems-postgres`, `ems-redis` en `json-file max-size=50m max-file=3`.
 - [ ] Purge legacy 912 Mo (checklist [0-CI §4](./finalisation-ci-cd-et-livraison.md)) — libère la marge disque.
 
 ## 6. Clôture du chantier
 
-- [ ] Mettre la ligne **0-MON à 100 %** dans le [suivi](../03-suivi-chantiers.md) UNIQUEMENT quand :
+- [x] Mettre la ligne **0-MON à 100 %** dans le [suivi](../03-suivi-chantiers.md) UNIQUEMENT quand :
       Netdata up + alerte disque **testée en réel** + Sentry reçoit des events (back ET front) +
       cron BullMQ en place.
-- [ ] Reporter la config dans la checklist K (résilience event) : qui reçoit les alertes pendant l'event,
+- [x] Reporter la config dans la checklist K (résilience event) : qui reçoit les alertes pendant l'event,
       qui a accès au dashboard.
 
 ---
