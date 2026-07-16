@@ -12,6 +12,7 @@
 | Fichier                                                            | Sujet                                                                      |
 | ------------------------------------------------------------------ | -------------------------------------------------------------------------- |
 | [02-brief-call-gcp-gotenberg.md](./02-brief-call-gcp-gotenberg.md) | Brief call GCP + résultats POC Gotenberg (comparateur Puppeteer/Gotenberg) |
+| [suivi-gcp-gotenberg-auth-cloudrun.md](./suivi-gcp-gotenberg-auth-cloudrun.md) | Suivi opérationnel du créneau Cloud Run privé + auth OIDC + smoke test |
 | [GCP_Gotenberg.md](./GCP_Gotenberg.md)                             | Dossier de cadrage équipe GCP (archi cible, séquence, RACI)                |
 | [lib-pdf-badge.md](./lib-pdf-badge.md)                             | Décision — choix moteur de rendu PDF/badge                                 |
 | [email-billet-wallet.md](./email-billet-wallet.md)                 | Diagnostic chaîne email / billet PDF / wallet vs code réel                 |
