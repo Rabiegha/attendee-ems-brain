@@ -14,7 +14,7 @@
 >
 > - tag `archive/staging-2026-06-25` (back & brain).
 >
-> **Dernière mise à jour :** 2026-07-10
+> **Dernière mise à jour :** 2026-07-17
 
 ---
 
@@ -23,10 +23,10 @@
 - ✅ **Pas de doc infra dans `attendee-ems-back`** → toute doc va dans `attendee-ems-brain`.
 - ✅ **Format-on-save OFF** pendant tout le chantier (jamais `npm run format` / Format Document) → diffs chirurgicaux.
 - ✅ **1 levier = 1 commit propre** sur sa **branche dédiée**.
-- ✅ **Workflow** (décision 2026-07-10) : branche dédiée → test **local** → **MR vers `staging`**
+- ✅ **Workflow** (décision 2026-07-10, rappel renforcé 2026-07-17) : branche dédiée → test **local** → **MR vers `staging`**
   (branche d'environnement : le serveur staging est construit **depuis `staging`**) → rebuild
-  api sur le VPS + campagne **k6** → en fin de chantier, **merge `staging` → `dev`**.
-  `dev` = espace des 2 devs, `staging` = espace de l'environnement staging.
+  api sur le VPS + campagne **k6** → en fin de chantier, **PR contrôlée `staging` → `main`**.
+  `staging` = espace de validation, `main` = production. Aucun levier ne doit cibler `main` directement.
   ✅ **Branche `staging` recréée proprement le 2026-07-10** depuis `main` (`c10a4fa`).
   L'ancienne (fourre-tout ressuscité par un `git pull` le 09/07, merge `e2d90ee`) est archivée :
   branche `staging-archive-2026-07-10` + tag `archive/staging-2026-07-10`. Checkouts VPS reset
@@ -48,11 +48,11 @@
 | ---------------------------------------------------------------- | ------------------------------ | ---------------------------------------- | ----------------------------------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
 | **L1/L2/L10** stack staging + pgBouncer + pool                   | `infra/staging-stack`          | infra/config                             | � **Sur `staging` + mesuré** (2026-07-10) | [#14](https://github.com/Rabiegha/attendee-ems-back/pull/14) **mergée sur `staging`** | ✅ avant/après fait → [détail ci-dessous](#-l1l2l10--stack-staging--pgbouncer--pool) |
 | **L9a** transaction event allégée (`registerToEvent`)             | `feat/register-event-tx-slim`  | **code métier** (chirurgie)              | ⚪ À faire                                | —                                                                                     | —                                                                                    |
-| **L9b** transaction session allégée (`registerToSession`)         | `feat/register-session-tx-slim`| **code métier** (chirurgie, priorite LFD)| ⚪ À faire                                | —                                                                                     | —                                                                                    |
+| **L9b** transaction session allégée (`registerToSession`)         | `feat/register-session-tx-slim`| **code métier** (chirurgie, priorite LFD)| 🟣 Sur `staging` + CI/CD OK              | [#33](https://github.com/Rabiegha/attendee-ems-back/pull/33) **mergée sur `staging`** | ⏸ bloquée : `SESSION_TOKEN`/compte loadtest staging manquant                         |
 | **L9.1** compteur présence session O(1) (candidat, **priorisé**) | `feat/session-present-counter` | code métier (colonne PG `present_count`) | ⚪ À faire                                | —                                                                                     | —                                                                                    |
 | **L7** email async BullMQ                                        | `feat/email-async-bullmq`      | nouveaux fichiers                        | ⚪ À faire                                | —                                                                                     | —                                                                                    |
 | **L8** worker `PROCESS_ROLE` (Voie A)                            | `feat/process-role-worker`     | code (gating `main.ts`)                  | ⚪ À faire                                | —                                                                                     | —                                                                                    |
-| **L3** `directUrl` Prisma                                        | `chore/prisma-directurl`       | config (+5 lignes)                       | 🟡 En cours                              | —                                                                                     | —                                                                                    |
+| **L3** `directUrl` Prisma                                        | `chore/prisma-directurl`       | config (+5 lignes)                       | 🟣 Sur `staging`                         | [#32](https://github.com/Rabiegha/attendee-ems-back/pull/32) **mergée sur `staging`** | n/a                                                                                  |
 
 **Légende statut :** ⚪ à faire · 🟡 en cours · 🟢 codé+testé local · 🔵 sur `dev` · 🟣 sur `staging`+mesuré · ✅ clos.
 
@@ -64,7 +64,7 @@
 | --- | ------------------------------------------------ | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 0   | Geler & archiver                                 | ✅ Fait              | tag `archive/staging-2026-06-25` + branche `staging-archive-2026-06-25` (back). Brain : à vérifier.                                                                                                                  |
 | 1   | Séparer reformatage / logique                    | ✅ Fait              | format-on-save vérifié OFF (learning créé).                                                                                                                                                                          |
-| 2   | Rejouer les leviers (chantier A + L9.1)          | 🟡 En cours          | 1/7 fait — **L1/L2/L10 mergé sur `staging` + mesuré avant/après (2026-07-10)**. Suivant immédiat : **L3 directUrl**, puis L9b session, L9a event, L9.1.                                                                  |
+| 2   | Rejouer les leviers (chantier A + L9.1)          | 🟡 En cours          | 3/7 posés sur `staging` — **L1/L2/L10 mesuré**, **L3 directUrl mergé**, **L9b session mergé + CI/CD staging OK**. Reste : mesure k6 L9b dès token dédié, puis L9a event, L9.1, L7/L8. |
 | 3   | Réconcilier la doc (~25/s CPU vs ~33/s DB)       | ⚪ À faire           | dans `infra-scaling-pca/README.md`.                                                                                                                                                                                  |
 | 4   | Post-mortem 502 prod                             | ✅ Fait (2026-07-10) | [bugs/fait/2026-06-25-prod-502-collision-compose.md](../../../bugs/fait/2026-06-25-prod-502-collision-compose.md) + garde-fous suivis dans [garde-fous-deploiement-staging.md](./garde-fous-deploiement-staging.md). |
 | 5   | Isoler le compose prod (PR dédiée)               | ⚪ À faire           | `docker-compose.prod.yml`, ne pas merger sans revue.                                                                                                                                                                 |
@@ -77,6 +77,13 @@ Le chemin nominal devient **L9b puis L9a puis L9.1 puis mesure k6**. L9b est pri
 considerer sont documentes dans [leviers-eventuels-capacite.md](./leviers-eventuels-capacite.md), avec
 une option de paquet livrable en 10 jours : portier Redis, cache public, queues/mode degrade, puis test
 combine.
+
+### Note branche / prod — 2026-07-17
+
+- L3 et L9b sont sur `staging` et déployés staging.
+- Une PR globale `staging -> main` (#34) a révélé une divergence : `main` contenait aussi des commits absents de `staging`.
+- #34 a été fermée et remplacée par [#35](https://github.com/Rabiegha/attendee-ems-back/pull/35), branche dédiée `chore/reconcile-staging-main`, conflits résolus localement, CI verte.
+- Ne pas merger #35 sans décision explicite : `main` peut déclencher la chaîne prod.
 
 ---
 
@@ -134,15 +141,16 @@ combine.
 - **Source de rejeu :** archive `staging-archive-2026-06-25` (rejouer à la main, pas cherry-pick du fourre-tout).
 - **Reste :** tout. À démarrer dans un chat dédié.
 
-### ⚪ L9b — transaction d'inscription session allégée
+### 🟣 L9b — transaction d'inscription session allégée
 
 - **Endpoint :** `POST /api/public/events/sessions/:sessionToken/register` (**utilisé par `back-office-event` LFD**).
 - **Méthode :** `PublicService.registerToSession`.
-- **Branche :** `feat/register-session-tx-slim` · **Fichier :** `src/modules/public/public.service.ts`.
-- **Problème :** verrou `FOR UPDATE` sur la ligne `sessions` + `registrationSessionChoice.count` capacité session + recomptage stats live.
-- **Nature :** ⚠️ **vraie chirurgie de code** → **test de non-régression obligatoire** (pas de doublon registration/session, pas de survente session, waitlist correcte, registration event créée/réutilisée).
+- **Branche :** `feat/register-session-tx-slim` · **MR :** [#33](https://github.com/Rabiegha/attendee-ems-back/pull/33) mergée sur `staging` · **Merge staging :** `44a9ff4`.
+- **Fichiers principaux :** `prisma/schema.prisma`, migration `20260717170000_session_registered_count`, `public.service.ts`, `registrations.service.ts`, `sessions.service.ts`, `test/sessions-h.e2e-spec.ts`.
+- **Fait :** compteur `sessions.registered_count` + backfill, capacité session lue sous verrou `FOR UPDATE`, incrément O(1) sur inscription publique session, refresh du compteur sur chemins admin/public/remove, stats live basées sur le compteur.
+- **Validation :** PR #33 CI verte, merge `staging`, CI push `staging` verte, CD staging vert, health staging OK (`version=44a9ff4ffc3cac590801b1efe17069e095b9fac1`).
 - **Note :** L9b ne remplace pas L9a. Il ajoute le hot path réellement utilisé pour LFD.
-- **Reste :** tout. À traiter avant L9a pour sécuriser le flux LFD réel.
+- **Reste :** mesure k6 dédiée. Bloqué le 2026-07-17 car `k6` absent localement, compte `loadtest-admin@staging.invalid` en 401 et aucun `SESSION_TOKEN` public dédié trouvé.
 
 ### ⚪ L9.1 — compteur de présence session O(1)
 
@@ -169,15 +177,15 @@ combine.
 - **But :** pouvoir lancer un process dédié « worker » (consomme la file) distinct de l'API.
 - **Reste :** tout.
 
-### ⚪ L3 — `directUrl` Prisma
+### 🟣 L3 — `directUrl` Prisma
 
 - **Branche :** `chore/prisma-directurl` · **Nature :** +5 lignes dans `datasource` de `schema.prisma`.
 - **But :** URL directe (port 5432) pour les migrations, l'app passant par pgBouncer (6432).
 - **⚠️ Urgence montée d'un cran (2026-07-10) :** sans `directUrl`, `prisma migrate deploy` via pgBouncer
   **crash-loop en P1002** (advisory lock) — vécu sur staging pendant la campagne k6. Workaround actuel :
   `RUN_MIGRATIONS=false` dans `.env.staging` (les migrations doivent être lancées à la main en direct).
-- **Statut 2026-07-17 :** demarre sur `chore/prisma-directurl` avant L9b/L9a/L9.1 pour sécuriser les migrations.
-- **Reste :** validation locale + MR/mesure staging. Levier le plus simple. Learning déjà écrit.
+- **Statut 2026-07-17 :** mergé sur `staging` via [#32](https://github.com/Rabiegha/attendee-ems-back/pull/32), puis repris dans la PR de réconciliation [#35](https://github.com/Rabiegha/attendee-ems-back/pull/35) vers `main`.
+- **Reste :** surveiller la prochaine migration staging/prod avec `DIRECT_URL` effectif.
 
 ---
 
