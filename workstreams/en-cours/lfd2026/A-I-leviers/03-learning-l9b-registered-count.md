@@ -395,6 +395,65 @@ Apres merge de L3 sur `staging` :
 - test k6 sur le vrai endpoint session ;
 - comparer avec la mesure precedente du plafond autour de 33 inscriptions/s.
 
+## 8.1 Etat commit / push / CI
+
+Commits crees le 2026-07-17 :
+
+- `attendee-ems-back` : `0632c8e feat: add session registered counter for public signup`
+- `attendee-ems-brain` : `fa09a4a docs: add L9b registered counter learning`
+
+Push effectues :
+
+- branche back poussee : `origin/feat/register-session-tx-slim`
+- note brain poussee sur `origin/main`
+
+Point de vigilance :
+
+- la branche L9.B est empilee sur `chore/prisma-directurl` car `staging` ne contenait pas encore L3 au moment du travail ;
+- une PR directe vers `staging` affichera donc L3 + L9.B tant que L3 n'est pas deja merge dans `staging` ;
+- c'est acceptable pour tester L3/migration + L9.B ensemble, mais a verifier visuellement dans la PR.
+
+Creation PR :
+
+- le connecteur GitHub a retourne `404 Not Found` lors de la creation automatique de PR ;
+- il ne faut pas utiliser le lien GitHub par defaut vers `main`.
+
+Lien manuel correct :
+
+```txt
+https://github.com/Rabiegha/attendee-ems-back/compare/staging...feat/register-session-tx-slim?expand=1
+```
+
+A verifier dans GitHub avant creation :
+
+- base : `staging`
+- compare/head : `feat/register-session-tx-slim`
+
+CI / staging :
+
+- la CI se declenche sur `pull_request` vers `staging` ou `main` ;
+- le push de branche feature seul ne declenche pas la CI ;
+- apres merge dans `staging`, le workflow `cd-staging.yml` se declenche sur push `staging`.
+
+K6 / charge :
+
+- plan de charge reference : `attendee-ems-brain/infra/lfd-2026-load-test-plan.md`
+- script local repere : `local-files/load-test/load_test_event.sh`
+- la mesure cible L9.B doit appeler le vrai endpoint LFD :
+
+```txt
+POST /api/public/events/sessions/:sessionToken/register
+```
+
+Sequence recommandee :
+
+1. creer PR base `staging` avec le lien ci-dessus ;
+2. attendre CI PR ;
+3. merger vers `staging` si CI OK ;
+4. verifier CD staging ;
+5. lancer k6/session endpoint ;
+6. noter le resultat et comparer au plafond precedent autour de 33 inscriptions/s.
+
 ## 9. Regle de travail a garder
 
 A partir de maintenant, pour chaque changement de levier :
