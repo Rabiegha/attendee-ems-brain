@@ -25,22 +25,46 @@ seulement quelques lots de test.
 - Envoi testé en prod.
 - Base warm-up disponible : inscrits newsletter du magasin Channel Scope.
 
+✅ Fait le 17/07 :
+
+- Tracking Mailgun prêt en production : `open`/`click`/`unsubscribes` actifs, protocole `https`, certificat tracking actif.
+- Script opérationnel d'envoi warm-up Channel Scope (`send-warmup-wave2-channelscope.js`) avec `--limit/--offset`, throttle et journal d'envoi.
+- Contenu warm-up en français confirmé (objet + preheader) avec opt-out fonctionnel (`%unsubscribe_url%`).
+- Doublon unsubscribe supprimé côté script (plus d'injection CTA supplémentaire).
+- Base Channel Scope validée pour J1 : ~5 220 adresses, dédupliquée, nettoyée Emailable.
+
 ## À faire
 
 - [ ] Valider que les événements webhooks arrivent bien en base `email_events`.
 - [ ] Vérifier les stats `/email/events/stats` après premiers envois.
-- [ ] Définir le débit initial côté throttle email (`1 email/s` recommandé J1).
-- [ ] Créer/choisir le mécanisme d'envoi warm-up : script interne passant par la queue Attendee,
-      pas une boucle Mailgun brute.
-- [ ] Préparer le contenu warm-up Channel Scope avec opt-out clair.
-- [ ] Nettoyer la base newsletter avant envoi : doublons, emails invalides, adresses rôle si possible.
-- [ ] Segmenter par fournisseur destinataire : Gmail, Outlook/Hotmail, Yahoo, domaines pro.
-- [ ] Envoyer J1 en petits lots, observer inbox/spam, bounce, complaint, deferred.
-- [ ] Documenter les résultats J1 dans ce fichier.
+- [x] Définir le débit initial J1 (`30s` entre envois sur le lot 100).
+- [x] Mettre en place le mécanisme d'envoi warm-up (script interne piloté, pas de boucle manuelle).
+- [x] Préparer le contenu warm-up Channel Scope avec opt-out clair.
+- [x] Nettoyer la base newsletter avant envoi (doublons invalides traités côté source Emailable).
+- [x] Segmenter de manière initiale par fournisseur destinataire (analyse domaine/top providers).
+- [x] Lancer J1 en petits lots (smoke tests puis lot 100), observer inbox/spam/bounce/complaint/deferred.
+- [x] Documenter les résultats J1 dans ce fichier.
 - [ ] Ajuster J2/J3 selon signaux réels.
 - [ ] Après J7, planifier des paliers vers 1 500 / 2 000 / 3 000 emails par jour si les signaux restent propres.
 - [ ] Réaliser au moins un test contrôlé proche de 3 000 emails avant l'event, avec observation queue/webhooks/providers.
 - [ ] Écrire le runbook jour J : pause, baisse débit, contact support Mailgun, fallback billet hors email.
+
+## Journal d'exécution — 2026-07-17
+
+- Smoke tests envoyés avec succès (adresses internes `@choyou.fr` + Gmail de contrôle).
+- Vérification unsubscribe en réel :
+  - désinscription effective détectée (`suppress-unsubscribe` côté events Mailgun) ;
+  - réinscription test validée via suppression de l'entrée unsubscribe ;
+  - nouvel envoi ensuite `delivered`.
+- Custom template unsubscribe Mailgun ajusté côté dashboard (texte FR) ; correctif script appliqué pour supprimer le doublon `unsubscribe`/`Se désinscrire` dans le mail.
+- Warm-up J1 lancé en production : lot `100` (`offset=0`, `limit=100`, `delay=30s`) avec journal CSV côté VPS.
+
+### Message IDs de référence (trace J1)
+
+- `20260717152919.9c3785080ad0d063@mail.attendee.fr` (smoke test)
+- `20260717152923.ce3db60bc149fac0@mail.attendee.fr` (smoke test)
+- `20260717155000.7af627cb5228c76e@mail.attendee.fr` (smoke test Gmail)
+- `20260717155415.103d741335884afb@mail.attendee.fr` (lot 100 — envoi 1/100)
 
 ## Leviers éventuels — à voir / détailler
 

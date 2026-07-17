@@ -44,7 +44,6 @@ Avancement global estimé : **~40 %** du périmètre event. Le niveau de livrais
 | **Mailgun C2** : transport SMTP/Mailgun, queue BullMQ `email-send`, webhooks signés, `email_events`, endpoint stats | C2 | ✅ Mergé staging | PR #20 |
 | **C2.1 email + billet session** : décision d'architecture sur le flux post-inscription session, et justification file PHP locale vs Attendee/BullMQ | C2.1 / BIL / B | 🟡 Cadré, à implémenter | [note C2.1](../C-migration-esp/C2-1-email-billet-session/03-note-file-php-vs-attendee-bullmq.md) |
 | **Warm-up Mailgun C3** : script d'envoi, diagnostic Mailgun, smoke tests, tracking HTTPS, unsubscribe testé, lot J1 lancé | C3 | 🟡 En exécution | `send-warmup-wave1.js`, `mg-events.js`, suivi C3 |
-| **Jeu Coupe du Monde staging** pour campagne warm-up | C3 / ops | 🟡 Déployé staging | `https://staging.attendee.fr/jeu` |
 | **L3 `directUrl` Prisma** | A | 🟣 Sur staging | PR #32 |
 | **L9b session `registered_count`** : compteur DB, migration/backfill, capacité session sans `COUNT(*)` hot path, refresh admin/public/remove | A / I / J | 🟣 Sur staging + CI/CD OK | PR #33, merge `44a9ff4`, CD staging OK |
 | **Réconciliation `staging -> main` propre** | Git / gouvernance | 🟢 PR prête, non mergée | PR #35 `CLEAN`, CI verte ; #34 fermée |
@@ -85,7 +84,6 @@ Avancement global estimé : **~40 %** du périmètre event. Le niveau de livrais
 | **C2.1 non implémenté** | L'inscription répond, mais la génération/envoi billet final ne sont pas encore orchestrés durablement côté Attendee | Créer `ticket.generate` + séquencement `email.send` après billet prêt |
 | **Worker BIL billet/email encore squelette** | Risque de faire dériver la logique métier dans `queue.jsonl`/`worker.php` | Garder comme adaptateur temporaire seulement ; cible = Attendee/BullMQ |
 | **Warm-up Mailgun calendaire** | Délivrabilité des ~12 400 emails dépend des signaux jour par jour | Lot J1 lancé ; suivre bounce/complaint/deferred/unsub |
-| **Jeu `/jeu` ajouté manuellement au vhost nginx staging** | Peut être écrasé par prochain deploy si non versionné | À pérenniser dans repo si la campagne continue |
 | **Billet PDF B0/B1 pas encore branché** | Pièce jointe PDF / séquencement billet→email encore à livrer | Priorité S30 |
 | **Mobile encore à stabiliser** | Risques terrain : offline, perf 20k, recherche, OTA, PrintNode | Chantier M cadré, à exécuter S30/S31 |
 

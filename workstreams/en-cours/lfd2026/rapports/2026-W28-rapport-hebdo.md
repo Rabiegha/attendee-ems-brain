@@ -7,6 +7,30 @@
 
 ---
 
+## Addendum — Fin de journée S29 (vendredi 17/07/2026)
+
+- ✅ **C3 warm-up passé en exécution réelle** (Mailgun prod, domaine `mail.attendee.fr`).
+- ✅ **Tracking prêt** : `open`/`click`/`unsubscribes` actifs, protocole `https`, certificat tracking actif.
+- ✅ **Smoke tests validés** : envois internes `@choyou.fr` + contrôle Gmail OK.
+- ✅ **Parcours désinscription testé bout en bout** :
+  - désinscription effective confirmée côté Mailgun (`suppress-unsubscribe`),
+  - réinscription testée (suppression de la suppression list),
+  - nouvel envoi ensuite `delivered`.
+- ✅ **Qualité contenu** : correction du doublon `unsubscribe` / `Se désinscrire` dans le script warm-up ; version envoyée stabilisée.
+- 🟡 **J1 warm-up lancé** : lot `100` (`offset=0`, `limit=100`, `delay=30s`) démarré sur base Channel Scope.
+- 🟡 **Avancement au moment du point** : `23/100` envoyés, sans échec remonté dans le flux d'exécution.
+
+**Trace technique (IDs de référence)**
+
+- Smoke tests : `20260717152919.9c3785080ad0d063@mail.attendee.fr`, `20260717152923.ce3db60bc149fac0@mail.attendee.fr`, `20260717155000.7af627cb5228c76e@mail.attendee.fr`
+- Lot 100 (départ) : `20260717155415.103d741335884afb@mail.attendee.fr`
+
+**Prochaines actions immédiates**
+
+1. Laisser finir le lot 100 et consolider les métriques J1 (`bounce`, `complaint`, `deferred`, `unsubscribed`, `delivered`).
+2. Décider J2 (200) uniquement si les signaux restent propres.
+3. Mettre à jour le runbook warm-up opérationnel avec le retour J1.
+
 ## 1. Résumé exécutif
 
 - ✅ **2 livrables shippés en prod/staging** : le **système de sauvegarde automatique de la DB**
