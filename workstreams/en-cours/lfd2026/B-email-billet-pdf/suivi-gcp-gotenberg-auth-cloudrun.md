@@ -1,8 +1,8 @@
 # Suivi operationnel — Gotenberg Cloud Run + Auth
 
 > Chantier B0/B1 — LFD 2026  
-> Derniere mise a jour : 2026-07-16  
-> Objectif du creneau : terminer la mise en place Cloud Run prive + auth OIDC, puis valider par smoke test.
+> Derniere mise a jour : 2026-07-17  
+> Objectif du creneau : valider le meme flux depuis Nest/OVH maintenant que Cloud Run prive est deploye et teste cote GCP.
 
 ---
 
@@ -12,18 +12,139 @@
 | --- | --- | --- |
 | POC local Gotenberg | Fait | PDF genere, rendu global OK, ecart surtout anti-aliasing texte. |
 | Architecture cible | Fait | Nest/OVH appelle Cloud Run en HTTPS, Cloud Run retourne les bytes PDF, pas de rappel vers OVH. |
-| Cloud Run Gotenberg | Bloque cote GCP jusqu'au retour equipe | Service a deployer/configurer avec acces prive. Call reporte a mardi prochain. |
-| Auth Cloud Run | Bloque pour validation reelle | Cloud Run doit refuser l'anonyme et accepter uniquement un token OIDC valide. |
-| Integration Nest/OVH | A preparer sans attendre | Preparer le code/env pour generer le token OIDC et appeler Gotenberg avec `Authorization: Bearer <token>`. |
-| Smoke test | A planifier mardi | Valider refus sans token + PDF OK avec token. Objectif : arriver mardi avec tout pret cote Rabie. |
+| Cloud Run Gotenberg | Fait cote GCP | Service deploye en `europe-west9`, URL fournie, smoke tests GCP OK. |
+| Auth Cloud Run | Fait cote GCP | Service prive : anonyme refuse en 403, OIDC requis. |
+| Integration Nest/OVH | A faire cote Rabie | Generer le token OIDC via service account, appeler Gotenberg, garder fallback Puppeteer. |
+| Smoke test Nest/OVH | Prochaine etape | Rejouer depuis Nest/OVH : health tokenise, refus anonyme, PDF 1 page, logs Cloud Run. |
 
 ---
 
-## Suite apres report du call GCP
+## Retour equipe GCP — 2026-07-17
 
-Le call etant reporte a mardi prochain, l'objectif cote Rabie n'est pas d'attendre : il faut
-preparer tout ce qui ne depend pas de l'URL Cloud Run reelle, pour que mardi soit uniquement un
-test d'assemblage.
+Infos recues :
+
+```txt
+Cloud Run URL / audience OIDC:
+https://badge-generator-service-ipn4gzbe6a-od.a.run.app
+
+Endpoint conversion HTML:
+POST https://badge-generator-service-ipn4gzbe6a-od.a.run.app/forms/chromium/convert/html
+
+Health check:
+GET https://badge-generator-service-ipn4gzbe6a-od.a.run.app/health
+
+GCP project:
+attendee-494112
+
+Region:
+europe-west9 (Paris)
+
+Calling service account:
+gotenberg-invoker@attendee494112.iam.gserviceaccount.com
+
+Timeout:
+60 s
+
+Payload hard limit:
+32 MB/request
+```
+
+Validations deja faites cote GCP :
+
+- [x] service Cloud Run deploye ;
+- [x] `--no-allow-unauthenticated` actif ;
+- [x] requete anonyme refusee avec `403` par le frontend Google avant Gotenberg ;
+- [x] `roles/run.invoker` donne au service account ci-dessus, scope service uniquement ;
+- [x] requete avec token OIDC valide acceptee ;
+- [x] generation PDF OK, 1 page confirmee ;
+- [x] requetes visibles dans Cloud Run Logs Explorer ;
+- [x] allowlist IP OVH non requise en plus d'OIDC avant event.
+
+Decision recommandee sur `min-instances` :
+
+```txt
+Pendant event / fenetres de pic: min-instances=1
+Hors fenetres de pic: min-instances=0
+```
+
+Raison : eviter le cold start Chromium pendant les inscriptions, tout en reduisant le cout en
+periode calme. Pour l'instant, le service est laisse a `min-instances=1`.
+
+### Credentials cote OVH/Nest
+
+L'equipe GCP transmettra la cle JSON du service account via canal securise, pas par email.
+
+Options de stockage cote Nest/OVH :
+
+```txt
+GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json
+```
+
+ou variable d'environnement contenant le JSON, selon ce qui est le plus simple sur le VPS.
+
+Implementation recommandee :
+
+```ts
+google-auth-library.getIdTokenClient(
+  "https://badge-generator-service-ipn4gzbe6a-od.a.run.app",
+)
+```
+
+Le client gere le cache et le refresh du token OIDC. L'audience doit etre exactement l'URL Cloud
+Run ci-dessus, sans chemin et sans slash final ajoute.
+
+### Details Gotenberg importants
+
+- `index.html` doit etre le nom du fichier HTML principal dans le multipart.
+- Les images/CSS/fonts sont envoyes comme fichiers additionnels et references par chemins relatifs.
+- Header requis :
+
+```http
+Authorization: Bearer <OIDC token>
+```
+
+- Audience OIDC :
+
+```txt
+https://badge-generator-service-ipn4gzbe6a-od.a.run.app
+```
+
+- Surveiller la taille HTML + assets + fonts : limite dure 32 MB.
+
+---
+
+## Prochaine validation cote Rabie / Nest
+
+1. Recuperer le credential service account par canal securise.
+2. Configurer l'environnement Nest/OVH :
+
+```txt
+GOTENBERG_ENABLED=true
+GOTENBERG_AUTH_MODE=oidc
+GOTENBERG_BASE_URL=https://badge-generator-service-ipn4gzbe6a-od.a.run.app
+GOTENBERG_URL=https://badge-generator-service-ipn4gzbe6a-od.a.run.app/forms/chromium/convert/html
+GOTENBERG_AUDIENCE=https://badge-generator-service-ipn4gzbe6a-od.a.run.app
+GOTENBERG_TIMEOUT_MS=60000
+GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json
+```
+
+3. Verifier `GET /health` avec token.
+4. Verifier `POST /forms/chromium/convert/html` avec un `index.html` minimal.
+5. Verifier que l'appel sans token retourne `403`.
+6. Verifier le PDF genere depuis Nest/OVH : non vide, ouvrable, 1 page.
+7. Verifier les logs Cloud Run.
+8. Brancher ensuite le client Gotenberg dans le worker PDF avec fallback Puppeteer.
+
+---
+
+## Historique — preparation avant retour GCP
+
+> Cette section est conservee pour trace. Elle date d'avant la reception des infos GCP du
+> 2026-07-17. Le service Cloud Run est maintenant deploye ; les points "bloques jusqu'a reception
+> des infos GCP" sont donc leves cote GCP et deviennent des actions de validation cote Nest/OVH.
+
+Le call etait reporte a mardi prochain ; l'objectif cote Rabie etait de ne pas attendre et de
+preparer tout ce qui ne dependait pas encore de l'URL Cloud Run reelle.
 
 ### Ce que je peux faire sans URL Cloud Run
 
@@ -40,7 +161,7 @@ test d'assemblage.
 | Mesurer le payload template reel | Oui | Exporter/generer un HTML de badge, mesurer HTML + assets + fonts pour anticiper les limites Cloud Run. |
 | Rejouer le comparateur local | Oui | Continuer la validation rendu Puppeteer vs Gotenberg local sur template final. |
 
-### Ce qui reste bloque jusqu'a reception des infos GCP
+### Ce qui etait bloque jusqu'a reception des infos GCP
 
 | Point | Bloque par quoi ? | Pourquoi |
 | --- | --- | --- |
