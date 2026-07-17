@@ -17,7 +17,7 @@
 - 🟢 **BIL / back-office événement a pris forme en produit LFD concret** : le repo `back-office-event` n'est plus un simple prototype de page ; il porte une billetterie one-page LFD avec agenda 2 jours, choix de session, formulaire public, back-office client, synchronisation des sessions vers Attendee et jauges live.
 - ✅ **Mailgun C1/C2 livrés** : domaine `mail.attendee.fr` configuré et vérifié, transport Mailgun intégré, queue BullMQ email, webhooks signés, persistence `email_events`, endpoint stats.
 - 🟡 **C2.1 cadré** : séquencement inscription session → billet PDF → email. Décision actée : la file PHP locale de `back-office-event` peut dépanner court terme, mais la cible durable doit vivre côté Attendee/BullMQ (`ticket.generate` puis `email.send`).
-- 🟡 **Warm-up C3 lancé en réel** : smoke tests validés, tracking HTTPS actif, désinscription testée bout en bout, lot J1 de 100 emails lancé sur base Channel Scope.
+- 🟢 **Warm-up C3 exécuté en réel** : smoke tests validés, tracking HTTPS actif, désinscription testée bout en bout, lot J1 Channel Scope terminé (**100/100 envoyés**).
 - 🟡 **Chantier A/I repris proprement** : L3 `directUrl` + L9b `registered_count` mergés et déployés sur staging, CI/CD verts. La mesure k6 L9b reste bloquée faute de session/token de test dédié.
 - 🟡 **Réconciliation Git maîtrisée** : la PR `staging -> main` conflictuelle (#34) a été remplacée par une PR propre (#35), CI verte, non mergée sans décision explicite car `main` peut déclencher la chaîne prod.
 
@@ -43,7 +43,7 @@ Avancement global estimé : **~40 %** du périmètre event. Le niveau de livrais
 | **Mailgun C1** : plan acheté, domaine EU `mail.attendee.fr`, SPF/DKIM/DMARC/MX/CNAME tracking, webhooks, variables staging/prod | C1 | ✅ Terminé | Suivi C1/C3 |
 | **Mailgun C2** : transport SMTP/Mailgun, queue BullMQ `email-send`, webhooks signés, `email_events`, endpoint stats | C2 | ✅ Mergé staging | PR #20 |
 | **C2.1 email + billet session** : décision d'architecture sur le flux post-inscription session, et justification file PHP locale vs Attendee/BullMQ | C2.1 / BIL / B | 🟡 Cadré, à implémenter | [note C2.1](../C-migration-esp/C2-1-email-billet-session/03-note-file-php-vs-attendee-bullmq.md) |
-| **Warm-up Mailgun C3** : script d'envoi, diagnostic Mailgun, smoke tests, tracking HTTPS, unsubscribe testé, lot J1 lancé | C3 | 🟡 En exécution | `send-warmup-wave1.js`, `mg-events.js`, suivi C3 |
+| **Warm-up Mailgun C3** : script d'envoi, diagnostic Mailgun, smoke tests, tracking HTTPS, unsubscribe testé, lot J1 terminé (**100/100**) | C3 | 🟢 J1 terminé | `send-warmup-wave1.js`, `mg-events.js`, suivi C3 |
 | **L3 `directUrl` Prisma** | A | 🟣 Sur staging | PR #32 |
 | **L9b session `registered_count`** : compteur DB, migration/backfill, capacité session sans `COUNT(*)` hot path, refresh admin/public/remove | A / I / J | 🟣 Sur staging + CI/CD OK | PR #33, merge `44a9ff4`, CD staging OK |
 | **Réconciliation `staging -> main` propre** | Git / gouvernance | 🟢 PR prête, non mergée | PR #35 `CLEAN`, CI verte ; #34 fermée |
@@ -83,7 +83,7 @@ Avancement global estimé : **~40 %** du périmètre event. Le niveau de livrais
 | **Back-office-event pointe staging Attendee** | Très utile pour tester, mais à sécuriser avant prod/client | Prévoir bascule env/config propre + secrets/URL prod au moment voulu |
 | **C2.1 non implémenté** | L'inscription répond, mais la génération/envoi billet final ne sont pas encore orchestrés durablement côté Attendee | Créer `ticket.generate` + séquencement `email.send` après billet prêt |
 | **Worker BIL billet/email encore squelette** | Risque de faire dériver la logique métier dans `queue.jsonl`/`worker.php` | Garder comme adaptateur temporaire seulement ; cible = Attendee/BullMQ |
-| **Warm-up Mailgun calendaire** | Délivrabilité des ~12 400 emails dépend des signaux jour par jour | Lot J1 lancé ; suivre bounce/complaint/deferred/unsub |
+| **Warm-up Mailgun calendaire** | Délivrabilité des ~12 400 emails dépend des signaux jour par jour | Lot J1 **100/100 terminé** ; analyser bounce/complaint/deferred/unsub avant J2 |
 | **Billet PDF B0/B1 pas encore branché** | Pièce jointe PDF / séquencement billet→email encore à livrer | Priorité S30 |
 | **Mobile encore à stabiliser** | Risques terrain : offline, perf 20k, recherche, OTA, PrintNode | Chantier M cadré, à exécuter S30/S31 |
 
@@ -100,7 +100,7 @@ Avancement global estimé : **~40 %** du périmètre event. Le niveau de livrais
 | **C1** | **100 %** | Domaine Mailgun prêt. |
 | **C2** | **100 %** | Intégration applicative Mailgun mergée staging. |
 | **C2.1 — Email + billet session** | **20 %** | Cadrage fait : endpoint session unique, transaction courte, jobs durables `ticket.generate` puis `email.send` côté Attendee/BullMQ. Implémentation restante. |
-| **C3** | **35 %** | Warm-up réel lancé, pilotage quotidien à poursuivre. |
+| **C3** | **40 %** | Warm-up réel lancé et J1 terminé (100/100). Pilotage quotidien à poursuivre selon signaux providers. |
 | **D** | **90 %** | Back en prod de facto, E2E QR signé fait ; release mobile différée. |
 | **H** | **80 %** | Back/front sessions très avancés ; reste grille mode-aware + page détail + prod finale. |
 | **J** | **35 %** | Source attendee + WS live + L9b compteur ; reste portier Redis/cache/load test combiné si nécessaire. |
