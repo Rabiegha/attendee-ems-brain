@@ -1,16 +1,17 @@
-# Leviers eventuels capacite — si L9/L9.1 ne suffisent pas
+# Leviers eventuels capacite — si L9a/L9b/L9.1 ne suffisent pas
 
 > Note de cadrage ajoutee le 16/07/2026.
 > Statut : **a explorer / a considerer**, pas un engagement de scope immediat.
-> Objectif : garder sous la main les plans B si le plafond inscription reste trop bas apres L9/L9.1.
+> Objectif : garder sous la main les plans B si le plafond inscription reste trop bas apres L9b/L9a/L9.1.
 
 ## Probleme vise
 
 Le plafond observe tourne autour de ~30 inscriptions/s selon les mesures historiques et le cadrage
-LFD. L9 et L9.1 restent les premiers leviers a faire parce qu'ils reduisent le travail critique par
+LFD. L9b, L9a et L9.1 restent les premiers leviers a faire parce qu'ils reduisent le travail critique par
 inscription/scan :
 
-- **L9** : transaction d'inscription plus courte, moins de verrous et de travail DB dans le chemin critique.
+- **L9b** : transaction d'inscription session plus courte (`registerToSession`), prioritaire LFD.
+- **L9a** : transaction d'inscription event plus courte (`registerToEvent`), a garder pour les formulaires event classiques.
 - **L9.1** : compteur session/presence en O(1), pour eviter les `COUNT(*)` qui grossissent avec le volume.
 
 Si ces deux leviers ne donnent pas assez de marge, ne pas improviser pendant le rush : choisir dans les
@@ -78,7 +79,7 @@ Impact attendu : transforme un pic brutal en debit soutenable.
 
 ### 6. Infra seulement apres reduction du travail par inscription
 
-But : augmenter CPU/RAM/Postgres/pool seulement apres L9/L9.1 et mesure.
+But : augmenter CPU/RAM/Postgres/pool seulement apres L9b/L9a/L9.1 et mesure.
 
 - Impact attendu : utile si le code est deja suffisamment maigre.
 - Risque : si le goulot est une transaction longue ou un lock, ajouter de l'infra aide peu.
@@ -89,9 +90,9 @@ But : augmenter CPU/RAM/Postgres/pool seulement apres L9/L9.1 et mesure.
 Si on decide de faire une version capacite en 10 jours, ne pas viser tous les leviers. Viser un paquet
 court, mesurable, deployable :
 
-1. **J1-J2 — L9**
-   - Slim transaction inscription.
-   - Tests non-regression : inscription identique, anti-doublon, capacite respectee.
+1. **J1-J2 — L9b + L9a**
+   - Slim transaction inscription session puis event.
+   - Tests non-regression : inscription identique, anti-doublon, capacites event/session respectees.
    - k6 avant/apres sur staging.
 
 2. **J3-J4 — L9.1**
@@ -123,7 +124,7 @@ court, mesurable, deployable :
 
 ## Regle de decision
 
-- Si L9/L9.1 donnent une marge confortable au test k6 final : ne pas ajouter de complexite.
+- Si L9b/L9a/L9.1 donnent une marge confortable au test k6 final : ne pas ajouter de complexite.
 - Si le plafond reste trop proche du besoin event : priorite au **portier Redis + cache public**.
 - Si la DB tient mais les effets secondaires bruitent : priorite aux **queues / mode degrade**.
 - Si CPU/infra devient clairement le plafond apres code maigri : envisager scale infra/GCP.

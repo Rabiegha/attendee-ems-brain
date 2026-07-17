@@ -164,7 +164,8 @@ levier dans son propre commit, diff minimal, mesure avant/après.
 
 | Ordre | Levier                                                                                   | Branche                    | Nature                              | Temps estimé |
 | ----- | ---------------------------------------------------------------------------------------- | -------------------------- | ----------------------------------- | ------------ |
-| 1     | **L9** transaction allégée (`public.service.ts`) — diff minimal + test de non-régression | `feat/register-tx-slim`    | rejeu à la main (~50 lignes utiles) | **~45 min**  |
+| 1     | **L9b** transaction session allégée (`registerToSession`) — diff minimal + test de non-régression | `feat/register-session-tx-slim` | rejeu à la main | **~½–1 j** |
+| 1b    | **L9a** transaction event allégée (`registerToEvent`) — ne pas abandonner le L9 classique | `feat/register-event-tx-slim` | rejeu à la main | **~½ j** |
 | 2     | **L7** email async BullMQ                                                                | `feat/email-async-bullmq`  | rejeu guidé (nouveaux fichiers)     | **~30 min**  |
 | 3     | **L8** worker `PROCESS_ROLE` (Voie A)                                                    | `feat/process-role-worker` | rejeu à la main (gating `main.ts`)  | **~20 min**  |
 | 4     | **L3** `directUrl` Prisma                                                                | `chore/prisma-directurl`   | cherry-pick ciblé (+5 lignes)       | **~10 min**  |
@@ -438,23 +439,24 @@ pour la génération par format**. On **découpe G en 4** au lieu d'un bloc V2 m
 **Pourquoi ça plafonne à ~30/s — c'est prouvé par nos propres mesures (25/06) :** ce n'est
 **ni le CPU** (2→4 cœurs = même débit : 32,8 → 32,65/s), **ni le pool DB** (1–4 connexions
 actives sur 100), **ni l'email** (worker séparé à ~8 % de CPU pendant la charge). C'est la
-**transaction Prisma d'inscription** (`registerToEvent`, `public.service.ts`) qui tient une
-connexion pendant un **`COUNT` de capacité** + upsert + create → **sérialisation** des
-inscriptions concurrentes. C'est un plafond **algorithmique**, donc **améliorable sans changer
-d'infra**.
+**transaction Prisma d'inscription** (`public.service.ts`) qui tient une connexion pendant un
+controle de capacité + upsert + create → **sérialisation** des inscriptions concurrentes. Elle existe
+sur deux chemins à traiter séparément : **L9a** `registerToEvent` (event classique) et **L9b**
+`registerToSession` (session LFD réelle, utilisée par `back-office-event`, avec verrou/COUNT session).
+C'est un plafond **algorithmique**, donc **améliorable sans changer d'infra**.
 
 **Le fix :** compteur de capacité **dénormalisé** (`UPDATE … SET pris = pris + 1 WHERE pris <
-capacite` atomique, ou Redis `DECR`) + **transaction réduite au strict `create`** + garde
+capacite` atomique, ou Redis `DECR`) + **transaction réduite au strict nécessaire** + garde
 d'unicité (contrainte, `P2002`→409). Anti-surbooking préservé par la contrainte/verrou ciblé.
 **Gain plausible : ×3 – ×10** sur le hot path (le débit suit alors le CPU/cluster au lieu du
 verrou DB).
 
 | Action                                                                                          | Temps estimé |
 | ----------------------------------------------------------------------------------------------- | ------------ |
-| Compteur dénormalisé (colonne/ligne de jauge + UPDATE atomique, ou Redis DECR + réconciliation) | ~½ j         |
-| Réduire la transaction au `create` + garde d'unicité ; refus propre « complet » (pas une 500)   | ~½ j         |
+| **L9b session** : compteur/portier capacité session + transaction `registerToSession` raccourcie | ~½–1 j       |
+| **L9a event** : compteur capacité event + transaction `registerToEvent` raccourcie              | ~½ j         |
 | Tests concurrence (zéro surbooking prouvé sous k6) + mesure avant/après                         | ~½ j         |
-| **Sous-total I**                                                                                | **~1,5 j**   |
+| **Sous-total I**                                                                                | **~1,5–2 j** |
 
 > ⚠️ **C'est LE plus gros levier de débit du workstream.** Tous les autres leviers de perf déjà
 > appliqués (pool 100, email async, transaction allégée, worker séparé, cluster) ne font que
@@ -575,7 +577,7 @@ session : lien public, capacité/waitlist) et **J** (capacité live : statut ple
 > **⚡ Lecture capacité :** ~22-31 jours-dev sur **2 devs × ~20 j ouvrés = ~40 j-dev de capacité**
 > → **ça passe encore mais le buffer est mince** (≈ 55-77 % de la capacité) avec l'ajout de **J**.
 > Conditions impératives : **tenir le descope** (HA → GCP, CD complet → post-event, wallet → V2),
-> traiter **H phase 2 (front) en V1 réduite**, et **prioriser dur** (L9/L9.1 + B0 + J d'abord).
+> traiter **H phase 2 (front) en V1 réduite**, et **prioriser dur** (L9b/L9a/L9.1 + B0 + J d'abord).
 > Voir le **planning daté** ci-dessous.
 
 ---
@@ -669,8 +671,9 @@ session : lien public, capacité/waitlist) et **J** (capacité live : statut ple
 
 ### 5.3 Sur la capacité technique réelle (les leviers eux-mêmes)
 
-- **Inscription plus rapide sous charge** : la transaction allégée (L9) sort le `COUNT` capacité
-  et l'anti-doublon de la transaction → moins de contention sur le hot path d'inscription.
+- **Inscription plus rapide sous charge** : les transactions allégées **L9b** (session LFD) et **L9a**
+  (event classique) sortent les `COUNT`/verrous larges du hot path → moins de contention sur les
+  inscriptions publiques.
 - **Hot path déchargé** : l'email/QR asynchrone (L7) + le worker séparable `PROCESS_ROLE` (L8)
   retirent le coût CPU des emails/badges du chemin de la requête → l'API encaisse mieux les pics.
 - **Base mesurée et fiable** : on conserve les **vrais chiffres** (~25/s, plafond CPU) au lieu de

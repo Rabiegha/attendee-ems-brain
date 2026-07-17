@@ -7,6 +7,7 @@
 > **Date :** 2026-07-08 · **Statut :** 🟡 cadré, **à démarrer APRÈS chantier A (les leviers)**.
 >
 > **Mise à jour 2026-07-16 :** l'implémentation livrée sur `attendee-ems-back` (PR #27) fait de l'API attendee la source de vérité pour la capacité publique et diffuse les stats en WebSocket. Le portier Redis décrit ci-dessous reste la cible de cadrage si on décide de déporter encore le hot path.
+> **Mise à jour 2026-07-17 :** le hot path LFD réel est `POST /api/public/events/sessions/:sessionToken/register` (`registerToSession`), appelé par `back-office-event`. Le levier capacité est donc séparé en **L9b session** (prioritaire LFD) et **L9a event** (form public event classique). **L9.1 reste distinct** : présence/check-in session O(1).
 
 ---
 
@@ -23,7 +24,7 @@ LFD **3000 simultanés + capacité serrée** :
 Cette partie **remplace** l'approche « polling + capacité en base » **pour les sessions à forte
 demande**. Les sessions normales gardent l'approche simple du README.
 
-> **Séquencement :** cette partie vient **après chantier A** (leviers L9/L7/L8/L3 + baseline k6).
+> **Séquencement :** cette partie vient **après chantier A** (leviers L9b/L9a/L7/L8/L3 + baseline k6).
 > On mesure d'abord ; on ne construit ce dispositif que si la mesure confirme le besoin.
 > Détails conceptuels : [learning — pic d'inscription temps réel](../../../learnings/2026-07-08-pic-inscription-temps-reel.md).
 
@@ -41,6 +42,10 @@ demande**. Les sessions normales gardent l'approche simple du README.
 ---
 
 ## 2a. Portier atomique Redis (anti-survente) 🔴 cœur
+
+> Rattachement levier : **L9b** pour l'inscription session LFD (`registerToSession`). Le même principe
+> peut inspirer **L9a** pour l'inscription event classique (`registerToEvent`), mais le flux LFD utilise
+> d'abord le endpoint session.
 
 - clé par session : `session:{id}:places` initialisée à la capacité.
 - à l'inscription : `DECR` atomique.
@@ -218,13 +223,17 @@ Lecture de la capacité = **lire un nombre = O(1)**, constant quelle que soit la
 > (simple `UPDATE` par clé primaire sur sa propre ligne, aucun `COUNT`, aucune ligne chaude) → déjà O(1),
 > **pas de levier**, juste l'isolation par pool DB réservé (§2e).
 
+> Clarification 2026-07-17 : ne pas confondre **L9b** et **L9.1**. L9b optimise l'**inscription a une
+> session** (`registration_session_choices`, capacite/waitlist). L9.1 optimise la **presence physique**
+> dans une session (`session_scans`, IN/OUT au check-in).
+
 ---
 
 ## 3. Ordre de construction (la vérité avant le tuyau)
 
 | # | Brique | Dépend de |
 |---|---|---|
-| 1 | **Portier Redis 2a** + init/reconciliation depuis la base | — |
+| 1 | **L9b — portier/session capacity** : portier Redis 2a ou compteur atomique PG + init/reconciliation depuis la base | — |
 | 2 | **File BullMQ** persistance inscription (si pas déjà via L7/L8) | levier L7/L8 |
 | 3 | **Émission d'events** au changement de statut | 1 |
 | 4 | **Gateway WebSocket + rooms** (back) | 3 |

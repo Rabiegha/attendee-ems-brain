@@ -7,7 +7,7 @@
 > - Le **quoi/pourquoi** (cadrage, temps estimés) → [00-plan-action.md](./00-plan-action.md) §0–§2.
 > - Le **focus global** (tous chantiers) → [../../../workspace-rabie/NOW.md](../../../workspace-rabie/NOW.md).
 > - Les **learnings** produits → [../../../learnings/README.md](../../../learnings/README.md).
-> - Les **leviers éventuels si L9/L9.1 ne suffisent pas** → [leviers-eventuels-capacite.md](./leviers-eventuels-capacite.md).
+> - Les **leviers éventuels si L9b/L9a/L9.1 ne suffisent pas** → [leviers-eventuels-capacite.md](./leviers-eventuels-capacite.md).
 >
 > **Principe maître :** _ne rien perdre, tout rejouer proprement_. 1 levier = 1 branche = 1 commit
 > (diff minimal) = 1 PR = 1 mesure avant/après. Archive de référence : branche `staging-archive-2026-06-25`
@@ -47,11 +47,12 @@
 | Levier                                                           | Branche                        | Nature                                   | Statut                                    | MR                                                                                    | Mesure k6                                                                            |
 | ---------------------------------------------------------------- | ------------------------------ | ---------------------------------------- | ----------------------------------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
 | **L1/L2/L10** stack staging + pgBouncer + pool                   | `infra/staging-stack`          | infra/config                             | � **Sur `staging` + mesuré** (2026-07-10) | [#14](https://github.com/Rabiegha/attendee-ems-back/pull/14) **mergée sur `staging`** | ✅ avant/après fait → [détail ci-dessous](#-l1l2l10--stack-staging--pgbouncer--pool) |
-| **L9** transaction allégée (`public.service.ts`)                 | `feat/register-tx-slim`        | **code métier** (chirurgie)              | ⚪ À faire                                | —                                                                                     | —                                                                                    |
+| **L9a** transaction event allégée (`registerToEvent`)             | `feat/register-event-tx-slim`  | **code métier** (chirurgie)              | ⚪ À faire                                | —                                                                                     | —                                                                                    |
+| **L9b** transaction session allégée (`registerToSession`)         | `feat/register-session-tx-slim`| **code métier** (chirurgie, priorite LFD)| ⚪ À faire                                | —                                                                                     | —                                                                                    |
 | **L9.1** compteur présence session O(1) (candidat, **priorisé**) | `feat/session-present-counter` | code métier (colonne PG `present_count`) | ⚪ À faire                                | —                                                                                     | —                                                                                    |
 | **L7** email async BullMQ                                        | `feat/email-async-bullmq`      | nouveaux fichiers                        | ⚪ À faire                                | —                                                                                     | —                                                                                    |
 | **L8** worker `PROCESS_ROLE` (Voie A)                            | `feat/process-role-worker`     | code (gating `main.ts`)                  | ⚪ À faire                                | —                                                                                     | —                                                                                    |
-| **L3** `directUrl` Prisma                                        | `chore/prisma-directurl`       | config (+5 lignes)                       | ⚪ À faire                                | —                                                                                     | —                                                                                    |
+| **L3** `directUrl` Prisma                                        | `chore/prisma-directurl`       | config (+5 lignes)                       | 🟡 En cours                              | —                                                                                     | —                                                                                    |
 
 **Légende statut :** ⚪ à faire · 🟡 en cours · 🟢 codé+testé local · 🔵 sur `dev` · 🟣 sur `staging`+mesuré · ✅ clos.
 
@@ -63,7 +64,7 @@
 | --- | ------------------------------------------------ | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 0   | Geler & archiver                                 | ✅ Fait              | tag `archive/staging-2026-06-25` + branche `staging-archive-2026-06-25` (back). Brain : à vérifier.                                                                                                                  |
 | 1   | Séparer reformatage / logique                    | ✅ Fait              | format-on-save vérifié OFF (learning créé).                                                                                                                                                                          |
-| 2   | Rejouer les leviers (chantier A + L9.1)          | 🟡 En cours          | 1/6 fait — **L1/L2/L10 mergé sur `staging` + mesuré avant/après (2026-07-10)**. Suivants : L9 + L9.1.                                                                                                                |
+| 2   | Rejouer les leviers (chantier A + L9.1)          | 🟡 En cours          | 1/7 fait — **L1/L2/L10 mergé sur `staging` + mesuré avant/après (2026-07-10)**. Suivant immédiat : **L3 directUrl**, puis L9b session, L9a event, L9.1.                                                                  |
 | 3   | Réconcilier la doc (~25/s CPU vs ~33/s DB)       | ⚪ À faire           | dans `infra-scaling-pca/README.md`.                                                                                                                                                                                  |
 | 4   | Post-mortem 502 prod                             | ✅ Fait (2026-07-10) | [bugs/fait/2026-06-25-prod-502-collision-compose.md](../../../bugs/fait/2026-06-25-prod-502-collision-compose.md) + garde-fous suivis dans [garde-fous-deploiement-staging.md](./garde-fous-deploiement-staging.md). |
 | 5   | Isoler le compose prod (PR dédiée)               | ⚪ À faire           | `docker-compose.prod.yml`, ne pas merger sans revue.                                                                                                                                                                 |
@@ -71,7 +72,8 @@
 
 ### Note capacite — plans B
 
-Le chemin nominal reste **L9 puis L9.1 puis mesure k6**. Si le plafond reste trop bas, les leviers a
+Le chemin nominal devient **L9b puis L9a puis L9.1 puis mesure k6**. L9b est prioritaire car
+`back-office-event` utilise `POST /api/public/events/sessions/:sessionToken/register`. Si le plafond reste trop bas, les leviers a
 considerer sont documentes dans [leviers-eventuels-capacite.md](./leviers-eventuels-capacite.md), avec
 une option de paquet livrable en 10 jours : portier Redis, cache public, queues/mode degrade, puis test
 combine.
@@ -122,12 +124,25 @@ combine.
   seront throttlés** → prévoir de relever la limite en staging ou un bypass dédié aux tests de charge.
 - **Learnings liés :** [stack staging](../../../learnings/2026-07-07-stack-staging-concepts-infra.md) · [pgBouncer/pool](../../../learnings/2026-07-07-pgbouncer-et-pool-db.md) · [directUrl](../../../learnings/2026-07-07-directurl-prisma.md) · [git checkout/reset](../../../learnings/2026-07-07-git-checkout-ref-fichier.md).
 
-### ⚪ L9 — transaction d'inscription allégée
+### ⚪ L9a — transaction d'inscription event allégée
 
-- **Branche :** `feat/register-tx-slim` · **Fichier :** `src/.../public.service.ts` (~50 lignes utiles).
+- **Endpoint :** `POST /api/public/events/:publicToken/register`.
+- **Méthode :** `PublicService.registerToEvent`.
+- **Branche :** `feat/register-event-tx-slim` · **Fichier :** `src/modules/public/public.service.ts`.
+- **Problème :** `registration.count` capacité event dans la transaction + upsert attendee + create/restore registration.
 - **Nature :** ⚠️ **vraie chirurgie de code** → **test de non-régression obligatoire** (inscriptions identiques, pas de doublon, quota respecté).
 - **Source de rejeu :** archive `staging-archive-2026-06-25` (rejouer à la main, pas cherry-pick du fourre-tout).
 - **Reste :** tout. À démarrer dans un chat dédié.
+
+### ⚪ L9b — transaction d'inscription session allégée
+
+- **Endpoint :** `POST /api/public/events/sessions/:sessionToken/register` (**utilisé par `back-office-event` LFD**).
+- **Méthode :** `PublicService.registerToSession`.
+- **Branche :** `feat/register-session-tx-slim` · **Fichier :** `src/modules/public/public.service.ts`.
+- **Problème :** verrou `FOR UPDATE` sur la ligne `sessions` + `registrationSessionChoice.count` capacité session + recomptage stats live.
+- **Nature :** ⚠️ **vraie chirurgie de code** → **test de non-régression obligatoire** (pas de doublon registration/session, pas de survente session, waitlist correcte, registration event créée/réutilisée).
+- **Note :** L9b ne remplace pas L9a. Il ajoute le hot path réellement utilisé pour LFD.
+- **Reste :** tout. À traiter avant L9a pour sécuriser le flux LFD réel.
 
 ### ⚪ L9.1 — compteur de présence session O(1)
 
@@ -161,7 +176,8 @@ combine.
 - **⚠️ Urgence montée d'un cran (2026-07-10) :** sans `directUrl`, `prisma migrate deploy` via pgBouncer
   **crash-loop en P1002** (advisory lock) — vécu sur staging pendant la campagne k6. Workaround actuel :
   `RUN_MIGRATIONS=false` dans `.env.staging` (les migrations doivent être lancées à la main en direct).
-- **Reste :** tout. Levier le plus simple. Learning déjà écrit.
+- **Statut 2026-07-17 :** demarre sur `chore/prisma-directurl` avant L9b/L9a/L9.1 pour sécuriser les migrations.
+- **Reste :** validation locale + MR/mesure staging. Levier le plus simple. Learning déjà écrit.
 
 ---
 

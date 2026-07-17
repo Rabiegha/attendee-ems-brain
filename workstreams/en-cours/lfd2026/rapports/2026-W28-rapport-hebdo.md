@@ -71,7 +71,7 @@
 ## 5. Semaine prochaine (S29 — 13 → 17 juillet)
 
 1. 🔴 **Lancer le warm-up ESP** (chantier C) — dès lundi, c'est du calendaire.
-2. **L9** (transaction d'inscription allégée) + **L9.1** (compteur O(1)) codés **et testés** (non-régression) — cœur du chantier A/I.
+2. **L9b** (transaction inscription session, hot path LFD) + **L9a** (transaction inscription event classique) + **L9.1** (compteur O(1)) codés **et testés** (non-régression) — cœur du chantier A/I.
 3. **Chantier D → prod** : validation E2E (scan QR signé bout-en-bout) puis déploiement.
 4. **Call GCP (mar. 14/07)** : validation archi cible B + Cloud Run · partager schéma + dump anonymisé selon retour.
 5. Poursuite de la **plateforme billetterie** (landing pages + backoffice client) — prioriser H/J pour la débloquer.
