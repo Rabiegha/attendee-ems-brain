@@ -14,6 +14,7 @@
 - ✅ **Chaîne CI/CD validée de bout en bout** : CI + CD staging + CD prod pour le back et le front, en conditions réelles. Un incident prod 502 d'environ 7 min au premier CD prod back a permis d'identifier et corriger deux problèmes critiques (healthcheck BusyBox + reload nginx après recreate API). Les runs suivants sont verts.
 - ✅ **Tests event-critical P0 livrés** : health, scan QR signé, permissions event. Le scan QR HMAC est désormais couvert par E2E, pas seulement par tests unitaires.
 - ✅ **Chantier H sessions fortement avancé** : E2E H-T1→H-T14 verts, capacité check-in distincte, onglet Sessions refondu, liste inscrits/stats/lien public/capacité/waitlist en staging.
+- 🟢 **BIL / back-office événement a pris forme en produit LFD concret** : le repo `back-office-event` n'est plus un simple prototype de page ; il porte une billetterie one-page LFD avec agenda 2 jours, choix de session, formulaire public, back-office client, synchronisation des sessions vers Attendee et jauges live.
 - ✅ **Mailgun C1/C2 livrés** : domaine `mail.attendee.fr` configuré et vérifié, transport Mailgun intégré, queue BullMQ email, webhooks signés, persistence `email_events`, endpoint stats.
 - 🟡 **Warm-up C3 lancé en réel** : smoke tests validés, tracking HTTPS actif, désinscription testée bout en bout, lot J1 de 100 emails lancé sur base Channel Scope.
 - 🟡 **Chantier A/I repris proprement** : L3 `directUrl` + L9b `registered_count` mergés et déployés sur staging, CI/CD verts. La mesure k6 L9b reste bloquée faute de session/token de test dédié.
@@ -33,6 +34,11 @@ Avancement global estimé : **~40 %** du périmètre event. Le niveau de livrais
 | **T1/T2/T3 tests event-critical** : health, QR HMAC, permissions event | T / D | ✅ Mergé staging | PR #18/#19 back |
 | **E2E sessions H-T1→H-T14** | H | ✅ Verts | `test/sessions-h.e2e-spec.ts`, PR #22 |
 | **Capacité check-in distincte (`checkin_capacity`) + refonte onglet Sessions** | H | 🟢 Sur staging | PR #23/#24/#25 back, PR #12/#13 front |
+| **Back-office événement LFD** : page billetterie publique one-page, agenda 2 jours, grille horaires × lieux, popup inscription, preview live | BIL | 🟢 Socle fonctionnel | repo `back-office-event` (`index.php`, `admin/index.php`) |
+| **Synchronisation BIL → Attendee** : création/update/delete des sessions Attendee depuis l'agenda local, activation du lien public et stockage `public_token` | BIL / H | 🟢 Branché staging | `back-office-event/admin/save.php`, `admin/attendee.php` |
+| **Inscription session autoritative** : le formulaire public appelle `POST /api/public/events/sessions/:sessionToken/register`; Attendee reste source de vérité capacité | BIL / I / J | 🟢 Aligné L9b | `back-office-event/register.php` + L9b PR #33 |
+| **Jauges live publiques** : abonnement WebSocket aux `public_token` de session, fallback `status.json`, refresh UI sans surcharger Attendee | BIL / J | 🟢 En place | `back-office-event/index.php` |
+| **File billet/email côté BIL** : inscription acceptée → job local `queue.jsonl` pour génération billet/envoi email | BIL / B / C | 🟡 Squelette prêt | `back-office-event/register.php`, `worker.php` |
 | **Mailgun C1** : plan acheté, domaine EU `mail.attendee.fr`, SPF/DKIM/DMARC/MX/CNAME tracking, webhooks, variables staging/prod | C1 | ✅ Terminé | Suivi C1/C3 |
 | **Mailgun C2** : transport SMTP/Mailgun, queue BullMQ `email-send`, webhooks signés, `email_events`, endpoint stats | C2 | ✅ Mergé staging | PR #20 |
 | **Warm-up Mailgun C3** : script d'envoi, diagnostic Mailgun, smoke tests, tracking HTTPS, unsubscribe testé, lot J1 lancé | C3 | 🟡 En exécution | `send-warmup-wave1.js`, `mg-events.js`, suivi C3 |
@@ -56,6 +62,7 @@ Avancement global estimé : **~40 %** du périmètre event. Le niveau de livrais
 | **Un seul domaine principal warmé : `mail.attendee.fr`** | Réputation concentrée, monitoring plus simple | C3 |
 | **Le tracking `opened` reste surveillé, pas encore refactoré** | Si les webhooks deviennent bruyants : queue `email.events` + worker/batch/dédup en levier ultérieur | C3 |
 | **L9 séparé en L9b puis L9a** | Priorité au vrai hot path LFD via `back-office-event` : session register avant event register classique | suivi leviers |
+| **Attendee devient la source de vérité pour BIL** | Le site billetterie n'incrémente plus localement la capacité ; il délègue l'inscription et les compteurs à Attendee | `back-office-event/register.php` + PR #33 |
 | **Ne pas merger #35 sans décision explicite** | Évite un déclenchement prod accidentel après réconciliation `staging -> main` | learning réconciliation |
 
 ---
@@ -69,6 +76,9 @@ Avancement global estimé : **~40 %** du périmètre event. Le niveau de livrais
 | **Divergence `main`/`staging`** | PR `staging -> main` #34 conflictuelle | ✅ Résolu proprement par #35, CI verte, non mergée |
 | **k6 L9b non lancé** | Gain L9b non quantifié | Prérequis : session staging dédiée + `public_token` + compte loadtest/JWT valide + éventuellement Docker k6 |
 | **Compte `loadtest-admin@staging.invalid` retourne 401** | Bloque création de session test via API | À recréer/réparer côté staging |
+| **BIL consomme de la capacité hors estimation initiale stricte** | Risque de compression de B0/B1, M ou J si non arbitré | Le suivre comme chantier produit à part entière, pas comme simple dépendance H/J |
+| **Back-office-event pointe staging Attendee** | Très utile pour tester, mais à sécuriser avant prod/client | Prévoir bascule env/config propre + secrets/URL prod au moment voulu |
+| **Worker BIL billet/email encore squelette** | L'inscription répond, mais la génération/envoi billet final restent à brancher avec B0/B1/C2 | À raccorder au pipeline billet/email cible |
 | **Warm-up Mailgun calendaire** | Délivrabilité des ~12 400 emails dépend des signaux jour par jour | Lot J1 lancé ; suivre bounce/complaint/deferred/unsub |
 | **Jeu `/jeu` ajouté manuellement au vhost nginx staging** | Peut être écrasé par prochain deploy si non versionné | À pérenniser dans repo si la campagne continue |
 | **0-MON pas encore 100 % ops VPS** | Alerting système/BullMQ pas totalement installé en prod | Déployer scripts Netdata/timer et confirmer alertes |
@@ -93,6 +103,7 @@ Avancement global estimé : **~40 %** du périmètre event. Le niveau de livrais
 | **J** | **25 %** | Source attendee + WS live + L9b compteur ; reste portier Redis/cache/load test combiné si nécessaire. |
 | **T** | **65 %** | P0 fait ; P1 PDF/auth/queue restant. |
 | **M** | **10 %** | Cadrage fait, exécution à lancer. |
+| **BIL — Plateforme billetterie** | **40 %** | Le repo `back-office-event` matérialise le cahier des charges LFD : landing/billetterie publique, agenda, admin client, sync Attendee, inscription session, jauges live. Reste durcissement prod, env, billet/email final, finition UX/client. |
 
 ---
 
@@ -101,8 +112,9 @@ Avancement global estimé : **~40 %** du périmètre event. Le niveau de livrais
 1. **Le warm-up Mailgun doit être suivi quotidiennement.** Même si le code est prêt, la délivrabilité est un sujet calendaire : ne pas attendre fin juillet pour découvrir les signaux providers.
 2. **La mesure k6 L9b nécessite des données de test propres.** Il faut une session staging dédiée avec `public_token`, capacité contrôlée et un compte admin staging valide.
 3. **PR #35 prête mais sensible.** Elle réconcilie `staging` vers `main`; elle est verte, mais doit être mergée seulement avec décision prod explicite.
-4. **Le billet PDF devient la priorité fonctionnelle S30.** C1/C2 email sont prêts ; il faut maintenant fermer B0/B1 pour que l'email transactionnel transporte le bon billet.
-5. **Mobile à ne pas repousser trop tard.** Le chantier M porte les risques terrain les plus visibles le jour J : offline, perf, scan, PrintNode, OTA.
+4. **BIL est un vrai chantier produit, pas juste un front de test.** Il transforme le cahier des charges LFD en parcours client concret, et dépend directement de H/J/L9b/B0/B1.
+5. **Le billet PDF devient la priorité fonctionnelle S30.** C1/C2 email sont prêts ; il faut maintenant fermer B0/B1 pour que l'email transactionnel transporte le bon billet.
+6. **Mobile à ne pas repousser trop tard.** Le chantier M porte les risques terrain les plus visibles le jour J : offline, perf, scan, PrintNode, OTA.
 
 ---
 
@@ -112,9 +124,10 @@ Avancement global estimé : **~40 %** du périmètre event. Le niveau de livrais
 2. **Créer/réparer le contexte k6 L9b** : compte admin staging valide, session publique de test, script k6 session, mesure avant/après.
 3. **Coder L9a puis L9.1** si L9b seul ne suffit pas ou pour fermer le plan A/I.
 4. **Avancer B0/B1 billet PDF** : Cloud Run/Gotenberg + branchement back + pièce jointe/lien secours + séquencement billet→email.
-5. **Finaliser 0-MON ops VPS** : Netdata système, timer BullMQ, test alerte disque, Sentry back/front, rotation logs.
-6. **Démarrer M mobile P0** : offline session, perf/sync, bug recherche, OTA, secrets PrintNode.
-7. **Décider explicitement #35** : merge prod/main ou attente, selon fenêtre de risque et besoin de livrer staging en prod.
+5. **Stabiliser BIL sur `back-office-event`** : environnement cible, finition admin/client, toggle rapide inscriptions, raccord billet/email final, vérification du parcours cahier des charges complet.
+6. **Finaliser 0-MON ops VPS** : Netdata système, timer BullMQ, test alerte disque, Sentry back/front, rotation logs.
+7. **Démarrer M mobile P0** : offline session, perf/sync, bug recherche, OTA, secrets PrintNode.
+8. **Décider explicitement #35** : merge prod/main ou attente, selon fenêtre de risque et besoin de livrer staging en prod.
 
 > **Cap fin juillet :** réalisable, mais le tampon dépend surtout de trois verrous : mesure capacité/k6,
 > billet PDF, et warm-up email sans signal provider négatif.
