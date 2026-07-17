@@ -12,7 +12,7 @@
 > (Gmail, Outlook/Hotmail, Yahoo, domaines pro).
 
 - **Plan maître :** [../00-plan-action.md](../00-plan-action.md) (§3-C1 / §3-C2)
-- **Avancement (%) :** [../03-suivi-chantiers.md](../03-suivi-chantiers.md) (lignes **C1**, **C2**, **C3**)
+- **Avancement (%) :** [../03-suivi-chantiers.md](../03-suivi-chantiers.md) (lignes **C1**, **C2**, **C2.1**, **C3**)
 
 ## Fichiers du dossier
 
@@ -21,6 +21,10 @@
 | [esp-choix-mailgun.md](./esp-choix-mailgun.md)                                                   | Décision — comparatif ESP + **pourquoi Mailgun**                          |
 | [MAILGUN_WARMUP_PLAN.md](./MAILGUN_WARMUP_PLAN.md)                                               | **C1** — prépa Mailgun + warm-up domaine + validation (phases 1/2/3)      |
 | [mailgun-migration-technique.md](./mailgun-migration-technique.md)                               | **C2** — intégration NestJS (API EU, queue, templates, webhooks, bascule) |
+| [C2-1-email-billet-session/README.md](./C2-1-email-billet-session/README.md)                     | **C2.1** — cadrage, état des lieux, plan et notes billet/email session    |
+| [C2-1-email-billet-session/00-suivi.md](./C2-1-email-billet-session/00-suivi.md)                 | **C2.1** — suivi opérationnel                                             |
+| [C2-1-email-billet-session/01-etat-des-lieux.md](./C2-1-email-billet-session/01-etat-des-lieux.md) | **C2.1** — état des lieux existant                                       |
+| [C2-1-email-billet-session/02-plan.md](./C2-1-email-billet-session/02-plan.md)                   | **C2.1** — plan d'implémentation                                          |
 | [C2-1-email-billet-session/03-note-file-php-vs-attendee-bullmq.md](./C2-1-email-billet-session/03-note-file-php-vs-attendee-bullmq.md) | **C2.1** — pourquoi la file PHP locale est temporaire et pourquoi la cible est Attendee/BullMQ (`ticket.generate` puis `email.send`) |
 | [c3-warmup-delivrabilite.md](./c3-warmup-delivrabilite.md)                                       | **C3** — suivi opérationnel warm-up, webhooks, métriques, runbook         |
 | [warm-up-strategie.md](./warm-up-strategie.md)                                                   | Stratégie d'envoi warm-up avec base newsletter Channel Scope              |

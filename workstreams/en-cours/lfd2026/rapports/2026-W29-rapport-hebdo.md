@@ -21,7 +21,7 @@
 - 🟡 **Chantier A/I repris proprement** : L3 `directUrl` + L9b `registered_count` mergés et déployés sur staging, CI/CD verts. La mesure k6 L9b reste bloquée faute de session/token de test dédié.
 - 🟡 **Réconciliation Git maîtrisée** : la PR `staging -> main` conflictuelle (#34) a été remplacée par une PR propre (#35), CI verte, non mergée sans décision explicite car `main` peut déclencher la chaîne prod.
 
-Avancement global estimé : **~40 %** du périmètre event. Le niveau de livraison a fortement progressé, mais le buffer reste mince : les risques principaux sont maintenant la mesure/tenue du pic d'inscription, le billet PDF, le mobile, et la poursuite quotidienne du warm-up Mailgun.
+Avancement global estimé : **~40 %** du périmètre event. Le niveau de livraison a fortement progressé, mais le buffer reste mince : les risques principaux sont maintenant la mesure/tenue du pic d'inscription, le billet PDF, le mobile, C2.1 et la poursuite quotidienne du warm-up Mailgun.
 
 ---
 
@@ -48,7 +48,7 @@ Avancement global estimé : **~40 %** du périmètre event. Le niveau de livrais
 | **L3 `directUrl` Prisma** | A | 🟣 Sur staging | PR #32 |
 | **L9b session `registered_count`** : compteur DB, migration/backfill, capacité session sans `COUNT(*)` hot path, refresh admin/public/remove | A / I / J | 🟣 Sur staging + CI/CD OK | PR #33, merge `44a9ff4`, CD staging OK |
 | **Réconciliation `staging -> main` propre** | Git / gouvernance | 🟢 PR prête, non mergée | PR #35 `CLEAN`, CI verte ; #34 fermée |
-| **0-MON code monitoring** : Netdata bind/health, webhook, timer BullMQ, health queues | 0-MON | 🟢 Code mergé staging, ops VPS restant | `chore/monitoring`, commit back `63c2bd6` |
+| **0-MON prod opérationnel** : Netdata durci, alertes disque/CPU/RAM, webhook, Sentry, timer BullMQ, health queues | 0-MON | ✅ Terminé | `chore/monitoring`, commit back `63c2bd6` |
 | **Chantier M mobile cadré** | M | 🟡 Démarré | `M-appli-mobile-lfd2026/README.md` |
 
 ---
@@ -80,13 +80,12 @@ Avancement global estimé : **~40 %** du périmètre event. Le niveau de livrais
 | **Divergence `main`/`staging`** | PR `staging -> main` #34 conflictuelle | ✅ Résolu proprement par #35, CI verte, non mergée |
 | **k6 L9b non lancé** | Gain L9b non quantifié | Prérequis : session staging dédiée + `public_token` + compte loadtest/JWT valide + éventuellement Docker k6 |
 | **Compte `loadtest-admin@staging.invalid` retourne 401** | Bloque création de session test via API | À recréer/réparer côté staging |
-| **BIL consomme de la capacité hors estimation initiale stricte** | Risque de compression de B0/B1, M ou J si non arbitré | Le suivre comme chantier produit à part entière, pas comme simple dépendance H/J |
+| **BIL est désormais intégré à la capacité** | Le chantier avait été sous-estimé au départ ; il reste ~1,5–2 j utiles et peut compresser B0/B1, M ou J si non arbitré | Le suivre comme chantier produit à part entière, pas comme simple dépendance H/J |
 | **Back-office-event pointe staging Attendee** | Très utile pour tester, mais à sécuriser avant prod/client | Prévoir bascule env/config propre + secrets/URL prod au moment voulu |
 | **C2.1 non implémenté** | L'inscription répond, mais la génération/envoi billet final ne sont pas encore orchestrés durablement côté Attendee | Créer `ticket.generate` + séquencement `email.send` après billet prêt |
 | **Worker BIL billet/email encore squelette** | Risque de faire dériver la logique métier dans `queue.jsonl`/`worker.php` | Garder comme adaptateur temporaire seulement ; cible = Attendee/BullMQ |
 | **Warm-up Mailgun calendaire** | Délivrabilité des ~12 400 emails dépend des signaux jour par jour | Lot J1 lancé ; suivre bounce/complaint/deferred/unsub |
 | **Jeu `/jeu` ajouté manuellement au vhost nginx staging** | Peut être écrasé par prochain deploy si non versionné | À pérenniser dans repo si la campagne continue |
-| **0-MON pas encore 100 % ops VPS** | Alerting système/BullMQ pas totalement installé en prod | Déployer scripts Netdata/timer et confirmer alertes |
 | **Billet PDF B0/B1 pas encore branché** | Pièce jointe PDF / séquencement billet→email encore à livrer | Priorité S30 |
 | **Mobile encore à stabiliser** | Risques terrain : offline, perf 20k, recherche, OTA, PrintNode | Chantier M cadré, à exécuter S30/S31 |
 
@@ -99,17 +98,18 @@ Avancement global estimé : **~40 %** du périmètre event. Le niveau de livrais
 | **A — Refonte propre** | **45 %** | L1/L2/L10 mesuré, L3 et L9b sur staging. Reste k6 L9b, L9a, L9.1, L7/L8. |
 | **I — Levier débit** | **35 %** | L9b livré staging ; L9a/L9.1 restent à faire et mesurer. |
 | **0-CI** | **98 %** | Chaîne complète rodée ; reste nettoyage/gouvernance post-event. |
-| **0-MON** | **90 %** | Code staging OK ; reste installation/vérification VPS. |
+| **0-MON** | **100 %** | MON prod opérationnel : Netdata durci, alertes testées, Sentry back/front, `/health/queues`, timer BullMQ et rotation Docker vérifiés. |
 | **C1** | **100 %** | Domaine Mailgun prêt. |
 | **C2** | **100 %** | Intégration applicative Mailgun mergée staging. |
 | **C2.1 — Email + billet session** | **20 %** | Cadrage fait : endpoint session unique, transaction courte, jobs durables `ticket.generate` puis `email.send` côté Attendee/BullMQ. Implémentation restante. |
 | **C3** | **35 %** | Warm-up réel lancé, pilotage quotidien à poursuivre. |
 | **D** | **90 %** | Back en prod de facto, E2E QR signé fait ; release mobile différée. |
 | **H** | **80 %** | Back/front sessions très avancés ; reste grille mode-aware + page détail + prod finale. |
-| **J** | **25 %** | Source attendee + WS live + L9b compteur ; reste portier Redis/cache/load test combiné si nécessaire. |
+| **J** | **35 %** | Source attendee + WS live + L9b compteur ; reste portier Redis/cache/load test combiné si nécessaire. |
 | **T** | **65 %** | P0 fait ; P1 PDF/auth/queue restant. |
 | **M** | **10 %** | Cadrage fait, exécution à lancer. |
-| **BIL — Plateforme billetterie** | **40 %** | Le repo `back-office-event` matérialise le cahier des charges LFD : landing/billetterie publique, agenda, admin client, sync Attendee, inscription session, jauges live. Reste durcissement prod, env, billet/email final, finition UX/client. |
+| **B0 — Billet PDF / Gotenberg** | **70 %** | Cloud Run Gotenberg privé déployé côté GCP, OIDC cadré, PDF 1 page généré ; reste credential sécurisé, smoke Nest/OVH et branchement back. |
+| **BIL — Plateforme billetterie** | **55 %** | Le repo `back-office-event` matérialise le socle LFD : landing/billetterie publique, agenda, admin client, sync Attendee, inscription session, jauges live. Reste durcissement prod, env, billet/email final, finition UX/client. |
 
 ---
 
@@ -133,7 +133,7 @@ Avancement global estimé : **~40 %** du périmètre event. Le niveau de livrais
 4. **Avancer B0/B1 billet PDF** : Cloud Run/Gotenberg + branchement back + pièce jointe/lien secours.
 5. **Implémenter C2.1** : `ticket.generate` côté Attendee, statut billet, puis `email.send` Mailgun seulement quand le billet est prêt.
 6. **Stabiliser BIL sur `back-office-event`** : environnement cible, finition admin/client, toggle rapide inscriptions, raccord billet/email final, vérification du parcours cahier des charges complet.
-7. **Finaliser 0-MON ops VPS** : Netdata système, timer BullMQ, test alerte disque, Sentry back/front, rotation logs.
+7. **Conserver 0-MON en surveillance** : vérifier les alertes pendant les prochains déploiements et garder la purge legacy côté 0-CI hors MON.
 8. **Démarrer M mobile P0** : offline session, perf/sync, bug recherche, OTA, secrets PrintNode.
 9. **Décider explicitement #35** : merge prod/main ou attente, selon fenêtre de risque et besoin de livrer staging en prod.
 
