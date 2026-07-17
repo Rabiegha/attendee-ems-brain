@@ -5,6 +5,7 @@
 
 - **Plan maître :** [../00-plan-action.md](../00-plan-action.md) (ligne J du tableau)
 - **Avancement (%) :** [../03-suivi-chantiers.md](../03-suivi-chantiers.md) (ligne **J**)
+- **Owner :** Corentin
 - **Statut :** 🟡 socle partiellement livré via H/Corentin — recoupe H/I, ne pas double-compter (S30–S31)
 
 ## Réévaluation 2026-07-17

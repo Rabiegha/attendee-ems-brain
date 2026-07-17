@@ -6,6 +6,8 @@ Sortir une version mobile stable et exploitable pour l'event LFD2026.
 
 Source backlog: `backlog/en-cours/appli-mobile-lfd2026.md`.
 
+Owner: a repartir.
+
 ## Priorites
 
 ### P0 Event mandatory
