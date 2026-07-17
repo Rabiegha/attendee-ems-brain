@@ -454,6 +454,101 @@ Sequence recommandee :
 5. lancer k6/session endpoint ;
 6. noter le resultat et comparer au plafond precedent autour de 33 inscriptions/s.
 
+## 8.2 CI PR #33
+
+PR creee :
+
+- URL : `https://github.com/Rabiegha/attendee-ems-back/pull/33`
+- base : `staging`
+- branche : `feat/register-session-tx-slim`
+- etat merge GitHub : `CLEAN`
+
+Resultat CI du 2026-07-17 :
+
+- `lint-typecheck` : OK
+- `unit-tests` : OK
+- `e2e-tests` : OK
+- `build-image` : OK
+
+Decision :
+
+- le scope L9.B est validable cote CI ;
+- passage sur `staging` possible ;
+- prochaine etape : verifier le deploiement staging puis lancer la mesure k6.
+
+## 8.3 Merge staging / CD / k6
+
+Merge staging :
+
+- PR #33 mergee dans `staging` le 2026-07-17 ;
+- commit de merge : `44a9ff4ffc3cac590801b1efe17069e095b9fac1`.
+
+CI push `staging` :
+
+- workflow : `CI`
+- run : `29593449622`
+- resultat : OK
+- jobs OK : `lint-typecheck`, `unit-tests`, `e2e-tests`, `build-image`
+
+CD staging :
+
+- workflow : `CD staging`
+- run : `29593692259`
+- resultat : OK
+- etape VPS : `Deployer sur le VPS (staging)` OK
+
+Healthcheck staging apres deploy :
+
+```json
+{
+  "status": "ok",
+  "db": "ok",
+  "redis": "ok",
+  "migrations": "ok",
+  "version": "44a9ff4ffc3cac590801b1efe17069e095b9fac1"
+}
+```
+
+K6 :
+
+- `k6` n'est pas installe localement ;
+- Docker est disponible, donc execution possible via image `grafana/k6` si l'image est presente ou telechargeable ;
+- le compte local documente `loadtest-admin@staging.invalid` retourne `401` sur staging ;
+- aucun `SESSION_TOKEN` public de test dedie L9.B n'a ete trouve dans les notes/fichiers locaux.
+
+Conclusion k6 :
+
+- mesure L9.B non lancee pour eviter de tester un mauvais endpoint ou une vraie session client ;
+- prerequis minimal : creer/recuperer une session staging dediee avec `public_token`, capacite controlee, et emails jetables ;
+- endpoint cible :
+
+```txt
+POST https://staging.attendee.fr/api/public/events/sessions/:sessionToken/register
+```
+
+Payload cible :
+
+```json
+{
+  "attendee": {
+    "first_name": "Load",
+    "last_name": "Test",
+    "email": "l9b-${__VU}-${__ITER}@load.test"
+  },
+  "attendance_type": "onsite",
+  "utm_source": "k6",
+  "utm_campaign": "lfd-l9b"
+}
+```
+
+Commande recommandee des que `SESSION_TOKEN` est disponible :
+
+```bash
+docker run --rm -i grafana/k6 run - \
+  -e BASE_URL=https://staging.attendee.fr/api \
+  -e SESSION_TOKEN=<session_public_token>
+```
+
 ## 9. Regle de travail a garder
 
 A partir de maintenant, pour chaque changement de levier :
