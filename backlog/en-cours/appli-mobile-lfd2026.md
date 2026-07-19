@@ -37,6 +37,11 @@
   enregistré » (le serveur est idempotent, pas le store mobile).
 - Fichiers : `src/store/registrations.slice.ts`, `src/store/offlineCheckIn.ts`, `src/hooks/useCheckIn.ts`.
 
+Audit du 19/07 sur le scan **session** : le back renvoie actuellement l'ancien scan en HTTP 201,
+donc le mobile ne peut pas distinguer une nouvelle admission d'un doublon. La queue n'élimine pas deux
+`session-scan` identiques et le reducer peut remplacer deux IDs temporaires par le même ID serveur.
+À traiter conjointement avec H-T20→H-T23 et L9.1.
+
 ### Perf ~20 000 attendees + refonte sync/pagination (⚠️ liés — à traiter ensemble)
 
 - Les deux events LFD cumulent **~20 000 attendees** ; les hôtesses chargent la liste
@@ -50,11 +55,19 @@
 - Fichier : `src/store/registrations.slice.ts`. Pistes perf : index Fuse mémoïsé/persisté,
   virtualisation, recherche serveur au-delà d'un seuil.
 
-### Sync de la liste des scans d'une session en local (manquante)
+### Sync de la liste des scans d'une session en local (partielle)
 
-- Aujourd'hui la liste des **scans d'une session** n'est pas synchronisée en local comme
-  celle des attendees → incohérence offline / après reconnexion.
-- Fix : même mécanisme de cache/delta-sync que la liste des attendees.
+- Le code précharge et persiste désormais les sessions et leurs historiques par lots de trois.
+- Restent à prouver/corriger : indicateur de complétude par appareil, déduplication après replay,
+  delta-sync et comportement après fermeture forcée. Les registrations volumineuses ne sont pas
+  persistées, donc un cold start sans réseau ne garantit pas la résolution locale des QR.
+
+### Recette réelle et UX bénévole
+
+- Sons distincts succès/refus/doublon, en complément de la couleur et des haptics existants.
+- Plusieurs scanners sur la même session, double scan offline, capacité et retour réseau.
+- Répétition complète J-10, contre-recette J-4 et PV GO/NO-GO :
+  [protocole M](../../workstreams/en-cours/lfd2026/M-appli-mobile-lfd2026/recette-terrain-scan-lfd.md).
 
 ### Bug recherche par entreprise (résultats manquants)
 
@@ -63,11 +76,6 @@
 - **Piste code** : `src/screens/EventDashboard/AttendeesListScreen.tsx` (~L326) — l'index
   Fuse cherche `answers.company` **mais pas `attendee.company`**. Ajouter la clé manquante.
 
-### Sécurité — clé PrintNode en clair dans le repo
-
-- Clé PrintNode en clair (4 profils `eas.json` + `.env`) → **rotate la clé PUIS** déplacer
-  dans EAS Secrets. (cf. [BACKLOG-TECH § urgent + sécurité](../a-faire/BACKLOG-TECH.md))
-
 ### OTA bloqué en prod
 
 - Stratégie `runtimeVersion` en `{ policy: "fingerprint" }` sans `@expo/fingerprint` installé
@@ -75,11 +83,20 @@
   stratégie définitive + rebuild store depuis HEAD pour que les OTA atteignent enfin les users.
 - Fichiers : `app.json`, `eas.json`, `package.json`.
 
-### Faux positif impression COMPLETED (print-client, jour-J)
+---
 
-- macOS : `webContents.print` = succès dès le spool CUPS même si rien n'est imprimé.
-  Fix : `lpstat` sanity-check avant `PATCH /complete`. App : `attendee-ems-print-client`
-  (`main-native.js`). (cf. [BACKLOG-TECH § urgent](../a-faire/BACKLOG-TECH.md))
+## 🔐 Sécurité transverse — hors recette scan LFD
+
+### Clé PrintNode exposée
+
+- Rotation puis déplacement dans EAS Secrets à traiter comme incident de secret.
+- LFD n'utilise aucune impression : ce point ne doit pas retarder la recette scan, mais l'absence
+  d'usage ne rend pas un secret exposé acceptable.
+
+### Faux positif impression COMPLETED
+
+- À traiter avec le print-client avant le prochain événement utilisant l'impression.
+- Hors scope fonctionnel LFD 2026.
 
 ---
 

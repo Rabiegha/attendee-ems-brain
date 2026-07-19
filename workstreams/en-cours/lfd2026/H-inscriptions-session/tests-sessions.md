@@ -1,11 +1,12 @@
 # Chantier H — Tests sessions/inscriptions (à livrer AVEC le chantier)
 
-> **Statut : 🔴 LISTE À VALIDER — rien n'est codé.**
+> **Statut au 19/07 : 🟠 socle H-T1→H-T14 livré et exécuté ; nouveaux gaps CDC à coder.**
 > **Owner : Corentin** (les tests suivent le code H).
 > Déplacé depuis le [chantier T — tests event-critical](../T-tests-event/README.md) le 13/07 :
 > ces tests dépendent des **règles métier écrites pendant H** (déjà scanné, event vs session,
-> sessions privées/publiques) — impossibles à écrire avant. **La V1 du CI/CD (chantier 0-CI)
-> est livrée sans**, et ces tests sont livrés **avec ou avant la livraison de H**.
+> sessions privées/publiques). La suite actuelle couvre le nominal et les refus principaux, mais
+> l'audit mobile/terrain du 19/07 ajoute la concurrence multi-scanner, la réconciliation offline et
+> la cohérence des métriques utilisées par J-ENTREES/BIL.
 
 - **Suivi :** [../03-suivi-chantiers.md](../03-suivi-chantiers.md) (ligne **H**)
 - **Chantier tests global (hors sessions) :** [../T-tests-event/README.md](../T-tests-event/README.md)
@@ -19,25 +20,29 @@ Le scan session ne suit **pas** la même logique qu'un simple refus binaire :
 1. **Déjà scanné ≠ refus dur** : le re-scan ne re-valide pas l'entrée, mais la réponse doit
    indiquer clairement l'état « déjà scanné » **et l'action de re-scan doit être conservée
    dans les logs** (traçabilité : qui a re-scanné, quand, où).
-   ⚠️ **Contrat actuel du back (vérifié 13/07)** : le check-in event renvoie **409
-   `ALREADY_CHECKED_IN`** + état serveur (réconciliation offline mobile) et **ne logge rien**.
-   À trancher pour les sessions : même contrat 409 ou 2xx — et brancher la persistance du
-   re-scan (AuditLog ?) qui **manque aujourd'hui** (voir [chantier T §5bis](../T-tests-event/README.md)).
+   ⚠️ **Contrat réel vérifié le 19/07 :** le check-in event renvoie 409
+   `ALREADY_CHECKED_IN`, mais le scan session renvoie l'ancien scan en **HTTP 201 sans indicateur
+   de doublon**. Le mobile affiche alors un nouveau succès. Le contrat session doit devenir explicite
+   et l'action de re-scan doit être auditée via O.
 2. **Pas inscrit à l'event** → refus.
 3. **Inscrit à l'event mais pas à la session** :
    - session **privée** (avec inscription) → refus ;
    - session **publique** (sans inscription — être présent à l'event suffit) → **accepté**.
 4. **Droits scanner** : dépend de la logique métier définie dans H (qui a le droit de scanner
    quoi : event, session, les deux).
+5. **Plusieurs scanners** : deux appareils sur le même participant produisent une seule admission ;
+   plusieurs participants concurrents ne doivent jamais dépasser la capacité de check-in.
 
-## 1bis. État réel du code scan (vérifié 13/07 dans `registrations.service.ts`) — point de départ pour H
+## 1bis. État réel du code scan (vérifié 19/07)
 
 | Exigence | Code actuel | Verdict |
 | --- | --- | --- |
-| HMAC branché sur la route de scan | `checkInByCode` → `ScanCodeResolverService` : vérif HMAC stricte, signature invalide → 400, UUID brut refusé | ✅ conforme, mais **aucun E2E** sur la route (unitaire seulement) → T2 (chantier T) |
-| Déjà scanné | **409 `ConflictException`** `code: ALREADY_CHECKED_IN` + état serveur complet (pour réconciliation **offline mobile**) | ⚠️ pas un 2xx — choix délibéré mobile ; **reco : garder 409** · même décision à prendre pour le scan session |
-| Re-scan conservé dans les logs | Exception levée, **rien n'est persisté**. `AuditLog` existe dans Prisma mais jamais appelé ici | 🔴 **non respecté** — dev à ajouter dans H (brancher la persistance sur le chemin « déjà scanné », event ET session) |
-| Multi-scan par point de contrôle | Un seul `checked_in_at` global par inscription + checkout ; **pas de scan par session** | ⏳ c'est précisément ce que H construit (modèle de check-in par session) |
+| HMAC route session | `ScanCodeResolverService` vérifie `code` côté serveur ; E2E H-T1→H-T5 présents | ✅ socle présent |
+| Re-scan même session | advisory lock par `sessionId:registrationId`, puis retour de l'ancien `SessionScan` en HTTP 201 | 🟠 une seule ligne serveur, mais aucun signal doublon pour le mobile |
+| Re-scan conservé dans l'audit | aucun événement explicite sur le chemin idempotent | 🔴 à porter par [O](../O-audit-lfd/README.md), pas par un stockage H parallèle |
+| Capacité multi-scanner | `COUNT(IN)`/`COUNT(OUT)` avant la transaction ; verrou ensuite par participant | 🔴 course possible entre deux participants sur la dernière place |
+| Historique par session | table `session_scans` avec IN/OUT/status, endpoint history et store mobile | ✅ présent |
+| E2E concurrents scan | aucun `Promise.all` couvrant même QR ou dernière place | 🔴 absent |
 
 ## 1ter. Code à développer (pré-requis des tests — à intégrer au découpage H)
 
@@ -45,17 +50,19 @@ Les tests §2 ne peuvent pas être verts sans ces devs. Chaque test référence 
 
 | # | Dev à faire | Détail | Débloque les tests |
 | --- | --- | --- | --- |
-| H-D1 | 🔴 **Persistance du re-scan** | Brancher `AuditLog` (ou table dédiée `checkin_logs`) sur le chemin « déjà scanné » : qui a re-scanné, quand, où — pour le check-in **event** (chemin `ALREADY_CHECKED_IN` existant) **et** le scan **session** | H-T2 |
-| H-D2 | **Contrat de réponse « déjà scanné » session** | Trancher 409 (aligné mobile offline, reco) vs 2xx, puis implémenter le même contrat que l'event (code erreur + état serveur) sur la route session | H-T2 |
-| H-D3 | **Modèle check-in par session** | Table/relation de check-in **par point de contrôle** (session), en plus du `checked_in_at` event global — cœur du multi-scan légitime (entrée → sessions → checkout → re-checkin) | H-T1 → H-T6 |
+| H-D1 | 🔴 **Émission du re-scan** | Émettre l'événement explicite défini par O avec auteur/appareil, session, participant, premier scan et tentative ; O possède le stockage/audit | H-T2 + O-TEST |
+| H-D2 | **Contrat « déjà scanné » session** | Recommandation : 409 `ALREADY_SESSION_SCANNED` + scan/registration/heure serveur, aligné avec le check-in event ; le mobile doit préserver `status/data` | H-T2, H-T20, H-T22 |
+| H-D3 | ✅ **Modèle check-in par session** | `session_scans` IN/OUT/status et historique par session présents | H-T1 → H-T6 |
 | H-D4 | **Règle d'admission session** | Logique privée (inscription session requise) vs publique (présence event suffit) + refus si pas inscrit à l'event — idéalement extraite en **fonction pure** testable en unitaire | H-T3, H-T4, H-T5 + unitaires §2 |
 | H-D5 | **Droits scanner par session/event** | Définir et implémenter qui peut scanner quoi (event, session, les deux) | H-T6, H-T14 |
 | H-D6 | **CRUD sessions + mode d'inscription** | Création/modification session avec mode privé/public, ouverture/fermeture d'inscription respectée par le endpoint public | H-T7 → H-T14 |
 | H-D7 | **Capacité / waitlist session** | Refus ou waitlist à capacité atteinte selon config | H-T9 |
+| H-D8 | **Maximum deux activités confirmées/jour** | Verrouiller la registration, calculer le jour en `Europe/Paris`, compter uniquement les choix `confirmed` et refuser le troisième sans toucher la jauge | H-T15 → H-T19 |
+| H-D9 | 🔴 **Capacité atomique au scan** | Déplacer la décision de capacité dans une transaction/verrou commun à la session ou utiliser le compteur atomique L9.1 ; ne pas verrouiller seulement le participant | H-T21 |
+| H-D10 | **Contrat de replay idempotent** | La même mutation rejouée doit retrouver son résultat sans créer une deuxième admission et doit permettre au mobile d'afficher le doublon | H-T20, H-T22 |
 
-> H-D3 à H-D7 = le cœur du chantier H déjà cadré — listés ici pour tracer le lien dev ↔ test.
-> **H-D1 et H-D2 sont les ajouts issus de la vérif code du 13/07** (§1bis) : petits mais
-> indispensables pour la règle « garder l'action du re-scan ».
+> H-D9/H-D10 sont des dépendances directes de la recette M. Leur effort reste dans H/L9.1 et ne doit
+> pas être compté une seconde fois dans M.
 
 ## 2. Liste des tests proposés — ✋ À VALIDER
 
@@ -88,6 +95,35 @@ Les tests §2 ne peuvent pas être verts sans ces devs. Chaque test référence 
 | H-T13 | Ouverture/fermeture d'inscription | état respecté par le endpoint public |
 | H-T14 | Permissions CRUD (qui peut créer/modifier/fermer) | selon rôles définis dans H |
 
+### Limite CDC — deux activités confirmées par jour
+
+| # | Cas | Attendu |
+| --- | --- | --- |
+| H-T15 | Première puis deuxième session `confirmed` le même jour Europe/Paris | deux choix acceptés |
+| H-T16 | Troisième session qui serait `confirmed` le même jour | refus métier, aucun choix créé, compteur session inchangé |
+| H-T17 | Deux sessions confirmées vendredi puis une session samedi | session du lendemain acceptée |
+| H-T18 | Choix `waitlisted`, `cancelled` ou `blocked` le même jour | ne consomme pas le quota confirmé ; annulation libère le quota |
+| H-T19 | Trois inscriptions concurrentes vers trois sessions du même jour | au maximum deux choix `confirmed`, aucune course ni sur-comptage |
+
+### Scan concurrent et replay offline — ajout audit du 19/07
+
+| # | Cas | Attendu |
+| --- | --- | --- |
+| H-T20 | N requêtes concurrentes, même QR et même session | une seule ligne `admitted`, les autres réponses indiquent explicitement le doublon |
+| H-T21 | N QR différents sur une session avec une seule place restante | exactement une admission supplémentaire, capacité jamais dépassée |
+| H-T22 | même QR mis en queue offline par deux appareils puis rejoué | une admission, une réconciliation doublon exploitable par M, aucun faux succès |
+| H-T23 | erreur métier pendant replay session | statut/code/état serveur conservés jusqu'au mobile, mutation classée sans trois faux retries réseau |
+
+### Compteurs de présence — prérequis de J-ENTREES/BIL
+
+| # | Cas | Attendu |
+| --- | --- | --- |
+| H-T24 | `IN` admis puis `OUT` admis | présence courante revient à 0 et visiteur unique reste à 1 |
+| H-T25 | scan rejeté ou doublon/replay | ni `present_count` ni le nombre de visiteurs uniques ne sont sur-comptés |
+
+Le calcul du taux, la propagation live, l'export nominatif et ses droits sont prouvés dans les tests
+`J-E1`→`J-E6` de [J-ENTREES](../J-capacite-live/README.md#tests-de-sortie), pas dans H.
+
 ### Unitaires (logique pure, si extraite en services)
 
 - Règle d'admission (event/session/privée/publique/déjà scanné) isolée en fonction pure → table de vérité.
@@ -102,8 +138,7 @@ Les tests §2 ne peuvent pas être verts sans ces devs. Chaque test référence 
 
 ## 4. Definition of done
 
-- H-D1 → H-D7 livrés (ou explicitement descopés avec trace ici) — en particulier **H-D1
-  (persistance re-scan)** qui manque aujourd'hui dans le code.
-- H-T1 → H-T14 verts en CI (ou explicitement descopés avec trace ici).
+- H-D1 → H-D10 livrés (ou explicitement descopés avec trace ici).
+- H-T1 → H-T25 verts en CI (ou explicitement descopés avec trace ici).
 - La règle « re-scan loggé » vérifiée par un test qui lit réellement le log/l'historique.
-- Liste validée par Rabie + Corentin avant d'écrire le premier test.
+- La capacité et le doublon sont ensuite contre-recettés sur appareils dans M/K.

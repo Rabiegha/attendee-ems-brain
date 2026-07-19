@@ -1,14 +1,15 @@
 # Chantier T — Tests event-critical (LFD 2026)
 
 > **Statut : 🟢 P0 LIVRÉ — P1/P2 en backlog.**
-> Ce chantier découle de l'audit Codex sur le chantier 0-CI ([coordination Codex/Claude](../../../workspace-rabie/codex-claude/ci-cd-coordination.md)) :
+> Ce chantier découle de l'audit Codex sur le chantier 0-CI ([coordination Codex/Claude](../../../../workspace-rabie/codex-claude/ci-cd-coordination.md)) :
 > les tests actuels suffisent pour faire tourner la CI, mais **ne couvrent pas les chemins qui
 > casseraient l'exploitation pendant l'event** (scan QR, permissions, inscription, health réel).
 
 - **Plan maître :** [../00-plan-action.md](../00-plan-action.md)
 - **Avancement (%) :** [../03-suivi-chantiers.md](../03-suivi-chantiers.md) (ligne **T**)
 - **Owner :** réparti (Rabie + Corentin selon périmètre) — **Statut :** 🟢 P0 fait (T1/T2/T3), P1/P2 à prioriser
-- **Lié à :** 0-CI (les tests deviennent le filet de la CI) · D-securite-qr (E2E HMAC) · H (inscriptions)
+- **Lié à :** 0-CI (les tests deviennent le filet de la CI) · D-securite-qr (E2E HMAC) ·
+  H (inscriptions) · [O](../O-audit-lfd/README.md) (audit métier/sécurité)
 
 ---
 
@@ -23,7 +24,7 @@ tests de charge (déjà couverts par le chantier J / load test k6).
 
 ## 2. État des lieux (2026-07-13)
 
-### Back ([attendee-ems-back/test/](../../../../attendee-ems-back/test/))
+### Back ([attendee-ems-back/test/](../../../../../attendee-ems-back/test/))
 
 | Fichier                              | Type     | Couvre                                                     |
 | ------------------------------------ | -------- | ---------------------------------------------------------- |
@@ -33,7 +34,7 @@ tests de charge (déjà couverts par le chantier J / load test k6).
 | `src/**/qr-token.service.spec.ts`    | unitaire | sign/verify/isToken HMAC QR                                |
 | `src/**/condition-evaluator.spec.ts` | unitaire | conditions badges                                          |
 
-### Front ([attendee-ems-front/tests/](../../../../attendee-ems-front/tests/))
+### Front ([attendee-ems-front/tests/](../../../../../attendee-ems-front/tests/))
 
 | Fichier             | Type       | Couvre      |
 | ------------------- | ---------- | ----------- |
@@ -87,7 +88,7 @@ E2E API = intégration (supertest + Postgres/Redis réels) → smoke front Playw
 >
 > **« Token HMAC modifié »** = test anti-fraude : le QR contient `v1.<registrationId>.<signature>`
 > (chantier D) ; si quelqu'un change l'ID ou la signature, le serveur doit rejeter. Déjà testé
-> en **unitaire** ([qr-token.service.spec.ts](../../../../attendee-ems-back/src/common/security/qr-token.service.spec.ts)) —
+> en **unitaire** ([qr-token.service.spec.ts](../../../../../attendee-ems-back/src/common/security/qr-token.service.spec.ts)) —
 > T2 vérifie que ce contrôle est **bien branché sur la vraie route de scan** (E2E).
 >
 > **Périmètre :** le scan couvre 2 contextes — (a) **scan principal event** : testable maintenant,
@@ -110,6 +111,19 @@ E2E API = intégration (supertest + Postgres/Redis réels) → smoke front Playw
 | --- | ------------------------------------------------ | ------------------------------------------------------------------------- | --------------------------------------- |
 | T7  | Compteur capacité Redis (unitaire + intégration) | décrément atomique · refus à capacité 0 · pas de sur-vente en concurrence | avec chantier I/J                       |
 | T8  | Front Playwright : parcours scan/checkin staff   | login staff → scan → résultat affiché                                     | si UI scan web utilisée pendant l'event |
+
+### Lot transverse O-TEST — obligatoire avant la recette CDC
+
+O-TEST réutilise le harnais E2E de T, mais son effort reste compté dans le chantier
+[O](../O-audit-lfd/README.md#lots), pas une seconde fois dans T.
+
+- succès/échec de connexion et logout produisent les événements attendus ;
+- modification d'inscription, rôle, ouverture/fermeture, jauge/horaire et export sont vérifiés
+  par lecture réelle de `audit_logs` ;
+- auteur, rôle au moment de l'action, événement, cible, résultat et avant/après sont contrôlés ;
+- un refus d'autorisation est audité sans fuite de secret ;
+- les trois rôles LFD et le cloisonnement organisation/événement sont couverts ;
+- le k6 final est rejoué avec l'audit activé.
 
 ### → Déplacé chantier H (owner Corentin) — voir [tests-sessions.md](../H-inscriptions-session/tests-sessions.md)
 
@@ -137,7 +151,8 @@ E2E API = intégration (supertest + Postgres/Redis réels) → smoke front Playw
 - [x] ~~Paiement : le paiement/webhook sera-t-il branché avant l'event ?~~ → **pas de paiement pour cet event, supprimé** (13/07)
 - [x] ~~T2 : vérifier le format de réponse exact du « déjà scanné » dans le code actuel~~ → **vérifié 13/07, voir §5bis**
 - [ ] T2 : trancher **409 vs 2xx** pour `ALREADY_CHECKED_IN` (reco : garder 409, le mobile offline en dépend)
-- [ ] 🔴 T2 : **le re-scan n'est PAS loggé aujourd'hui** → décider où brancher la persistance (AuditLog ?) et dans quel chantier (T ou H)
+- [x] 🔴 T2 : **le re-scan n'est PAS loggé aujourd'hui** → correction portée par **O** ; T réutilise
+  le scénario de scan pour en vérifier la persistance, sans créer un stockage parallèle.
 - [ ] Owner : Rabie, Corentin, ou réparti par chantier (T2 avec D · tests sessions avec H · T7 avec I/J)
 - [ ] Les P0 deviennent-ils **bloquants dans la CI** (required status check) dès leur ajout ?
 
@@ -155,4 +170,5 @@ E2E API = intégration (supertest + Postgres/Redis réels) → smoke front Playw
 - P0 (T1–T3) verts en local **et** dans la CI GitHub Actions.
 - P0 requis dans la branch protection de `main`/`staging`.
 - P1 verts ou explicitement descopés avec trace ici.
+- O-TEST vert avant recette CDC, sans double-compter son effort dans T.
 - Ce README mis à jour : liste validée, owners, cases cochées.

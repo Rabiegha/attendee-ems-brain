@@ -60,3 +60,7 @@ place n'a de valeur que si quelqu'un peut réellement réparer le serveur pendan
 - [ ] Déploiement 0-MON complet (Netdata + alertes + webhook) — code prêt, pas déployé
 - [ ] Test de charge validant les pics d'ouverture de créneaux (chantiers I/J)
 - [ ] Décision manager sur le dispositif (1+1 vs 2 sur place avec conditions)
+- [ ] Parc réel Android/iOS, nombre de scanners et comptes nominatifs confirmés avec le client
+- [ ] [Répétition scan terrain](../M-appli-mobile-lfd2026/recette-terrain-scan-lfd.md) réalisée au plus tard J-10
+- [ ] Contre-recette du build final au plus tard J-4, avec décision GO/NO-GO consignée
+- [ ] Téléphones de secours, batteries/chargeurs et deux connectivités opérateur préparés

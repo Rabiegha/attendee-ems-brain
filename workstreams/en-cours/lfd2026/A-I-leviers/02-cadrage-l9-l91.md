@@ -118,15 +118,19 @@ L9.1 vise un autre goulot : le check-in session. Le probleme identifie est dans 
 
 - fichier cible : `src/modules/sessions/sessions.service.ts`
 - methode de scan session ;
-- symptome : a chaque scan IN admis, le code recompte `session_scans` avec un `COUNT` IN et un `COUNT` OUT.
+- symptome performance : a chaque scan IN admis, le code recompte `session_scans` avec un `COUNT` IN et un `COUNT` OUT ;
+- symptome correction confirme par l'audit du 19/07 : les `COUNT` sont avant la transaction et
+  l'advisory lock est derive de `sessionId:registrationId`, donc il ne serialise pas deux participants
+  differents qui prennent simultanement la derniere place.
 
 Ce calcul est O(n) : plus la table grossit, plus le cout grandit. L9.1 remplace ce recalcul par un compteur O(1).
 
 Option par defaut :
 
 - ajouter une colonne Postgres de type `present_count` sur `sessions` ;
-- incrementer sur un IN admis ;
-- decrementer sur un OUT admis ;
+- backfiller selon le **dernier scan admis par participant/session**, pas avec `IN - OUT` brut ;
+- incrementer sur un IN admis avec une garde atomique `present_count < checkin_capacity` ;
+- decrementer sur un OUT admis sans passer sous zero ;
 - garder l'operation dans la meme transaction que le scan pour rester coherent.
 
 Redis n'est pas obligatoire pour L9.1. Il peut devenir interessant plus tard pour l'affichage live ou un compteur derive, mais la verite simple et durable pour ce levier reste Postgres.
@@ -142,10 +146,15 @@ Invariants a conserver :
 - le compteur ne passe pas sous zero ;
 - la capacite de check-in distincte (`checkin_capacity`) reste respectee ;
 - la capacite d'inscription session et la capacite physique restent deux notions distinctes.
+- deux QR differents concurrents sur la derniere place produisent exactement une admission ;
+- deux scanners du meme QR produisent une admission et un resultat doublon explicite, exploitable
+  pendant le replay offline mobile.
+- le dashboard J-ENTREES lit la présence actuelle O(1), tandis que le bilan post-event considère
+  présent toute personne ayant eu au moins un `IN admitted`, même si elle est ensuite sortie.
 
 Mesures attendues apres L9.1 :
 
-- tests unitaires ou integration sur IN/OUT/rejet/double scan ;
+- tests unitaires ou integration sur IN/OUT/rejet/double scan et H-T20→H-T25 ;
 - verification migration + backfill initial du compteur ;
 - test k6 combine si possible : inscriptions + check-ins session + check-ins entree.
 

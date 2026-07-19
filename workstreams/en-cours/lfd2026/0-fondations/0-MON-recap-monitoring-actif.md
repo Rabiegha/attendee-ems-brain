@@ -2,7 +2,7 @@
 
 > Date : 2026-07-16 · Statut : ✅ monitoring prod opérationnel
 > Références : [0-MON-plan.md](./0-MON-plan.md) · [finalisation-0-mon.md](./finalisation-0-mon.md) ·
-> [runbook Netdata](../../../ops/netdata-monitoring.md)
+> [runbook Netdata](../../../../ops/netdata-monitoring.md)
 
 ## 1. Ce qu'on surveille
 
@@ -200,3 +200,11 @@ Ce point est versionné dans `docker-compose.prod.yml`.
 - BullMQ surveillé toutes les 5 minutes ;
 - rotation Docker vérifiée ;
 - suivi chantier passé à 100 %.
+
+## 10. Raccord avec l'audit LFD
+
+Le chantier [O](../O-audit-lfd/README.md) ne remplace pas les logs techniques, Sentry ou Netdata.
+Il ajoute seulement un signal opérationnel indispensable : toute erreur d'écriture d'un événement
+d'audit obligatoire doit remonter dans Sentry et, si elle se répète, déclencher l'alerte Discord.
+La métrique et son seuil appartiennent à O/K ; 0-MON fournit le canal existant. Ce raccord ne rouvre
+pas un chantier général de collecte des logs avant LFD.

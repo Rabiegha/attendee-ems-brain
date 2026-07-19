@@ -67,11 +67,13 @@ L9a — registerToEvent   : hot path event classique a ne pas abandonner
 | Brique                        | Rôle                                                                          | Besoin GCP ?           |
 | ----------------------------- | ----------------------------------------------------------------------------- | ---------------------- |
 | **L9** (tx courte + compteur) | casse le plafond 33/s → **100–300/s plausible**                               | ❌ non                 |
-| **File BullMQ**               | absorbe les **3 000 simultanés** → personne rejeté, la DB draine à son rythme | ❌ non (Redis déjà là) |
+| **BullMQ effets secondaires** | absorbe le backlog PDF/email sans bloquer l'inscription ; la réservation reste synchrone en DB | ❌ non (Redis déjà là) |
 | **Portier Redis atomique**    | anti-survente sur sessions à capacité serrée                                  | ❌ non                 |
 
-Avec ça, 3 000 inscriptions à l'ouverture drainent en **~10–30 s** derrière la file, sans saturer
-Postgres. C'est le chantier **J** + le levier **L9**. **Aucune brique ne nécessite GCP.**
+Avec ça, les inscriptions sont acceptées par un chemin PostgreSQL court et atomique ; les traitements
+PDF/email drainent ensuite derrière BullMQ sans ralentir la décision métier. La tenue réelle
+des 3 000 inscriptions doit être prouvée par k6 après L9. C'est le chantier **J/N** + le levier **L9**.
+**Aucune brique ne nécessite GCP.**
 
 ---
 
@@ -85,8 +87,9 @@ Le mur est dans la transaction, pas dans le serveur → on le règle sur l'infra
 ### 4.2 Clustering — **plus tard, et sous condition mesurée**
 
 Bloqué de toute façon par le **pas-encore-stateless**, ajoute de la complexité (état partagé
-sockets+imprimantes), et **une instance unique post-L9 couvre très probablement l'event** (3 000
-derrière une file à 100–300/s = quelques dizaines de secondes). → **Ne pas clusteriser maintenant.**
+sockets+imprimantes), et **une instance unique post-L9 couvre très probablement l'event**. La durée
+d'absorption des 3 000 inscriptions doit être mesurée sur le chemin DB synchrone optimisé ; seules les
+tâches PDF/email s'accumulent derrière BullMQ. → **Ne pas clusteriser maintenant.**
 Le clustering est une réponse à un **manque mesuré**, pas à une intuition.
 
 ### 4.3 Continuité — ne « tombe pas à l'eau », elle se **coupe en deux**
@@ -137,7 +140,7 @@ couverte sur le VPS.** La contrainte « même serveur » bloque **l'HA**, pas le
 >
 > | Risque                                   | Probabilité        | La HA aide ?                   | Parade réelle (sans GCP)                                        |
 > | ---------------------------------------- | ------------------ | ------------------------------ | --------------------------------------------------------------- |
-> | **Saturation CPU/DB** (3000 concurrents) | **élevée**         | ❌                             | **L9b/L9a + file BullMQ**                                       |
+> | **Saturation CPU/DB** (3000 concurrents) | **élevée**         | ❌                             | **L9b/L9a + effets secondaires BullMQ + k6 combiné**            |
 > | **Disque plein**                         | **moyenne-élevée** | ❌ (réplica se remplit pareil) | **0-MON alerte disque + capacité + rotation logs + offload R2** |
 > | **Perte / corruption données**           | moyenne            | ❌ (réplique la bêtise)        | **backup offsite + restore testé**                              |
 > | **Machine meurt** (hardware)             | **faible**         | ✅                             | _(HA → reportée GCP, risque assumé)_                            |
@@ -188,7 +191,7 @@ est acceptable »), sinon le gate n'a pas de seuil.
 ## 6. Discours à l'équipe (résumé froid pour le call)
 
 1. **Le plafond 33/s est un bug de code, pas de matériel** → réglé sur l'infra actuelle par **L9**.
-2. **Plan event = L9b/L9a + file BullMQ + portier Redis** → on tient l'event **sur le VPS**.
+2. **Plan event = L9b/L9a + BullMQ pour les effets secondaires + portier Redis si mesuré nécessaire** → on vise l'event **sur le VPS**.
 3. **GCP est découplé de l'event** : cible durable (HA/PITR/autoscaling), **pas un prérequis**.
 4. **Clustering reporté**, décidé **après mesure** de L9.
 5. **Continuité** : backup offsite **maintenant** (anti-perte) ; **HA avec GCP** plus tard.

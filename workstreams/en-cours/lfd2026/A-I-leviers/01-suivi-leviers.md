@@ -4,9 +4,9 @@
 > Source de vérité de **ce qui est fait / ce qui reste**, levier par levier, branche par branche.
 > **À ouvrir au début de chaque nouveau chat** (on fait 1 chat par levier) et sur n'importe quel poste.
 >
-> - Le **quoi/pourquoi** (cadrage, temps estimés) → [00-plan-action.md](./00-plan-action.md) §0–§2.
-> - Le **focus global** (tous chantiers) → [../../../workspace-rabie/NOW.md](../../../workspace-rabie/NOW.md).
-> - Les **learnings** produits → [../../../learnings/README.md](../../../learnings/README.md).
+> - Le **quoi/pourquoi** (cadrage, temps estimés) → [00-plan-action.md](../00-plan-action.md) §0–§2.
+> - Le **focus global** (tous chantiers) → [NOW.md](../../../../workspace-rabie/NOW.md).
+> - Les **learnings** produits → [learnings](../../../../learnings/README.md).
 > - Les **leviers éventuels si L9b/L9a/L9.1 ne suffisent pas** → [leviers-eventuels-capacite.md](./leviers-eventuels-capacite.md).
 >
 > **Principe maître :** _ne rien perdre, tout rejouer proprement_. 1 levier = 1 branche = 1 commit
@@ -66,7 +66,7 @@
 | 1   | Séparer reformatage / logique                    | ✅ Fait              | format-on-save vérifié OFF (learning créé).                                                                                                                                                                          |
 | 2   | Rejouer les leviers (chantier A + L9.1)          | 🟡 En cours          | 3/7 posés sur `staging` — **L1/L2/L10 mesuré**, **L3 directUrl mergé**, **L9b session mergé + CI/CD staging OK**. Reste : mesure k6 L9b dès token dédié, puis L9a event, L9.1, L7/L8. |
 | 3   | Réconcilier la doc (~25/s CPU vs ~33/s DB)       | ⚪ À faire           | dans `infra-scaling-pca/README.md`.                                                                                                                                                                                  |
-| 4   | Post-mortem 502 prod                             | ✅ Fait (2026-07-10) | [bugs/fait/2026-06-25-prod-502-collision-compose.md](../../../bugs/fait/2026-06-25-prod-502-collision-compose.md) + garde-fous suivis dans [garde-fous-deploiement-staging.md](./garde-fous-deploiement-staging.md). |
+| 4   | Post-mortem 502 prod                             | ✅ Fait (2026-07-10) | [bugs/fait/2026-06-25-prod-502-collision-compose.md](../../../../bugs/fait/2026-06-25-prod-502-collision-compose.md) + garde-fous suivis dans [garde-fous-deploiement-staging.md](./garde-fous-deploiement-staging.md). |
 | 5   | Isoler le compose prod (PR dédiée)               | ⚪ À faire           | `docker-compose.prod.yml`, ne pas merger sans revue.                                                                                                                                                                 |
 | 6   | Cadrer l'interdit (L13 cluster, L12 sync_commit) | ⚪ À faire           | note, pas de code.                                                                                                                                                                                                   |
 
@@ -129,7 +129,7 @@ combine.
 - **Note :** `staging` contient aussi le **chantier D** (sécurité QR, PR #17 mergée via `dev` par Corentin le 10/07) —
   dont un throttler global (Redis) + `@Throttle(limit: 100/min)` sur `POST /register`. **Les prochains runs k6
   seront throttlés** → prévoir de relever la limite en staging ou un bypass dédié aux tests de charge.
-- **Learnings liés :** [stack staging](../../../learnings/2026-07-07-stack-staging-concepts-infra.md) · [pgBouncer/pool](../../../learnings/2026-07-07-pgbouncer-et-pool-db.md) · [directUrl](../../../learnings/2026-07-07-directurl-prisma.md) · [git checkout/reset](../../../learnings/2026-07-07-git-checkout-ref-fichier.md).
+- **Learnings liés :** [stack staging](../../../../learnings/2026-07-07-stack-staging-concepts-infra.md) · [pgBouncer/pool](../../../../learnings/2026-07-07-pgbouncer-et-pool-db.md) · [directUrl](../../../../learnings/2026-07-07-directurl-prisma.md) · [git checkout/reset](../../../../learnings/2026-07-07-git-checkout-ref-fichier.md).
 
 ### ⚪ L9a — transaction d'inscription event allégée
 
@@ -155,12 +155,23 @@ combine.
 ### ⚪ L9.1 — compteur de présence session O(1)
 
 - **Branche :** `feat/session-present-counter` · **Fichier :** `src/modules/sessions/sessions.service.ts`.
-- **Problème :** `2× COUNT(*)` sur `session_scans` à chaque scan IN → **O(n)** (coût qui grandit avec la table).
-- **Levier :** compteur incrémental → **O(1)**. **Colonne PG `present_count` par défaut** (suffit, faible concurrence) ; Redis en **bonus « win no effort »** si affichage live voulu (Redis déjà là pour l'inscription).
-- **Nature :** ⚠️ **code métier** → **test de non-régression obligatoire** (pas de survente, occupation correcte après IN / OUT / annulation, idempotence double-scan).
+- **Problème performance :** `2× COUNT(*)` sur `session_scans` à chaque scan IN → **O(n)**.
+- **Problème correction confirmé le 19/07 :** ces `COUNT` sont exécutés avant la transaction et le
+  verrou actuel est par `sessionId:registrationId`. Deux participants différents scannés en même temps
+  peuvent observer la dernière place libre et être admis tous les deux.
+- **Levier :** compteur PostgreSQL `present_count` O(1) mis à jour atomiquement dans la même
+  transaction que le scan, avec garde `present_count < checkin_capacity` et sérialisation au niveau
+  session. Redis reste un dérivé éventuel pour l'affichage, pas la source de vérité.
+- **Consommateur CDC :** [J-ENTREES](../J-capacite-live/README.md#j-entrees--tableau-de-bord-des-entrées-lfd)
+  lit ce compteur pour les présents actuels et le taux de remplissage physique. Le total post-event
+  « entré au moins une fois » reste une métrique distincte fondée sur les `IN admitted`.
+- **Nature :** ⚠️ **code métier** → tests H-T20→H-T25 obligatoires : concurrence/replay, cohérence
+  IN/OUT, capacité physique et statut présent/absent.
 - **Conditionné mesure** à l'origine, **priorisé** pour ce cycle (décision 2026-07-08).
-- **Détail conceptuel :** [workstream 02 §2g](../../a-faire/sessions-inscriptions-lfd2026/02-capacite-live-forte-charge.md).
-- **Reste :** tout. À démarrer dans un chat dédié (après/avec L9).
+- **Détail conceptuel :** [workstream 02 §2g](../../../a-faire/sessions-inscriptions-lfd2026/02-capacite-live-forte-charge.md).
+- **Reste :** migration/backfill depuis le dernier scan admis par participant, opération atomique
+  IN/OUT, contrat doublon session explicite, E2E concurrents et recette appareils/dashboard M/J/K.
+  À démarrer dans un chat dédié (après/avec L9).
 
 ### ⚪ L7 — email async (BullMQ)
 

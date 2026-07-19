@@ -6,10 +6,10 @@
 > (B→H) les **nouveaux chantiers** (chaîne email/billet, sécurité QR, sauvegarde DB, continuité,
 > wallet V2, **inscriptions par session**). Les durées supposent un travail **assisté par IA**.
 > **Date :** 30 juin 2026 · **Rattachement :** workstream `lfd2026`
-> **Références :** [audit-branche-staging.md](../infra-scaling-pca/journal/2026-06-26-audit-branche-staging.md) ·
+> **Références :** [audit-branche-staging.md](../gcp-migration/infra-scaling-pca/journal/2026-06-26-audit-branche-staging.md) ·
 > [diagnostic email/billet/wallet](./B-email-billet-pdf/email-billet-wallet.md) ·
-> [plan-continuite-activite.md](../infra-scaling-pca/plan-continuite-activite.md) ·
-> [brief-backup-automatique-db.md](../../../backlog/a-faire/brief-backup-automatique-db.md)
+> [plan-continuite-activite.md](../gcp-migration/infra-scaling-pca/plan-continuite-activite.md) ·
+> [brief-backup-automatique-db.md](../../../backlog/fait/brief-backup-automatique-db.md)
 
 ---
 
@@ -31,10 +31,15 @@
 | **B0**    | **Email → billet PDF (POC)** — Cloud Run **déjà en place** → rendu Gotenberg → PDF joint (chemin heureux)                               | 🔴 Haute                       | 🟡 Cloud Run fait, code à brancher                                               | §3-B                                                                                  |
 | **B1**    | **Email → billet PDF (durcissement)** — auth s2s, fallback lien, séquencement, edge cases, tests                                        | 🔴 Haute                       | ⚪ Après B0                                                                      | §3-B                                                                                  |
 | **H**     | **Inscriptions par session** (lien public par session + capacité/waitlist + refonte front)                                              | 🔴 Haute (**fonctionnel**)     | 🟡 Cadré, prêt à découper                                                        | §3-H                                                                                  |
-| **J**     | **Capacité live forte charge** — attendee source de vérité + WebSocket stats live + **pic combiné** insc/check-in                         | 🔴 Haute (**event**)           | 🟡 En cours sur attendee (PR #27)                                                | [ws 02](../../a-faire/sessions-inscriptions-lfd2026/02-capacite-live-forte-charge.md) |
-| **BIL**   | **Plateforme billetterie LFD** — gestion billetterie + landing pages + **backoffice client**                                            | 🔴 Haute (**produit**)         | 🟡 **Chantier global ~55 %** (démarré 07/07) — finalisation dépend de H+J+C2.1/B | §3-BIL                                                                                |
+| **J**     | **Capacité live forte charge + J-ENTREES** — réservations et entrées physiques live + **pic combiné** insc/check-in                       | 🔴 Haute (**event/CDC**)       | 🟡 Socle inscription live ; dashboard présence/export partiels                   | [J](./J-capacite-live/README.md)                                                       |
+| **BIL**   | **Plateforme billetterie LFD** — landing pages + **backoffice client RBAC et dashboard entrées**                                        | 🔴 Haute (**produit**)         | 🟡 **~35 %, 7–11 j-dev** — Corentin ; dépend de H+J+C2.1/B                      | §3-BIL                                                                                |
 | **K**     | **Résilience event** — checklist finale : être sûr que **tout ce qui protège** est en place (saturation, disque, perte, recovery testé) | 🔴 Haute (**event**)           | 🔴 À vérifier avant J-7                                                          | [ws résilience](../../a-faire/resilience-event-lfd2026/README.md)                     |
-| **F**     | Continuité — **HA réplication**                                                                                                         | 🔵 **Reporté → migration GCP** | HA/PITR natifs Cloud SQL                                                         | §3-F                                                                                  |
+| **M**     | **Scan mobile et recette terrain** — offline, multi-scanner, feedback et répétition                                                     | 🔴 Haute (**terrain**)         | 🔴 **~10 %, 5,5–9 j-dev** ; GO terrain non acquis                              | [M](./M-appli-mobile-lfd2026/README.md)                                                |
+| **N**     | **Architecture event-ready LFD** — coordination sync/async, anti-bot, charge et runbooks                                                | 🔴 Haute (**event**)           | 🟡 Coordinateur ; ne pas doubler les lots contributeurs                         | [N](./N-architecture-event-ready/README.md)                                           |
+| **O**     | **Audit métier et sécurité LFD** — accès/actions BIL, avant/après, E2E et preuve CDC                                                     | 🔴 Haute (**CDC**)             | 🟡 **~10 %, 5–8,5 j bruts** ; hooks partagés avec BIL/T                         | [O](./O-audit-lfd/README.md)                                                          |
+| **F**     | API stateless, multi-instance et HA                                                                                                     | 🔵 **Post-event · 15–27 j-dev** | audit puis séparation des rôles, état partagé, validation multi-instance et GCP | §3-F                                                                                  |
+| **L**     | Architecture event-driven globale                                                                                                       | 🔵 **Post-event · 27–46 j-dev** | outbox/inbox, contrats et migration incrémentale                                | [L](./L-architecture-event-driven/README.md)                                          |
+| **P**     | Plateforme de journalisation Attendee                                                                                                    | 🔵 **Post-event**              | **15–25 j après L0/L1** ; audit et logs techniques séparés                      | [P](./P-plateforme-journalisation/README.md)                                          |
 | **G**     | Wallet Apple + Google — **harnais dans B · onboarding now · Google fast-follow · Apple hors chemin critique**                           | 🟡 Découpé (was ⚪ V2)         | Onboarding à lancer J1                                                           | §3-G                                                                                  |
 
 > **⚡ Ordre :** **A (refonte) d'abord** — elle débloque le déploiement propre de tout le reste.
@@ -118,7 +123,7 @@ est un **visualiseur de logs**, pas un système d'alerte.
 ## 0. Principe directeur (chantier A — refonte)
 
 > **📎 Fichiers liés (chantier A) :** [01-suivi-leviers.md](./A-I-leviers/01-suivi-leviers.md) (état vivant par levier) ·
-> [audit branche staging](../infra-scaling-pca/journal/2026-06-26-audit-branche-staging.md) ·
+> [audit branche staging](../gcp-migration/infra-scaling-pca/journal/2026-06-26-audit-branche-staging.md) ·
 > [NOW.md](../../../workspace-rabie/NOW.md) · [index des learnings](../../../learnings/README.md).
 
 **Ne rien perdre, tout rejouer proprement.** La branche `staging` reste l'archive de référence
@@ -302,7 +307,7 @@ préservée (même moteur Chromium), **faisable sans attendre la migration GCP**
 ### Chantier C — Migration ESP (délivrabilité) 🔴 Haute · ⏳ choix à trancher
 
 > **📎 Fichiers liés :** [diagnostic email/billet/wallet §1](./B-email-billet-pdf/email-billet-wallet.md) ·
-> [décision ESP — Brevo vs Scaleway](./C-migration-esp/esp-brevo-vs-scaleway.md)
+> [décision ESP — Mailgun](./C-migration-esp/esp-choix-mailgun.md)
 
 Email actuel = **nodemailer SMTP direct** (pas un ESP) → risque de délivrabilité sur ~12 400 envois.
 
@@ -338,7 +343,7 @@ Sensible vu les **données nominatives MEAE**.
 
 ### Chantier E — Sauvegarde DB automatique ✅ TERMINÉ · [PR #15](https://github.com/Rabiegha/attendee-ems-back/pull/15)
 
-> **📎 Fichiers liés :** [brief backup automatique DB](../../../backlog/a-faire/brief-backup-automatique-db.md) ·
+> **📎 Fichiers liés :** [brief backup automatique DB](../../../backlog/fait/brief-backup-automatique-db.md) ·
 > [scripts/backup/](https://github.com/Rabiegha/attendee-ems-back/tree/feature/db-backup/scripts/backup)
 
 **Livraison complète — dépasse le brief initial sur 3 points.**
@@ -360,11 +365,12 @@ Sensible vu les **données nominatives MEAE**.
 
 **Effort réel : ~2 jours** (MVP + paliers + tests + bugs fixes alerting).
 
-### Chantier F — Continuité d'activité � Partiellement reportée (post-GCP)
+### Chantier F — API stateless, multi-instance et continuité/HA 🔵 Post-event
 
-> **📎 Fichiers liés :** [plan de continuité d'activité](../infra-scaling-pca/plan-continuite-activite.md) ·
+> **📎 Fichiers liés :** [plan de continuité d'activité](../gcp-migration/infra-scaling-pca/plan-continuite-activite.md) ·
 > [PCA LFD 2026](../../../infra/lfd-2026-pca.md) · [stratégie SLA](../../../infra/lfd-2026-sla-strategy.md) ·
 > [workstream migration GCP (archi cible B)](../../a-faire/gcp-migration/README.md)
+> · [cadrage stateless et multi-instance](./F-stateless-multi-instance/README.md)
 
 **Pourquoi la continuité est ultra importante :**
 
@@ -388,8 +394,9 @@ Sensible vu les **données nominatives MEAE**.
 | **Archivage WAL / PITR léger** sur le VPS (sans réplica HA) — « remonter le temps » | ~4 h         | ✅ à faire si le temps le permet                                                 |
 | ~~Réplication streaming + bascule HA~~                                              | ~2-3 j       | 🔵 **reporté → migration GCP**                                                   |
 
-**Conséquence :** F passe de « ~2-3 jours d'infra lourde » à **un sous-ensemble léger** (~½ jour de
-PITR en plus du backup MVP). La HA complète arrive **avec GCP**, hors périmètre de ce mois.
+**Conséquence :** avant LFD, F se limite au filet de continuité et à la cartographie. Après LFD,
+F regroupe le travail applicatif stateless (sessions, WebSockets, workers, impression, fichiers,
+schedulers, pools) nécessaire au multi-instance, puis la HA complète avec GCP.
 
 > ⚠️ _À confirmer : timing de la migration GCP vs l'event (4-5 sept). Si GCP est livré avant l'event,_
 > _la continuité est couverte nativement. Sinon, le couple backup MVP + PITR léger est le filet._
@@ -486,7 +493,8 @@ lien) vs. avec inscription (lien public + capacité optionnelle + stats complèt
 | **Phase 0** — migration Prisma (champs session + statut `SessionRegistration`) + backfill + fix bug `session_choice_ids`                       | ~½ j             |
 | **Phase 1** — inscription publique par session (token, routes publiques, anti-doublon assoupli, capacité + waitlist, contrôles manuels, stats) | ~2 – 3 j         |
 | **Phase 2** — refonte front sessions (cartes + page détail + config + liste inscrits + stats live, _mode-aware_)                               | ~3 – 5 j         |
-| **Sous-total H (phases 0–2)**                                                                                                                  | **~5,5 – 8,5 j** |
+| **Ajout CDC H-D8** — maximum deux activités `confirmed`/jour Europe/Paris + E2E concurrence                                                   | **~1 – 2 j**     |
+| **Sous-total H (phases 0–2 + H-D8)**                                                                                                           | **~6,5 – 10,5 j** |
 | 🔵 _Reporté post-event (phase 3) :_ form/emails dédiés session, contenu riche, websocket live                                                  | ~2 – 3 j         |
 
 > ⚠️ **Impact capacité :** H est un **besoin fonctionnel** (pas du perf) → il **concurrence** les
@@ -503,9 +511,12 @@ lien) vs. avec inscription (lien public + capacité optionnelle + stats complèt
 > [plan de test de charge](../../../infra/lfd-2026-load-test-plan.md)
 
 **Besoin :** tenir **3000 inscriptions quasi simultanées** sur sessions à capacité serrée, avec **statut
-live** (pleine/fermée), **sans survente** ni saturation Postgres. Sépare **lecture** (statut → Redis/cache/
-WebSocket) et **écriture** (inscription → portier Redis atomique → file BullMQ → Postgres), et couvre le
-**pic combiné** inscriptions + check-ins. Inclut le levier candidat **L9.1** (compteur présence session O(1)).
+live** (pleine/fermée) et [dashboard des entrées physiques](./J-capacite-live/README.md#j-entrees--tableau-de-bord-des-entrées-lfd),
+**sans survente** ni saturation Postgres. Sépare **lecture** (statut → cache/WebSocket ou polling
+authentifié) et **écriture métier synchrone** (inscription/scan → transaction PostgreSQL courte et atomique).
+Après le commit, BullMQ ne traite que les effets secondaires. La réservation d'une place et le check-in
+ne passent jamais dans un worker. Le chantier couvre le **pic combiné** inscriptions + check-ins et inclut
+le levier candidat **L9.1** (compteur présence session O(1)).
 
 | Action                                                                      | Temps estimé     |
 | --------------------------------------------------------------------------- | ---------------- |
@@ -513,8 +524,9 @@ WebSocket) et **écriture** (inscription → portier Redis atomique → file Bul
 | Gateway WebSocket + rooms + émission au changement de statut (back + front) | ~1,5 – 2 j       |
 | Endpoint read servi par Redis + pré-chauffe + single-flight                 | ~1 j             |
 | Isolation check-in (pool DB réservé) + L9.1 compteur O(1)                   | ~1 j             |
+| J-ENTREES : snapshot event, live après scan et export présent/absent        | ~1 – 2 j net     |
 | Test de charge **combiné** (insc + check-ins) + critères de gate            | ~1 – 1,5 j       |
-| **Sous-total J**                                                            | **~4 – 7 jours** |
+| **Sous-total J réévalué**                                                   | **~5 – 9 jours** |
 
 > ⚠️ **À démarrer APRÈS chantier A** (les leviers) et **après mesure** (les leviers + Gotenberg peuvent
 > suffire). Recoupe partiellement **H** (capacité/waitlist) et **I** (compteur capacité) — ne pas double-compter.
@@ -529,12 +541,13 @@ WebSocket) et **écriture** (inscription → portier Redis atomique → file Bul
 - **Page/landing publique event** avec agenda et inscriptions.
 - **Backoffice client** : le client gère ses sessions/pages principales sans passer par nous.
 
-**État (2026-07-17) : chantier global ~55 %** — le repo `back-office-event` porte déjà la
+**État réévalué (2026-07-19) : chantier global ~35 %** — le repo `back-office-event` porte déjà la
 billetterie publique one-page, l'agenda 2 jours, le back-office client, la synchronisation
-Attendee, l'inscription publique session et les jauges live.
+Attendee, l'inscription publique session et les jauges live. En revanche, son accès admin est
+binaire : tout utilisateur authentifié obtient les mêmes droits. Le RBAC demandé par le CDC reste à livrer.
 
-> Nuance : le socle MVP LFD est avancé, mais le chantier global reste à ~55 % tant que
-> l'environnement cible, la finition client, le durcissement et le raccord billet/email ne sont
+> Nuance : le socle MVP LFD est avancé, mais le chantier global est réévalué à ~35 % tant que
+> le RBAC, l'environnement cible, la finition client, le durcissement et le raccord billet/email ne sont
 > pas fermés. Ce n'est pas une plateforme billetterie générique post-event avec offres, paiement,
 > builder multi-event avancé et self-service complet.
 
@@ -544,12 +557,14 @@ et **C2.1/B** (billet PDF + email après inscription).
 
 | Action                                                     | Temps estimé                                      |
 | ---------------------------------------------------------- | ------------------------------------------------- |
-| Socle MVP LFD + backoffice client (en cours, ~55 % global)  | — (déjà entamé)                                   |
+| Socle MVP LFD + backoffice client (en cours)                | — (déjà entamé)                                   |
+| RBAC LFD : administrateur/opérateur/lecteur                  | **~2,5–5 j**, détail dans [BIL](./BIL-billetterie/README.md) |
+| Dashboard salle/créneau + export nominatif contrôlé          | **~0,5–1 j net** après contrat J-ENTREES                       |
 | Builder / gestion des landing pages avancées                | post-event / à re-cadrer                          |
 | Branchement sur H (sessions publiques + capacité/waitlist) | après H                                           |
 | Branchement sur J (statut live plein/fermé)                | après J                                           |
 | Branchement sur C2.1/B (billet PDF + email)                | après B0/C2.1                                     |
-| **Sous-total BIL MVP LFD**                                 | **~4–5 jours** inclus dans l'estimation courante  |
+| **Sous-total BIL MVP LFD réévalué**                         | **~7–11 j-dev**, dont ~3 j consommés               |
 
 > ⚠️ **Impact capacité :** BIL était sous-estimé dans le périmètre initial. Il est désormais
 > suivi comme chantier produit à part entière dans [03-suivi-chantiers.md](./03-suivi-chantiers.md).
@@ -569,21 +584,72 @@ et **C2.1/B** (billet PDF + email après inscription).
 | **C** — Migration ESP                                                                     | **~2 – 3 jours**                             | propagation DNS + **warm-up (1-2 sem)**               |
 | **D** — Sécurité QR HMAC                                                                  | **~1 – 2 jours**                             | — (coordination 2 repos clients)                      |
 | ~~**E** — Backup auto (MVP) + PITR léger~~                                                | ~~**~1,5 – 2 jours**~~                       | ✅ **Backup MVP terminé** (PITR = §3-F, hors scope E) |
-| **H** — Inscriptions par session (phases 0–2)                                             | **~5,5 – 8,5 jours**                         | —                                                     |
-| **J** — Capacité live forte charge (portier Redis + WebSocket + pic combiné)              | **~4 – 7 jours**                             | — (Redis déjà présent)                                |
-| **BIL** — Plateforme billetterie LFD (landing + backoffice client)                        | **~4–5 jours** (chantier global ~55 % fait)   | dépend de H + J + C2.1/B                              |
+| **H** — Inscriptions par session + maximum 2 confirmées/jour                              | **~6,5 – 10,5 jours**                        | —                                                     |
+| **J** — Capacité live forte charge + J-ENTREES                                            | **~5 – 9 jours**                             | — (Redis déjà présent)                                |
+| **BIL** — Plateforme billetterie LFD (landing + RBAC + dashboard entrées)                 | **~7–11 j-dev** (chantier global ~35 %)      | dépend de H + J + C2.1/B                              |
 | **K** — Résilience event (checklist protections : saturation/disque/perte/recovery testé) | **~½ – 1 jour** _(surtout vérif + runbooks)_ | —                                                     |
-| **F** — HA réplication complète                                                           | 🔵 **reporté**                               | → migration GCP                                       |
+| **M** — Scan mobile et recette terrain                                                    | **~5,5–9 j-dev**                             | multi-appareils + répétition J-10 et J-4                   |
+| **N** — Architecture event-ready (coordination I/J/B/C2.1/T/K + N-ANTI)                   | **~10–17,5 j bruts**                         | ne pas doubler les lots déjà distribués                |
+| **O** — Audit métier et sécurité LFD                                                     | **~5–8,5 j bruts**                           | hooks partagés BIL/T/K ; avant k6 final                 |
+| **F** — API stateless, multi-instance et HA                                               | 🔵 **15–27 j-dev**                           | ~4–7 semaines calendaires, audit post-event puis GCP   |
+| **L** — Architecture event-driven globale                                                 | 🔵 **27–46 j-dev**                           | ~2–4 mois calendaires, livraison incrémentale          |
+| **P** — Plateforme de journalisation globale                                              | 🔵 **15–25 j-dev après L0/L1**               | 22–36 j autonome ; entièrement post-event              |
 | **G** — Wallet (V2)                                                                       | ~1 semaine _(hors event)_                    | validation Apple                                      |
-| **Total périmètre event (mois)**                                                          | **~22 – 32 jours-dev**                       | DNS + warm-up ESP + Cloud Run                         |
+| **Reste event brut au 19/07**                                                            | **~32 – 48,5 jours-dev**                     | suivi vivant ; J-ENTREES recoupe H/BIL/T/K             |
 
 > ⚠️ **Chevauchement à arbitrer :** le chantier **J** (capacité live forte charge) recoupe en partie
 > **H** (inscriptions par session : capacité/waitlist) et **I** (compteur capacité). Ne pas double-compter :
 > une fois H/I cadrés, une partie de J est déjà couverte. J = le **sur-ensemble forte charge** (portier
 > Redis anti-survente + WebSocket live + pic combiné insc/check-in), à livrer pour l'event.
 
-> **⚡ Lecture capacité :** ~22-31 jours-dev sur **2 devs × ~20 j ouvrés = ~40 j-dev de capacité**
-> → **ça passe encore mais le buffer est mince** (≈ 55-77 % de la capacité) avec l'ajout de **J**.
+### Chantier N — Architecture event-ready LFD 2026 🔴 Haute (event)
+
+> **📎 Cadrage :** [N — architecture event-ready](./N-architecture-event-ready/README.md)
+
+Chantier coordinateur event : chemins inscription/check-in synchrones et atomiques, effets secondaires
+BullMQ, workers PDF/email séparables, idempotence, réconciliation, tests de charge combinés,
+métriques et runbooks. Il consolide I/J/B/C2.1/T/K/O sans doubler leur estimation. Il inclut désormais
+[N-ANTI](./N-architecture-event-ready/N-ANTI-protection-anti-bot.md) : Turnstile validé serveur,
+rate limit progressif, idempotence et correction du risque de quota unique derrière le proxy PHP.
+Charge brute coordonnée : **~10–17,5 j**, dont une part importante est déjà portée par les chantiers liés.
+
+**Impression/PrintNode est explicitement hors scope LFD** et reste dans les trajectoires post-event F/L.
+
+### Chantier O — Audit métier et sécurité LFD 🔴 Haute (CDC)
+
+> **📎 Cadrage :** [O — audit LFD](./O-audit-lfd/README.md)
+
+O couvre avant l'événement la journalisation des accès et actions back-office : authentification,
+refus, modifications d'inscription, rôles, ouverture/fermeture, jauges, horaires et exports. Le socle
+PostgreSQL `audit_logs` est conservé, mais les événements critiques deviennent explicites et
+versionnés via `AuditEventV1`, avec auteur/rôle snapshot, cible, résultat et avant/après minimisé.
+`O-BIL` est un lot d'intégration partagé avec Corentin, pas un chantier supplémentaire.
+
+Le k6 ciblé L9.b est exécuté avant O. Le k6 final est rejoué avec O activé pour vérifier coût et
+complétude dans la configuration réellement livrée.
+
+### Chantier L — Architecture event-driven Attendee 🔵 Post-event
+
+> **📎 Cadrage :** [L — architecture event-driven](./L-architecture-event-driven/README.md)
+
+Trajectoire globale après LFD : transactional outbox/inbox, événements métier versionnés, consommateurs
+idempotents, replay/DLQ, traçabilité et migration progressive des flux inscription, check-in, billet,
+email, impression, invitations, scoring, exports, intégrations et webhooks. Ce chantier est distinct de F :
+F rend les instances interchangeables ; L fiabilise et découple la propagation des faits métier.
+
+### Chantier P — Plateforme de journalisation Attendee 🔵 Post-event
+
+> **📎 Cadrage :** [P — plateforme de journalisation](./P-plateforme-journalisation/README.md)
+
+P réutilise `AuditEventV1` de O et L0/L1 pour brancher l'audit sur une outbox durable, construire les
+projections, l'archive, la rétention et le viewer org-scoped. Il consolide aussi les logs techniques
+dans un pipeline séparé. Aucun choix MongoDB/OpenSearch/ClickHouse n'est pris avant volumétrie et
+benchmark ; P ne recrée ni le format O ni l'outbox L.
+
+> **⚡ Lecture capacité au 19/07 :** ~32–48,5 jours-dev bruts restants sur
+> **2 devs × ~15 j ouvrés = ~30 j-dev de capacité restante**. Avec O, la fourchette haute dépasse désormais
+> la capacité ; une partie recoupe BIL/T/K, mais **le buffer doit être considéré nul tant que O0 n'a
+> pas recalé l'incrément net**.
 > Conditions impératives : **tenir le descope** (HA → GCP, CD complet → post-event, wallet → V2),
 > traiter **H phase 2 (front) en V1 réduite**, et **prioriser dur** (L9b/L9a/L9.1 + B0 + J d'abord).
 > Voir le **planning daté** ci-dessous.
@@ -595,16 +661,24 @@ et **C2.1/B** (billet PDF + email après inscription).
 > **Contexte :** échéance **1 mois**, **2 devs**. Périmètre **descopé** pour tenir le délai.
 
 | Priorité | Chantier                                                                | Décision                                                                                                  |
-| -------- | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | --- | -------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------ | --- | ----- | -------------------------- | ----------------------------------------------------- |
+| -------- | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
 | 🔴 P0    | **A** — Refonte propre §7                                               | **Priorité n°1** — débloque le déploiement propre du reste                                                |
 | 🔴 P0    | **C** — ESP (Brevo/Scaleway)                                            | ⚠️ **lancer le warm-up tout de suite** (délai calendaire)                                                 |
 | 🔴 P0/P1 | **I** — ⚡ Levier débit n°1 (compteur capacité dénormalisé + tx courte) | **Le seul levier qui lève le plafond ~30/s** — juste après A, avant le load test S4                       |
 | 🔴 P1    | **0-MON** — Monitoring minimal (uptime + alerte + Sentry)               | Gardé (réduit)                                                                                            |
 | 🔴 P1    | **0-CI** — CI/CD **minimaliste** (build+test PR + deploy staging)       | Gardé (réduit, **sans CD/rollback auto**)                                                                 |
 | ✅ —     | **E** — Backup auto MVP                                                 | ✅ **Terminé** — [PR #15](https://github.com/Rabiegha/attendee-ems-back/pull/15)                          |
-| � P1     | **H** — Inscriptions par session                                        | **Nouveau** besoin fonctionnel LFD — ph. 0–1 **event-critique** ; ph. 2 front **à arbitrer** (V1 réduite) |
-| �🔸 P1   | **D** — Sécurité QR HMAC                                                | **Gardé** (simple, données MEAE)                                                                          |     | 🟠 P1/P2 | **BIL** — Plateforme billetterie LFD (landing + backoffice client) | **Chantier global ~55 %** — finalisation séquencée **après H, J et C2.1/B** |     | 🟠 P2 | **B** — Email → billet PDF | Gardé **si le client l'exige** pour l'event, sinon V2 |
-| 🔵 —     | **F** — HA réplication complète                                         | **Reporté → après migration GCP** (HA/PITR natifs Cloud SQL)                                              |
+| 🔴 P1    | **H** — Inscriptions par session                                        | Besoin fonctionnel LFD ; finir la V1 et la limite de deux activités confirmées/jour                      |
+| 🔸 P1    | **D** — Sécurité QR HMAC                                                | Gardé (simple, données MEAE)                                                                               |
+| 🔴 P1    | **J** — Capacité live + J-ENTREES                                  | finir L9.1, dashboard salle/créneau et export présent/absent avant répétition                              |
+| 🟠 P1/P2 | **BIL** — Plateforme billetterie LFD (landing + RBAC + entrées)      | ~35 % ; RBAC et vue client CDC à livrer avec H, J et C2.1/B                                               |
+| 🟠 P2    | **B** — Email → billet PDF                                              | Gardé si le client l'exige pour l'event, sinon V2                                                         |
+| 🔴 P1    | **N** — Architecture event-ready                                        | **Coordonne les garanties sync/async, la charge et les runbooks sans doubler I/J/B/C2.1/T/K/O**           |
+| 🔴 P1    | **O** — Audit métier et sécurité LFD                                    | **Exigence CDC ; socle réutilisable, O-BIL partagé, à fermer avant le k6 final**                           |
+| 🔴 P1    | **M** — Scan mobile et recette terrain                                  | **Gate jour J : corrections offline/multi-scanner, parc réel et répétition GO/NO-GO**                      |
+| 🔵 —     | **F** — API stateless, multi-instance et HA                             | **Reporté post-event** ; audit applicatif avant activation du clustering/GCP                              |
+| 🔵 —     | **L** — Architecture event-driven globale                               | **Reporté post-event** ; outbox/inbox et migration progressive des flux                                   |
+| 🔵 —     | **P** — Plateforme de journalisation                                    | **Reportée post-event** ; réutilise O + L0/L1, aucun sink décidé d'avance                                 |
 | ⚪ V2    | **G** — Wallet Apple + Google                                           | Hors périmètre event                                                                                      |
 
 > **🔵 Migration GCP** : absorbe la HA + le PITR managés. La continuité lourde n'est donc **pas** à
