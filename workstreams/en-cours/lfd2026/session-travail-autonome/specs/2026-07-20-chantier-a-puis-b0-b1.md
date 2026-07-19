@@ -45,6 +45,10 @@ explicable : livrée, abandonnée avec preuve ou bloquée par un prérequis iden
 9. **B1 — durcissement PDF**.
 10. **Revue de clôture B0/B1** : CI/CD staging, tests d'échec et documentation.
 
+Le préflight comprend obligatoirement l'installation de k6, la reconstruction sélective d'un runner
+versionné depuis les références d'archive, l'ajout du watchdog d'incident et sa validation à charge
+minimale. Aucun ancien script sans arrêt automatique n'est lancé tel quel.
+
 Si le credential Gotenberg n'est pas encore disponible après A, préparer B0/B1 sans faux secret,
 documenter précisément le blocage et poursuivre uniquement les travaux qui restent vérifiables.
 
@@ -186,6 +190,11 @@ Le protocole
 [`2026-07-20-protocole-generateur-k6.md`](2026-07-20-protocole-generateur-k6.md) est obligatoire pour
 les scénarios élevés. Un test ne peut pas conclure sur la limite d'Attendee si la santé du générateur,
 le débit réellement injecté et `dropped_iterations` ne sont pas documentés.
+
+Le runbook
+[`2026-07-20-runbook-incident-staging-k6.md`](2026-07-20-runbook-incident-staging-k6.md) est également
+obligatoire. Le watchdog et sa capacité à arrêter le PID k6 doivent être testés à faible charge avant
+tout palier important.
 
 ### Mesures consignées
 
