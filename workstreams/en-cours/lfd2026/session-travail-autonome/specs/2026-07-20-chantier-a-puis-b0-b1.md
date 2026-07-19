@@ -301,8 +301,34 @@ Pour B0/B1 :
 4. la décision sur `min-instances=1` pendant les pics/event, ou l'autorité pour seulement mesurer le
    cold start sans modifier cette configuration.
 
-GitHub et le push sont actuellement disponibles dans l'environnement. Les blocages déjà connus sont
-le compte/token de load test session et le credential Gotenberg côté staging.
+GitHub et le push sont actuellement disponibles dans l'environnement. La session est autorisée à
+créer ses propres comptes, événements et tokens de load test sur staging. Le credential Gotenberg a
+été reçu et vérifié localement ; son injection sécurisée sur staging reste à confirmer lors de B0.
+
+### Autorisations staging reçues le 2026-07-20
+
+Le responsable du projet autorise, exclusivement sur **staging** :
+
+- la création des comptes techniques/de test nécessaires aux scénarios L9 ;
+- la création d'un événement LFD de charge isolé et des sessions associées ;
+- la génération des tokens de session dédiés aux tests ;
+- la création des inscriptions, scans et autres fixtures synthétiques nécessaires ;
+- le nettoyage des seules données créées pour ces tests ;
+- l'exécution des tests de charge k6 pendant la fenêtre nocturne autorisée.
+
+Garde-fous impératifs :
+
+- vérifier l'URL, l'environnement et l'identité de la base avant toute création, charge ou suppression ;
+- marquer clairement chaque fixture comme donnée de load test ;
+- conserver la liste ou le préfixe des identifiants créés afin de cibler le nettoyage ;
+- refuser automatiquement toute URL ou configuration pointant vers la production ;
+- ne supprimer aucune donnée staging antérieure ou non créée par cette session ;
+- ne jamais utiliser un compte, un événement ou un token de production ;
+- demander une nouvelle fenêtre si la charge est reportée hors de la période nocturne autorisée.
+
+La production, `main` et toute donnée réelle restent explicitement hors périmètre. Cette autorisation
+ne vaut pas encore validation contractuelle des performances : elle autorise à préparer, exécuter,
+mesurer et optimiser les tests sur staging.
 
 ## 13. Conditions d'arrêt ou d'escalade
 
