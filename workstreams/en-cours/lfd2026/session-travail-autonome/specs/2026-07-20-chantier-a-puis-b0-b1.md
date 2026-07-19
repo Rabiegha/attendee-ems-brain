@@ -192,6 +192,18 @@ Chaque comparaison avant/après conserve :
 - surbooking, doublons ou dérive des compteurs ;
 - SHA backend, version du script, date/heure et configuration du scénario.
 
+Chaque exécution, réussie, échouée, interrompue ou invalidée, produit un rapport séparé conforme au
+modèle [`../rapports-load-tests/README.md`](../rapports-load-tests/README.md). À la fin de la campagne,
+un bilan compare tous les paliers, situe le point de saturation et formule un avis argumenté sur la
+préparation de LFD : GO, GO sous conditions ou NO-GO technique.
+
+L'avis distingue toujours :
+
+- l'intégrité métier et la stabilité technique ;
+- le débit réellement injecté du débit seulement configuré dans k6 ;
+- la performance observée sur staging d'une garantie applicable à la production ;
+- un GO technique sur un scénario précis d'une conformité contractuelle aux « 3 000 simultanés ».
+
 ### Gates non négociables
 
 - zéro surbooking ;
