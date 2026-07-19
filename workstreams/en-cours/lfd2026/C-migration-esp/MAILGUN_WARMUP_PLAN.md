@@ -63,6 +63,10 @@ Stratégie d'envoi : [warm-up-strategie.md](./warm-up-strategie.md).
 
 > Démarrer avec de **vrais emails transactionnels** à audience **engagée** (pas des envois à vide).
 > Planning indicatif à ajuster selon les métriques (bounce/spam).
+>
+> 📌 **Exécution réelle en cours** (démarrée 16/07) : suivi jour par jour dans
+> [suivi-envois-channelscope.md](./suivi-envois-channelscope.md) — J1-J3 faits (30/100/250),
+> J4→J6 programmés par timers systemd jusqu'au 22/07 (fin base Channel Scope), nouvelle base le 23/07.
 
 | Jour | Volume cible                                                               |
 | ---- | -------------------------------------------------------------------------- |

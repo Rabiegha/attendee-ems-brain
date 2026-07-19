@@ -122,15 +122,22 @@ Stopper J1 si :
 le besoin LFD impose ensuite de monter vers des journées autour de 3 000 emails si les signaux restent
 propres.
 
-| Jour | Volume cible | Condition |
-| ---- | ------------ | --------- |
-| J1   | 20-50        | setup + premiers signaux |
+> 📌 **Exécution réelle (mise à jour 18/07)** : J1 = 30 internes (16/07), J2 = 100 (17/07), J3 = 250 (18/07).
+> La suite est **glissée d'un jour** (dimanche 19/07 = repos, base B2B → ouvertures faibles le week-end) :
+> Rampe atténuée validée le 18/07 : J4 = 400 (lun 20/07), J5 = 600 (mar 21/07),
+> J6 = 900 + 600 maximum (mer 22/07, second lot sous `GO` humain explicite).
+> Le palier "J7 progressif" est reporté sur la **nouvelle base à partir du jeudi 23/07**.
+> Programmation et état au jour le jour → [suivi-envois-channelscope.md](./suivi-envois-channelscope.md).
+
+| Jour | Volume cible | Condition                     |
+| ---- | ------------ | ----------------------------- |
+| J1   | 20-50        | setup + premiers signaux      |
 | J2   | ~100         | pas de plainte, bounce faible |
-| J3   | ~250         | inbox OK Gmail/Outlook |
-| J4   | ~500         | deferred faible |
-| J5   | ~1 000       | queue et webhooks stables |
-| J6   | ~2 000       | pas de blocage provider |
-| J7+  | progressif   | montée vers besoin event |
+| J3   | ~250         | inbox OK Gmail/Outlook        |
+| J4   | ~400         | deferred faible               |
+| J5   | ~600         | queue et webhooks stables     |
+| J6   | ~900 + 600 max | pas de blocage provider + GO humain avant le second lot |
+| J7+  | progressif   | montée vers besoin event      |
 
 ## Après J7 — montée vers le besoin event
 
@@ -150,34 +157,83 @@ Règle de montée :
 - `temporary failure` élevé, spam placement ou complaint : pause/réduction et analyse par provider ;
 - `spam complaints` > 0 : stop immédiat du lot et revue de la base/contenu.
 
+### Fenêtres de contrôle obligatoires avant chaque palier
+
+L'absence de doublons protège les destinataires contre la répétition, mais ne remplace pas le suivi
+de réputation : les bounces, plaintes et blocages sont attachés au domaine d'envoi, à l'IP et aux
+mailbox providers. Certains signaux arrivent avec plusieurs heures de retard.
+
+Pour chaque lot, effectuer trois contrôles :
+
+1. **une heure avant le départ** : smoke test interne, vérification visuelle, événements Mailgun et
+   décision humaine `GO / HOLD / STOP` ;
+2. **1 à 2 heures après le départ** : détection rapide d'un blocage ou de `temporary failure` ;
+3. **en fin de journée ou le lendemain matin** : bilan consolidé incluant les retours tardifs.
+
+Décision :
+
+- **VERT — GO** : 0 plainte, bounces permanents faibles, temporaires faibles et dispersés, aucune
+  concentration anormale chez Gmail/Outlook/Yahoo ou un domaine professionnel ;
+- **ORANGE — HOLD/RÉDUCTION** : hausse des temporaires, ralentissement de livraison, blocage concentré
+  chez un provider ou signaux encore incomplets ; maintenir ou réduire le volume, sans accélérer ;
+- **ROUGE — STOP** : plainte spam, blocage provider, hausse nette des bounces permanents ou placement
+  spam évident ; annuler le lot suivant et analyser la base, le contenu et le provider concerné.
+
+Un smoke test valide seulement le chemin technique. Il ne vaut jamais validation de réputation et
+ne peut pas, à lui seul, autoriser le palier suivant.
+
+### Comment donner le `GO`
+
+Après avoir reçu et contrôlé le smoke test, le `GO` doit être donné avant 09h heure de Paris. Deux
+méthodes sont possibles :
+
+1. écrire à Codex `GO J4`, `GO J5` ou `GO J6a` ; Codex vérifie d'abord les événements Mailgun puis
+   crée l'autorisation sur le VPS ;
+2. créer directement le fichier d'autorisation depuis un terminal :
+
+```bash
+# Lundi — J4, lot de 400
+ssh ems-vps 'printf "GO 2026-07-20 350\n" > /tmp/warmup-go-2026-07-20-350'
+
+# Mardi — J5, lot de 600
+ssh ems-vps 'printf "GO 2026-07-21 750\n" > /tmp/warmup-go-2026-07-21-750'
+
+# Mercredi matin — J6a, lot de 900
+ssh ems-vps 'printf "GO 2026-07-22 1350\n" > /tmp/warmup-go-2026-07-22-1350'
+```
+
+Le contenu doit correspondre exactement à la date et à l'offset attendus. Sans fichier valide au
+moment du timer de 09h, le lot est annulé avant tout envoi. Ajouter le fichier après 09h ne relance
+pas automatiquement le lot : il faudra alors décider d'un lancement manuel ou d'un report.
+
 ### Plan indicatif semaine 2
 
 Hypothèse : J1-J7 propres, aucune plainte spam, bounce faible, pas de blocage Gmail/Outlook/Yahoo.
 
-| Jour | Volume cible | Débit conseillé | Condition |
-| ---- | ------------ | --------------- | --------- |
-| S2-J1 | ~1 000-1 500 | 1 email/s | reprendre sans saut brutal après J7 |
-| S2-J2 | ~1 500 | 1 email/s | delivered OK, pas de deferred anormal |
-| S2-J3 | ~2 000 | 1-2 emails/s | Gmail/Outlook toujours OK |
-| S2-J4 | ~2 000 | 1-2 emails/s | maintenir si signaux moyens |
-| S2-J5 | ~2 500 | 2 emails/s max | seulement si signaux verts |
-| S2-J6 | pause ou petit lot ~500 | 1 email/s | respiration + analyse provider |
-| S2-J7 | ~2 500-3 000 | 2 emails/s max | premier palier proche du besoin event |
+| Jour  | Volume cible            | Débit conseillé | Condition                             |
+| ----- | ----------------------- | --------------- | ------------------------------------- |
+| S2-J1 | ~1 000-1 500            | 1 email/s       | reprendre sans saut brutal après J7   |
+| S2-J2 | ~1 500                  | 1 email/s       | delivered OK, pas de deferred anormal |
+| S2-J3 | ~2 000                  | 1-2 emails/s    | Gmail/Outlook toujours OK             |
+| S2-J4 | ~2 000                  | 1-2 emails/s    | maintenir si signaux moyens           |
+| S2-J5 | ~2 500                  | 2 emails/s max  | seulement si signaux verts            |
+| S2-J6 | pause ou petit lot ~500 | 1 email/s       | respiration + analyse provider        |
+| S2-J7 | ~2 500-3 000            | 2 emails/s max  | premier palier proche du besoin event |
 
 ### Plan indicatif semaine 3
 
 Objectif : valider que `mail.attendee.fr` et le chemin Attendee/Mailgun tiennent des volumes proches
 du besoin LFD, puis tester la fenêtre opérationnelle.
 
-| Jour | Volume cible | Débit conseillé | Condition |
-| ---- | ------------ | --------------- | --------- |
-| S3-J1 | ~2 000 | 1-2 emails/s | reprise prudente |
-| S3-J2 | ~3 000 | 2 emails/s max | test volume cible |
-| S3-J3 | ~3 000 | 2 emails/s max | confirmer stabilité providers |
-| S3-J4 | pause ou petit lot ~500-1 000 | 1 email/s | analyse + nettoyage base |
-| S3-J5 | ~3 000 | 2-3 emails/s max | test de répétabilité |
-| S3-J6 | test fenêtre : ~3 000 en 30-60 min | 1-2 emails/s selon fenêtre | vérifier queue/webhooks/backlog |
-| S3-J7 | ajustement | selon signaux | réduire, maintenir ou préparer S4 |
+| Jour  | Volume cible                       | Débit conseillé            | Condition                         |
+| ----- | ---------------------------------- | -------------------------- | --------------------------------- |
+| S3-J1 | ~2 000                             | 1-2 emails/s               | reprise prudente                  |
+| S3-J2 | ~3 000                             | 2 emails/s max             | test volume cible                 |
+| S3-J3 | ~3 000                             | 2 emails/s max             | confirmer stabilité providers     |
+| S3-J4 | pause ou petit lot ~500-1 000      | 1 email/s                  | analyse + nettoyage base          |
+| S3-J5 | ~3 000                             | 2-3 emails/s max           | test de répétabilité              |
+| S3-J6 | test fenêtre : ~3 000 en 30-60 min | 1-2 emails/s selon fenêtre | vérifier queue/webhooks/backlog   |
+| S3-J7 | ajustement                         | selon signaux              | réduire, maintenir ou préparer S4 |
 
 Ces volumes sont des **plafonds conditionnels**. Si la base disponible n'est pas assez propre, il vaut
 mieux rester sous ces volumes que créer de mauvais signaux de réputation.
@@ -214,6 +270,21 @@ Exemples acceptables :
 - délai inscription/enqueue -> accepted -> delivered.
 - capacité à absorber une vague proche de 3 000 emails sans backlog durable, sans explosion webhook
   et sans blocage provider.
+
+Pour le calendrier opérationnel du 19 au 22 juillet 2026 :
+
+| Moment (heure de Paris)               | Contrôle / décision                                                      |
+| ------------------------------------- | ------------------------------------------------------------------------ |
+| Dim. 19/07, 10h-12h                  | bilan consolidé J1-J3 ; autoriser ou non les 400 du lundi                |
+| Lun. 20/07, 08h30 / 11h / 17h-18h   | pré-GO J4, contrôle rapide, puis bilan consolidé                         |
+| Mar. 21/07, 08h30 / 11h-12h / 17h-18h | pré-GO J5, contrôle rapide, puis bilan consolidé                       |
+| Mer. 22/07, avant 08h30              | autoriser ou non les 900 de J6a                                          |
+| Mer. 22/07, 11h-14h                  | analyser J6a et décider manuellement `GO / HOLD / STOP` pour J6b         |
+
+**J6b ne doit jamais partir sur le seul critère « 900 lignes journalisées ».** Sa validation doit
+inclure les événements Mailgun (`delivered`, `failed`, `complained`, `unsubscribed`, `deferred`) et
+la répartition par provider. En l'absence de validation humaine explicite avant 15h heure de Paris,
+le lot est reporté.
 
 ## Faut-il warmer deux domaines ?
 
