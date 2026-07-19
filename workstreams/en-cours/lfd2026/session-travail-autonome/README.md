@@ -18,4 +18,5 @@ branches, tests, reviews, déploiements autorisés, mesures, livrables et condit
 
 - [2026-07-20 — Chantier A puis B0/B1](./specs/2026-07-20-chantier-a-puis-b0-b1.md)
 - [2026-07-20 — Entrées B0/B1 pour Gotenberg privé](./specs/2026-07-20-b0-b1-gotenberg-entrees.md)
+- [2026-07-20 — Protocole de validation des générateurs k6](./specs/2026-07-20-protocole-generateur-k6.md)
 - [Modèle obligatoire des rapports de load tests](./rapports-load-tests/README.md)

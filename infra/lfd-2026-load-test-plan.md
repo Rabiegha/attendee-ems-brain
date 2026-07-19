@@ -40,10 +40,10 @@ Alternatives :
 | Env | Usage | Données |
 |---|---|---|
 | `staging-load` | Cible des tests | Iso‑prod (taille, config), DB anonymisée |
-| `prod` | **Smoke uniquement** (< 50 req/s) | données réelles |
+| `prod` | **Interdit dans la session autonome A → B0/B1** | données réelles, hors périmètre |
 
-> Ne **jamais** exécuter de test > 100 req/s en production directement. Les tests de capacité
-> doivent être réalisés sur un environnement dédié dimensionné identiquement.
+> La session autonome ne lance **aucune charge, même légère, en production**. Les tests de capacité
+> sont réalisés sur staging/staging-load, après vérification explicite de la cible.
 
 ## 4. Métriques à mesurer
 
@@ -101,7 +101,13 @@ Alternatives :
 | Charge | Ramp 0 → 50 VUs sur 1 min, palier 50 VUs / 5 min |
 | Seuils | p95 < 1 500 ms, erreur < 0,1 %, badges générés < 60 s |
 
-### 5.3 T3 — Pic 3 000 simultanés (contractuel)
+### 5.3 T3 — Pic 3 000 simultanés (preuve technique ; contrat à clarifier)
+
+> ⚠️ Le squelette historique ci-dessous maintient 3 000 VUs en boucle pendant 60 secondes et réutilise
+> un email par VU. Il ne prouve donc pas à lui seul « 3 000 personnes uniques, une inscription
+> chacune ». Avant exécution, le séparer en un scénario one-shot de 3 000 identités uniques et des
+> scénarios `ramping-arrival-rate` pour mesurer le débit. Appliquer le
+> [protocole de validation du générateur](../workstreams/en-cours/lfd2026/session-travail-autonome/specs/2026-07-20-protocole-generateur-k6.md).
 
 | Champ | Valeur |
 |---|---|

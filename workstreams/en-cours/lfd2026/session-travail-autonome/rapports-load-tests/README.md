@@ -65,6 +65,17 @@ sécurisé des artefacts éventuels.
 - Nombre total d'itérations/requêtes :
 - Générateur unique ou distribué :
 
+## Santé du ou des générateurs k6
+
+- CPU maximum par générateur :
+- RAM physique maximale et swap :
+- Bande passante maximale :
+- Limite de fichiers/sockets et erreurs locales :
+- `dropped_iterations` :
+- Débit configuré comparé au débit réellement démarré :
+- Répartition de charge par générateur :
+- Le générateur peut-il être exclu comme goulot : oui/non, preuve :
+
 ## Résultats k6
 
 | Mesure | Résultat | Seuil | Verdict |
@@ -158,6 +169,10 @@ sécurisé des artefacts éventuels.
 - `5xx` inexpliqués ou indisponibilité ;
 - débit réellement injecté très inférieur au débit annoncé ;
 - saturation sans récupération fiable.
+
+Un test est **INVALIDE**, et non ROUGE pour Attendee, si le générateur atteint 80 % CPU, 90 % de la
+RAM physique, swappe, sature son réseau ou ne démarre pas la charge configurée alors qu'Attendee reste
+sous-utilisé. Il doit être optimisé ou distribué puis rejoué.
 
 Un résultat VERT représente un **GO technique pour le scénario testé**, pas automatiquement une
 preuve de conformité contractuelle aux « 3 000 simultanés ». Cette dernière exige que le client ou le

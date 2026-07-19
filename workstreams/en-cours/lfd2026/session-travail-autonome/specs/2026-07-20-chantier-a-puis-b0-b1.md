@@ -182,6 +182,11 @@ Chaque comparaison avant/après conserve :
 - même méthode de nettoyage/préparation des données ;
 - dashboard et monitoring ouverts pour corréler API, PostgreSQL, Redis, CPU et mémoire.
 
+Le protocole
+[`2026-07-20-protocole-generateur-k6.md`](2026-07-20-protocole-generateur-k6.md) est obligatoire pour
+les scénarios élevés. Un test ne peut pas conclure sur la limite d'Attendee si la santé du générateur,
+le débit réellement injecté et `dropped_iterations` ne sont pas documentés.
+
 ### Mesures consignées
 
 - nombre de tentatives et résultats métier ;
