@@ -4,6 +4,15 @@ Ce dossier reçoit un rapport Markdown pour **chaque** exécution de charge, y c
 interrompu ou invalidé par un problème de générateur. Un bilan final compare tous les scénarios et
 formule un avis explicite sur la préparation de LFD.
 
+## Campagne du 20/07/2026
+
+- [Bilan final L9.b atomique — limite mesurée](./2026-07-20-1635-1708-l9b-atomique-campagne-finale.md)
+- [Diagnostic intermédiaire du goulot 50/s](./2026-07-20-1548-1602-l9b-diagnostic-50rps.md)
+
+Les autres fichiers datés du 20/07 conservent la trace des smokes, baselines, échecs et runs
+invalidés. Ils ne remplacent pas le bilan final : **70/s soutenues et 250 simultanées sont prouvées ;
+75/s, 350 simultanées et 3 000 simultanées ne le sont pas.**
+
 ## Convention de nommage
 
 `YYYY-MM-DD-HHMM-<levier>-<scenario>.md`

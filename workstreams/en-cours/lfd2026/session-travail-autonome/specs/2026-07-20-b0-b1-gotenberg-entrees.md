@@ -71,9 +71,10 @@ Le message de transmission mentionnait une fois
 
 `gotenberg-invoker@attendee-494112.iam.gserviceaccount.com`
 
-Cette seconde valeur correspond au `project_id` du credential. Avant de conclure B0, vérifier par un
-smoke test que `roles/run.invoker` est bien accordé à cette identité exacte. Un `403` avec un token
-correct doit conduire à contrôler ce binding en premier.
+Cette seconde valeur correspond au `project_id` du credential. Le smoke OIDC réel du 20/07 depuis
+l'OVH a réussi avec ce credential ; le binding `roles/run.invoker` est donc effectif pour l'identité
+contenue dans le fichier. Ne pas recopier cette conclusion vers un autre credential sans nouveau
+smoke.
 
 ## 6. Smoke tests obligatoires depuis Nest
 
@@ -87,6 +88,12 @@ correct doit conduire à contrôler ce binding en premier.
 
 Les quatre premiers contrôles ont déjà été annoncés comme validés côté service. B0 doit reproduire
 la validation de bout en bout depuis le backend Nest réellement déployé sur staging.
+
+**Résultat du 20/07 :** anonyme `403`, health OIDC OK et conversion PDF OK depuis un conteneur
+éphémère OVH utilisant l'image staging `5563121` : 8 117 octets, signature `%PDF`, 267 ms. La copie
+temporaire de la clé sur l'OVH a été détruite après le run. Les logs Cloud Run n'ont pas été consultés
+avec cette identité invoker-only ; l'audience erronée reste couverte au niveau tests mais pas rejouée
+sur Cloud Run. Le scénario C2.1 complet reste ouvert.
 
 ## 7. Décision warm/cold
 
