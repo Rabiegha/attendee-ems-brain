@@ -20,6 +20,7 @@ Bugs **confirmés** à suivre, toutes apps confondues. Vient de l'inbox `[bug]`.
 | Revue sécurité CORS origin                                 | back          | [a-faire/cors-origin-security-review](a-faire/cors-origin-security-review.md)                                     |
 | Suppression user & membership multi-tenant                 | back          | [a-faire/user-deletion-multitenant-membership](a-faire/user-deletion-multitenant-membership.md)                   |
 | Reset mot de passe — invalider les sessions actives ?      | back          | [a-faire/password-reset-session-invalidation](a-faire/password-reset-session-invalidation.md)                     |
+| GitHub Actions bloqué (facturation compte) — CI/CD KO depuis 15h35 le 20/07 | infra (org GitHub) | [a-faire/github-actions-billing-outage](a-faire/github-actions-billing-outage.md) |
 
 ## Fait — résolus (historique)
 
