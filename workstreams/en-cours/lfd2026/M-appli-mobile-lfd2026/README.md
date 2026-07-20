@@ -1,9 +1,11 @@
 # Chantier M — Scan mobile et recette terrain LFD 2026
 
-> **Statut au 20/07 : 🟡 M2 partiel + M3 + M5(typecheck) livrés — corrections scan session et son.**
-> M2 : erreurs structurées préservées, déduplication queue, détection ALREADY_SESSION_SCANNED (prêt pour H/L9.1).
-> M3 : sons distincts succès/refus/doublon via expo-av (rebuild natif requis).
-> M5 : typecheck vert (0 erreur TS). Reste M1 (stabilité réseau), M2 reste (cold start, registrations), M4, M5 build RC, M6 recette terrain.
+> **Statut au 20/07 (fin de journée) : 🟡 M2 partiel + M3 + M5(typecheck) livrés et validés sur staging.**
+> M2 : erreurs Axios préservées, dédup queue, heuristique doublon `scanned_at` confirmée sur staging (affiche "déjà scannée à HH:mm" + son warning). Prêt pour contrat 409 H/L9.1.
+> M3 : sons confirmes fonctionnels sur Expo Go / staging (succès 880 Hz, erreur 220 Hz, warning 440 Hz).
+> M5 : typecheck vert (0 erreur TS).
+> Bonus : WebSocket staging fixé (ajout `location /socket.io/` dans nginx) — `[Socket] Connected` confirmé dans les logs.
+> Reste M1 (stabilité réseau), M2 back (H/L9.1 409), M4 (cold start offline), M5 build RC natif, M6 recette terrain.
 
 - **But :** livrer une version mobile stable et prouvée sur les parcours de scan réellement utilisés
   pendant LFD.
@@ -40,7 +42,7 @@
 
 1. **Doublon session invisible.** ~~Le back renvoie le scan existant en HTTP 201. Le mobile affiche donc
    « entrée confirmée » au second scanner au lieu de « déjà scanné à HH:mm ».~~
-   **Corrigé M côté mobile (20/07) :** détection `ALREADY_SESSION_SCANNED` + affichage heure dans ScanScreen.
+   **Corrigé M côté mobile (20/07), validé sur staging :** heuristique `scanned_at` (>10s = doublon) + détection `ALREADY_SESSION_SCANNED` + affichage « déjà scannée à HH:mm » + son warning.
    La correction back (HTTP 409 au lieu de 201) reste dans H/L9.1 ; le mobile est prêt à recevoir le contrat.
 2. **Course sur la capacité de check-in.** Les deux `COUNT` de capacité sont exécutés avant la
    transaction et le verrou est par participant, pas par session. Deux participants différents
@@ -55,9 +57,9 @@
    de registrations sont volontairement exclues de Redux Persist. Après fermeture forcée de l'app,
    un appareil hors ligne ne dispose donc pas forcément de la liste permettant de résoudre les QR. → **M4.**
 6. **Aucun son.** ~~Seuls animation, couleur et haptics sont présents.~~
-   **Corrigé (20/07) :** `expo-av` installé, sons WAV générés (`assets/sounds/`), hook `useScanSound`
+   **Corrigé (20/07), validé sur staging :** `expo-av` installé, sons WAV générés (`assets/sounds/`), hook `useScanSound`
    câblé dans ScanScreen — son distinct pour succès (880 Hz), erreur (220 Hz) et doublon/warning (440 Hz).
-   **Rebuild natif requis** (`npx expo prebuild && eas build`).
+   Fonctionnel sur Expo Go (expo-av inclus dans Expo Go). **Rebuild natif requis pour dev client** (`npx expo prebuild && eas build`).
 7. **Aucun filet automatique mobile.** ~~Aucun test unitaire/E2E mobile ni script `test` n'a été trouvé.
    `npx tsc --noEmit` échoue actuellement sur plusieurs erreurs existantes.~~
    **Typecheck corrigé (20/07) : 0 erreur TS.** Tests E2E mobile → M5/M6.
