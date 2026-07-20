@@ -1,8 +1,9 @@
 # Chantier M — Scan mobile et recette terrain LFD 2026
 
-> **Statut au 19/07 : 🔴 couverture partielle — GO terrain non acquis.**
-> Le code possède un vrai socle offline, mais la conformité CDC ne peut pas être conclue sans
-> corrections, tests multi-appareils et répétition avec des utilisateurs réels.
+> **Statut au 20/07 : 🟡 M2 partiel + M3 + M5(typecheck) livrés — corrections scan session et son.**
+> M2 : erreurs structurées préservées, déduplication queue, détection ALREADY_SESSION_SCANNED (prêt pour H/L9.1).
+> M3 : sons distincts succès/refus/doublon via expo-av (rebuild natif requis).
+> M5 : typecheck vert (0 erreur TS). Reste M1 (stabilité réseau), M2 reste (cold start, registrations), M4, M5 build RC, M6 recette terrain.
 
 - **But :** livrer une version mobile stable et prouvée sur les parcours de scan réellement utilisés
   pendant LFD.
@@ -37,25 +38,29 @@
 
 ### Gaps confirmés dans le code
 
-1. **Doublon session invisible.** Le back renvoie le scan existant en HTTP 201. Le mobile affiche donc
-   « entrée confirmée » au second scanner au lieu de « déjà scanné à HH:mm ».
+1. **Doublon session invisible.** ~~Le back renvoie le scan existant en HTTP 201. Le mobile affiche donc
+   « entrée confirmée » au second scanner au lieu de « déjà scanné à HH:mm ».~~
+   **Corrigé M côté mobile (20/07) :** détection `ALREADY_SESSION_SCANNED` + affichage heure dans ScanScreen.
+   La correction back (HTTP 409 au lieu de 201) reste dans H/L9.1 ; le mobile est prêt à recevoir le contrat.
 2. **Course sur la capacité de check-in.** Les deux `COUNT` de capacité sont exécutés avant la
    transaction et le verrou est par participant, pas par session. Deux participants différents
-   scannés simultanément peuvent tous les deux observer une place disponible.
-3. **Replay session insuffisant.** `SessionsService.scanParticipant` transforme l'erreur Axios en
-   `Error` simple et perd `status/data`. La queue ne peut donc pas classifier proprement un refus
-   métier de session.
-4. **Déduplication locale absente.** Deux `session-scan` offline identiques peuvent rester en queue ;
-   le remplacement des deux IDs temporaires par le même scan serveur peut créer deux lignes locales
-   portant le même ID jusqu'au prochain refresh.
+   scannés simultanément peuvent tous les deux observer une place disponible. → **H/L9.1.**
+3. **Replay session insuffisant.** ~~`SessionsService.scanParticipant` transforme l'erreur Axios en
+   `Error` simple et perd `status/data`.~~
+   **Corrigé (20/07) :** la couche service relaie l'erreur Axios brute ; la mutationQueue classifie
+   correctement 409 `ALREADY_SESSION_SCANNED` et réconcilie le store optimiste au replay.
+4. **Déduplication locale absente.** ~~Deux `session-scan` offline identiques peuvent rester en queue.~~
+   **Corrigé (20/07) :** `enqueue()` rejette le doublon `(sessionId, registrationId, scanType)`.
 5. **Cold start offline incomplet.** Les sessions/historiques sont persistés, mais les grandes listes
    de registrations sont volontairement exclues de Redux Persist. Après fermeture forcée de l'app,
-   un appareil hors ligne ne dispose donc pas forcément de la liste permettant de résoudre les QR.
-6. **Aucun son.** Seuls animation, couleur et haptics sont présents. En environnement bruyant, la
-   vibration seule ne répond pas à l'exigence de retour sonore.
-7. **Aucun filet automatique mobile.** Aucun test unitaire/E2E mobile ni script `test` n'a été trouvé.
-   `npx tsc --noEmit` échoue actuellement sur plusieurs erreurs existantes, dont une dans
-   `ScanScreen` ; une release candidate ne peut pas être déclarée verte ainsi.
+   un appareil hors ligne ne dispose donc pas forcément de la liste permettant de résoudre les QR. → **M4.**
+6. **Aucun son.** ~~Seuls animation, couleur et haptics sont présents.~~
+   **Corrigé (20/07) :** `expo-av` installé, sons WAV générés (`assets/sounds/`), hook `useScanSound`
+   câblé dans ScanScreen — son distinct pour succès (880 Hz), erreur (220 Hz) et doublon/warning (440 Hz).
+   **Rebuild natif requis** (`npx expo prebuild && eas build`).
+7. **Aucun filet automatique mobile.** ~~Aucun test unitaire/E2E mobile ni script `test` n'a été trouvé.
+   `npx tsc --noEmit` échoue actuellement sur plusieurs erreurs existantes.~~
+   **Typecheck corrigé (20/07) : 0 erreur TS.** Tests E2E mobile → M5/M6.
 
 ## Frontières M / H / K / T
 
