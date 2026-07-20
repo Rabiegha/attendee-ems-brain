@@ -3,14 +3,56 @@
 ## Statut
 
 ```txt
-Statut: cadre
-Avancement: 5 %
-Estime: ~5-7 j
+Statut: MVP livré (email sans PDF) — reste PDF + page confirmation
+Avancement: 25 %
+Estime: ~3-4 j restants (PDF + page confirmation)
 Owner: Rabie
-Dependances: C2 pour l'envoi email, B0/B1 pour le PDF, BIL pour les decisions billet/QR/parcours
+Dependances: C2 pour l'envoi email (FAIT), B0/B1 pour le PDF (bloquant pour la suite), BIL pour les decisions billet/QR/parcours
 Inclus: pipeline PDF/email + page confirmation persistante + polling leger + telechargement billet
 Hors perimetre: websocket temps reel, resend avance, correction email self-service, verification email obligatoire
 ```
+
+## Journal des changements
+
+### 2026-07-20 — MVP email session sans PDF (livré sur staging)
+
+**Contexte :** deadline serrée, B0 non terminé. Décision de livrer un MVP email sans PDF
+pour pouvoir présenter un système d'envoi fonctionnel.
+
+**Prérequis résolus avant le MVP :**
+
+1. **Staging ne envoyait pas de mails** — `.env.staging` pointait sur `SMTP_HOST=mailpit`
+   (guardrail load test par conception). Basculé sur `EMAIL_TRANSPORT=mailgun` avec les
+   mêmes credentials que la prod. Rebuild container staging.
+
+2. **Bug `!isAdminSource` dans `registrations.service.ts`** — la condition était inversée :
+   l'email était sauté pour les inscriptions `public_form` et envoyé pour les sources admin.
+   Corrigé : `if (!isAdminSource)` → `if (isAdminSource)`.
+   Ce bug existait aussi en prod, mais les emails prod "fonctionnaient" via `approve-with-email`
+   (bouton admin manuel), un chemin entièrement séparé qui bypass la condition.
+
+**Ce qui a été codé (commit `86806d9` sur `staging`) :**
+
+Dans `src/modules/public/public.service.ts`, fonction `registerToSession` :
+- Ajout de `emailSettings: { include: { approvalTemplate: true } }` dans le include Prisma
+  de la session (pour charger le template dans la même transaction)
+- Retour d'un `_emailContext` interne depuis la transaction (données nécessaires à l'email,
+  strippé du retour API public)
+- `setImmediate` post-transaction : envoi fire-and-forget de l'approval template via
+  `emailService.sendFromCustomTemplate`
+- Clé d'idempotence : `reg:<registrationId>:session:<sessionId>:approval`
+- Variable `sessionName` exposée au template pour personnalisation
+
+**Conditions requises côté config back-office pour que l'email parte :**
+- `approval_enabled = true` dans les email settings de l'event
+- Un approval template lié (`approval_template_id` non NULL avec `template_data`)
+- Inscription `confirmed` (pas `waitlisted`) et première inscription (`already_registered=false`)
+
+**Ce que le MVP ne fait PAS :**
+- Pas de PDF en pièce jointe (dépend de B0/Gotenberg)
+- Pas de page de confirmation persistante
+- Pas d'email sur waitlist → confirmé
+- Pas d'email sur désinscription
 
 ## Pourquoi ce chantier existe
 
@@ -68,16 +110,19 @@ parcours soit exploitable sans attendre un chantier UX complet.
 
 ## Prochaine action
 
-Demarrer apres un chemin PDF exploitable cote B :
+MVP livré. La suite dépend de B0 (chemin PDF exploitable) :
 
 ```txt
-1. choisir le modele ticket/version/status
-2. ajouter job durable ticket.generate
-3. brancher generation PDF
-4. creer worker ticket/pdf separe
-5. separer worker email du process API
-6. creer endpoint/status public de confirmation
-7. creer page confirmation + polling leger + telechargement billet
-8. enqueue email.send avec idempotence
-9. ajouter template/config email billet
+FAIT (MVP 2026-07-20) :
+  ✓ email approval template envoyé après inscription session confirmée
+  ✓ idempotence via clé reg:<registrationId>:session:<sessionId>:approval
+  ✓ variable sessionName disponible dans le template
+
+RESTE (dépend de B0) :
+  1. PDF généré après inscription session (worker Gotenberg)
+  2. PDF attaché à l'email (ou lien R2 signé de secours)
+  3. Page confirmation persistante (/registration-confirmation/:token)
+  4. Endpoint status GET .../status avec polling léger
+  5. Email sur waitlist → confirmé
+  6. Worker email séparé du process API (avant tests de volume)
 ```
