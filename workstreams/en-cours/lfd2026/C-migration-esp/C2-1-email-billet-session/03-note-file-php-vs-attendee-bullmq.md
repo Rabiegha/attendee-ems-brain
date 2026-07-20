@@ -28,9 +28,9 @@ POST /api/public/events/sessions/:sessionToken/register
 -> transaction courte d'inscription/reservation
 -> commit
 -> enqueue durable cote Attendee :
-   - ticket.generate
+   - pdf.generate
    - email.send
--> worker ticket/PDF
+-> worker PDF
 -> worker email Mailgun
 ```
 
@@ -70,9 +70,9 @@ Le flux cible devient :
 ```txt
 register endpoint
 -> commit DB
--> job ticket.generate
--> worker ticket genere le PDF
--> stockage PDF + ticket_status=ready
+-> job pdf.generate
+-> worker PDF genere le PDF
+-> stockage PDF + Badge.status=completed
 -> enqueue email.send
 -> worker email envoie via Mailgun
 -> webhooks Mailgun mettent a jour email_events
@@ -86,7 +86,7 @@ puis la page de confirmation/polling affiche ensuite "billet pret" et "email env
 - **Deux sources de verite** : Attendee possede la registration, la session, l'email, les statuts et les idempotency keys ; la file PHP duplique une partie de ce contexte.
 - **Durabilite faible** : un fichier `queue.jsonl` local depend du disque, du verrou fichier, du cron/worker manuel et n'a pas de dead-letter queue robuste.
 - **Observabilite limitee** : pas de Bull Board, pas de metriques queue standard, pas de retry/backoff centralise, pas de statut billet/email visible facilement depuis Attendee.
-- **Idempotence fragile** : Attendee peut garantir des cles comme `ticket:<registrationId>:v<version>:generate` ou `reg:<registrationId>:session:<sessionId>:ticket-email`; le PHP travaille avec un `ticket_id` local moins relie a la verite metier.
+- **Idempotence fragile** : Attendee peut garantir des cles comme `pdf:badge:<registrationId>:generate` ou `reg:<registrationId>:session:<sessionId>:ticket-email`; le PHP travaille avec un `ticket_id` local moins relie a la verite metier.
 - **Support utilisateur plus dur** : si un participant appelle, l'equipe doit recouper Attendee + fichiers PHP pour savoir si le billet est genere, envoye, bloque ou perdu.
 - **Scalabilite faible** : plusieurs instances PHP ou plusieurs workers fichier augmentent les risques de concurrence, doublons, jobs perdus ou ordre mal gere.
 - **Mauvais endroit pour C2/Mailgun** : C2 a deja BullMQ, `email.send`, throttle Mailgun, webhooks et `email_events`. Refaire une deuxieme infra email cote PHP complexifie inutilement.
@@ -94,10 +94,11 @@ puis la page de confirmation/polling affiche ensuite "billet pret" et "email env
 
 ## Pourquoi Attendee/BullMQ est le bon choix cible
 
-- Attendee possede la **verite DB** : `registration_id`, `session_id`, statut, email, ticket version.
+- Attendee possede la **verite DB** : `registration_id`, `session_id`, statut, email et `Badge`
+  unique par registration. Le MVP n'a besoin ni d'un `ticket_id` ni d'un `ticket_version` metier.
 - BullMQ apporte **retry**, **backoff**, **jobId idempotent**, **dead-letter/logs**, monitoring et separation des workers.
 - C2 fournit deja l'infra email : Mailgun, throttle, webhooks, `email_events`.
-- B/Gotenberg peut etre appele par un worker ticket sans bloquer l'API HTTP.
+- B/Gotenberg peut etre appele par un worker PDF sans bloquer l'API HTTP.
 - La page de confirmation C2.1 peut lire un statut unique dans Attendee : inscription, billet, email.
 
 ## Position court terme
@@ -107,7 +108,7 @@ La file PHP locale peut rester acceptable uniquement comme rustine courte duree 
 - elle ne bloque pas L9b/L9a/L9.1 ;
 - elle ne devient pas la source de verite du billet ;
 - elle ne porte pas la logique Mailgun definitive ;
-- elle est remplacee par `ticket.generate` + `email.send` cote Attendee des que C2.1 demarre.
+- elle est remplacee par `pdf.generate` + `email.send` cote Attendee des que C2.1 demarre.
 
 ## Regle a garder
 

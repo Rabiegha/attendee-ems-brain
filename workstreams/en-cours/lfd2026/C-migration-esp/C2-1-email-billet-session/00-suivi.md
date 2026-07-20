@@ -87,10 +87,12 @@ parcours soit exploitable sans attendre un chantier UX complet.
 - Ne pas creer un deuxieme systeme email.
 - Ne pas generer le PDF dans la requete HTTP d'inscription.
 - Ajouter une demande durable de generation PDF apres inscription session.
-- Preferer un QR stable par registration/attendee et un billet PDF versionne.
+- Utiliser un QR stable par registration/attendee et le `Badge` deja unique par `registration_id`.
+- Ne pas ajouter de `ticket_id` ou `ticket_version` au MVP : le PDF ne liste pas les sessions et
+  le controle des droits session reste dynamique au scan.
 - Ajouter l'email billet session dans l'onglet Email de l'evenement, pas dans chaque session en V1.
 - Garder les parametres session centres sur ouverture/capacite/waitlist.
-- Mettre en place un worker PDF/ticket separe du process API.
+- Mettre en place un worker PDF separe du process API (detail et garde-fous dans B2).
 - Mettre en place un worker email separe du process API comme cible C2.1, au plus tard avant les tests de volume realistes.
 - Ajouter une page confirmation persistante avec polling leger.
 - Afficher billet en preparation, billet pret, email en attente/envoye.
@@ -99,7 +101,6 @@ parcours soit exploitable sans attendre un chantier UX complet.
 
 ## Points ouverts
 
-- Table exacte : `tickets`, `registration_tickets`, `ticket_versions`, ou autre nom.
 - Outbox DB vs enqueue BullMQ directement apres commit.
 - Piece jointe PDF obligatoire ou lien de secours prioritaire.
 - Mapping minimal entre `email_events` Mailgun et l'etat billet visible support.
@@ -108,9 +109,11 @@ parcours soit exploitable sans attendre un chantier UX complet.
 - Niveau de mock PDF/email pour les tests de charge.
 - Texte exact des messages utilisateur et timeout d'attente avant conseil spam/support.
 
+Voir aussi : [B2 — fallback Puppeteer resilient et asynchrone](../../B-email-billet-pdf/B2-fallback-puppeteer-resilient.md).
+
 ## Prochaine action
 
-MVP livré. La suite dépend de B0 (chemin PDF exploitable) :
+MVP livré. La suite dépend de la validation/merge B1, puis partage son worker avec B2 :
 
 ```txt
 FAIT (MVP 2026-07-20) :
@@ -118,7 +121,7 @@ FAIT (MVP 2026-07-20) :
   ✓ idempotence via clé reg:<registrationId>:session:<sessionId>:approval
   ✓ variable sessionName disponible dans le template
 
-RESTE (dépend de B0) :
+RESTE (après B1) :
   1. PDF généré après inscription session (worker Gotenberg)
   2. PDF attaché à l'email (ou lien R2 signé de secours)
   3. Page confirmation persistante (/registration-confirmation/:token)
