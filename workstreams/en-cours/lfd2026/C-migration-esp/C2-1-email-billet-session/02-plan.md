@@ -15,12 +15,12 @@ POST inscription session
    - creer/mettre a jour registration
    - creer RegistrationSessionChoice
    - confirmer ou waitlister la place
-   - creer/invalider un ticket/billet record
+   - creer/mettre en pending le Badge unique de la registration si necessaire
    - creer une demande durable de generation PDF
 -> commit
 -> worker PDF genere ou regenere le billet
 -> stocke le PDF
--> met ticket status ready
+-> met Badge.status=completed
 -> page confirmation affiche le billet quand il est pret
 -> enqueue email.send avec PDF ou lien
 -> worker email C2 envoie via Mailgun
@@ -46,9 +46,8 @@ PDF utilisable.
 
 C2.1 doit rester aligne avec BIL pour :
 
-- decision QR stable par registration vs QR par session
+- QR stable par registration/attendee (decision actee)
 - contenu produit du billet
-- logique de version de billet
 - parcours utilisateur cible apres inscription
 - contraintes futures de backoffice client
 
@@ -68,22 +67,20 @@ Il ne faut pas creer une deuxieme infrastructure email.
 
 ## Modele technique recommande
 
-Ajouter une couche billet, par exemple :
+Reutiliser en priorite le modele existant :
 
 ```txt
 registrations
 registration_session_choices
-tickets / registration_tickets
-ticket_versions
-ticket_generation_jobs ou outbox_events
+badges (deja unique par registration_id, avec status/pdf_url/error_message)
+pdf_generation_jobs BullMQ ou outbox_events
 email_deliveries ou lien metier vers email_events
 ```
 
 Minimum viable C2.1 :
 
-- un record ticket par registration ou registration/session selon la decision QR
-- un `ticket_status`
-- une version de billet
+- le record `Badge` unique de la registration
+- un statut PDF (`pending`, `generating`, `completed`, `failed`)
 - une reference PDF stockee
 - un job durable de generation PDF
 - un email billet idempotent
@@ -91,12 +88,11 @@ Minimum viable C2.1 :
 Etats proposes :
 
 ```txt
-ticket_status:
+pdf_status:
 - pending
 - generating
-- ready
+- completed
 - failed
-- outdated
 
 email_status:
 - not_queued
@@ -155,7 +151,6 @@ Exemple de payload :
   "registration": "confirmed",
   "ticket": {
     "status": "generating",
-    "version": 3,
     "downloadUrl": null
   },
   "email": {
@@ -171,7 +166,6 @@ Quand le billet est pret :
   "registration": "confirmed",
   "ticket": {
     "status": "ready",
-    "version": 3,
     "downloadUrl": "/tickets/download/..."
   },
   "email": {
@@ -195,14 +189,14 @@ Si vous ne recevez pas l'email dans les 10 minutes, verifiez vos spams.
 Votre billet reste telechargeable depuis cette page.
 ```
 
-## QR code et version de billet
+## QR code et identite du billet
 
 Decision recommandee pour LFD2026 :
 
 ```txt
 Un QR stable par registration/attendee.
-Un PDF regenerable qui reflete les sessions actuelles.
-Une version de billet.
+Un seul PDF/badge par registration.
+Le PDF MVP n'embarque pas la liste mutable des sessions.
 ```
 
 Pourquoi :
@@ -211,17 +205,19 @@ Pourquoi :
 - moins de confusion pour l'utilisateur
 - le QR reste valide si les sessions changent
 - le controle d'acces verifie dynamiquement les droits de l'attendee a la session
+- aucun `ticket_id` ou `ticket_version` metier supplementaire a synchroniser
 
 Flux avec QR stable :
 
 ```txt
 Ajout/retrait/changement de session
--> ticket_version++
--> ancien PDF devient outdated
--> job generate_ticket_pdf(registration_id, ticket_version)
--> quand pret, PDF vN devient current
--> email billet envoye si necessaire
+-> aucun changement du QR ou du PDF MVP
+-> le scan resout registration_id
+-> le back verifie en temps reel l'inscription a la session scannee
 ```
+
+Si une future version du PDF affiche les sessions, sa regeneration pourra utiliser une empreinte
+technique du contenu/template. Cela ne versionne ni l'identite du billet ni le QR.
 
 Alternative non retenue en V1 :
 
@@ -255,8 +251,8 @@ Important :
 Cles idempotentes possibles :
 
 ```txt
-ticket:<registrationId>:v<ticketVersion>:generate
-ticket:<registrationId>:v<ticketVersion>:email
+pdf:badge:<registrationId>:generate
+reg:<registrationId>:ticket-email
 reg:<registrationId>:session:<sessionId>:ticket-email
 ```
 
@@ -312,7 +308,6 @@ C2.1 doit prevoir une petite refonte des templates email pour les billets :
   - `sessionLocation`
   - `ticketDownloadUrl`
   - `registrationId`
-  - `ticketVersion`
 - support PDF en piece jointe
 - lien de secours vers PDF
 
@@ -356,8 +351,8 @@ worker-email:
   - throttle Mailgun
   - retry API Mailgun
 
-worker-ticket:
-  - generate_ticket_pdf
+worker-pdf:
+  - generate_badge_pdf
   - appel Gotenberg
   - stockage PDF
   - enqueue email billet
@@ -400,11 +395,11 @@ d'autres leviers.
 
 ## Checklist C2.1
 
-- [ ] Valider decision QR stable par registration vs QR par session.
-- [ ] Ajouter modele ticket/billet + version + status.
-- [ ] Ajouter queue/job durable `ticket.generate`.
+- [x] Valider decision : QR stable par registration/attendee, controle session dynamique.
+- [ ] Reutiliser `Badge` unique par `registration_id` avec status/pdf_url/error_message.
+- [ ] Ajouter queue/job durable `pdf.generate`.
 - [ ] Brancher generation PDF issue de B.
-- [ ] Creer un worker ticket/PDF separe du process API.
+- [ ] Creer un worker PDF separe du process API.
 - [ ] Separer le worker email du process API avant les tests de volume realistes, sauf arbitrage explicite.
 - [ ] Stocker PDF + reference de telechargement.
 - [ ] Ajouter token/page confirmation persistante.

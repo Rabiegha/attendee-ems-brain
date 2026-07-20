@@ -2,7 +2,8 @@
 
 > **Décision : Mailgun** (région EU, IP partagée, API HTTP + queue BullMQ) pour la délivrabilité
 > des ~12 400 envois. Découpé en **C1 (prépa Mailgun + DNS)**, **C2 (migration applicative)**,
-> **C2.1 (email + billet session)** et **C3 (warm-up / délivrabilité opérationnelle)**.
+> **C2.1 (email + billet session)**, **C3 (warm-up / délivrabilité opérationnelle)** et
+> **C4 (fallback SMTP résilient et sous quota)**.
 > 🔴 **Warm-up domaine à lancer tôt** (~2 sem min, 3-4 idéal) — délai calendaire incompressible.
 > ✅ **C1 terminé 15/07 :** plan Mailgun acheté, domaine EU `mail.attendee.fr` vérifié,
 > DNS OVH publiés, env staging/prod posés, tests d'envoi OK.
@@ -12,7 +13,7 @@
 > (Gmail, Outlook/Hotmail, Yahoo, domaines pro).
 
 - **Plan maître :** [../00-plan-action.md](../00-plan-action.md) (§3-C1 / §3-C2)
-- **Avancement (%) :** [../03-suivi-chantiers.md](../03-suivi-chantiers.md) (lignes **C1**, **C2**, **C2.1**, **C3**)
+- **Avancement (%) :** [../03-suivi-chantiers.md](../03-suivi-chantiers.md) (lignes **C1**, **C2**, **C2.1**, **C3**, **C4**)
 
 ## Fichiers du dossier
 
@@ -25,7 +26,8 @@
 | [C2-1-email-billet-session/00-suivi.md](./C2-1-email-billet-session/00-suivi.md)                 | **C2.1** — suivi opérationnel                                             |
 | [C2-1-email-billet-session/01-etat-des-lieux.md](./C2-1-email-billet-session/01-etat-des-lieux.md) | **C2.1** — état des lieux existant                                       |
 | [C2-1-email-billet-session/02-plan.md](./C2-1-email-billet-session/02-plan.md)                   | **C2.1** — plan d'implémentation                                          |
-| [C2-1-email-billet-session/03-note-file-php-vs-attendee-bullmq.md](./C2-1-email-billet-session/03-note-file-php-vs-attendee-bullmq.md) | **C2.1** — pourquoi la file PHP locale est temporaire et pourquoi la cible est Attendee/BullMQ (`ticket.generate` puis `email.send`) |
+| [C2-1-email-billet-session/03-note-file-php-vs-attendee-bullmq.md](./C2-1-email-billet-session/03-note-file-php-vs-attendee-bullmq.md) | **C2.1** — pourquoi la file PHP locale est temporaire et pourquoi la cible est Attendee/BullMQ (`pdf.generate` puis `email.send`) |
 | [c3-warmup-delivrabilite.md](./c3-warmup-delivrabilite.md)                                       | **C3** — suivi opérationnel warm-up, webhooks, métriques, runbook         |
+| [c4-fallback-smtp-resilient.md](./c4-fallback-smtp-resilient.md)                                 | **C4** — failover SMTP contrôlé, quota, anti-doublon et runbook           |
 | [warm-up-strategie.md](./warm-up-strategie.md)                                                   | Stratégie d'envoi warm-up avec base newsletter Channel Scope              |
 | [ChoixESP-transactionnel-pour-Attendee-LFD.pdf](./ChoixESP-transactionnel-pour-Attendee-LFD.pdf) | Rapport source de la décision                                             |

@@ -23,13 +23,15 @@
 | --------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
 | **A**     | **Refonte propre (§7 audit)** — rejouer les leviers proprement                                                                          | 🔴 **Priorité n°1**            | À faire                                                                          | §1–§2 ci-dessous                                                                      |
 | **I**     | **⚡ Levier débit n°1 — compteur capacité dénormalisé + transaction courte** (lève le plafond ~30/s)                                    | 🔴 **Haute (perf)**            | 🟡 Diagnostiqué, non codé                                                        | §3-I                                                                                  |
-| **C**     | Migration ESP (Brevo/Scaleway) — délivrabilité ~12 400 envois                                                                           | 🔴 Haute                       | ⚠️ **warm-up à lancer J1**                                                       | §3-C                                                                                  |
+| **C1–C3** | Migration Mailgun + délivrabilité (~12 400 envois)                                                                                     | 🔴 Haute                       | 🟡 C1/C2 faits, C3 en cours                                                       | §3-C                                                                                  |
+| **C4**    | **Fallback SMTP résilient** — transactionnel critique, anti-doublon, quota minute/jour                                                  | 🟠 P1 résilience               | ⚪ Cadré, mode manuel d'abord                                                     | [C4](./C-migration-esp/c4-fallback-smtp-resilient.md)                                 |
 | **0-MON** | Monitoring & alerting **minimal** (uptime / Sentry / CPU)                                                                               | 🔴 Haute                       | ✅ Prod opérationnel                                                            | §P0                                                                                   |
 | **0-CI**  | CI/CD **minimaliste** (build+test PR + deploy staging)                                                                                  | 🔴 Haute                       | 🟢 Chaîne validée, nettoyage/gouvernance restants                                | §P0                                                                                   |
 | **E**     | Sauvegarde DB automatique (cron + offsite + restore testé)                                                                              | 🔴 Haute                       | ✅ **Terminé** — [PR #15](https://github.com/Rabiegha/attendee-ems-back/pull/15) | §3-E                                                                                  |
 | **D**     | Sécurité QR (signature HMAC + durcir route publique)                                                                                    | 🔸 Moyenne                     | **Gardé** (simple)                                                               | §3-D                                                                                  |
-| **B0**    | **Email → billet PDF (POC)** — Cloud Run **déjà en place** → rendu Gotenberg → PDF joint (chemin heureux)                               | 🔴 Haute                       | 🟡 Cloud Run fait, code à brancher                                               | §3-B                                                                                  |
-| **B1**    | **Email → billet PDF (durcissement)** — auth s2s, fallback lien, séquencement, edge cases, tests                                        | 🔴 Haute                       | ⚪ Après B0                                                                      | §3-B                                                                                  |
+| **B0**    | **Email → billet PDF (client Gotenberg)** — auth OIDC vers Cloud Run privé                                                              | 🔴 Haute                       | 🟢 Client mergé `staging`, smoke runtime restant                                 | §3-B                                                                                  |
+| **B1**    | **Email → billet PDF (branchement)** — retries Gotenberg + fallback Puppeteer compatible                                               | 🔴 Haute                       | 🟢 Branche prête, CI/merge/smoke restants                                        | §3-B                                                                                  |
+| **B2**    | **Fallback PDF Puppeteer résilient** — worker async, circuit breaker, concurrence/budget bornés                                         | 🟠 P1 résilience               | ⚪ Cadré, après B1 et avec C2.1                                                   | [B2](./B-email-billet-pdf/B2-fallback-puppeteer-resilient.md)                         |
 | **H**     | **Inscriptions par session** (lien public par session + capacité/waitlist + refonte front)                                              | 🔴 Haute (**fonctionnel**)     | 🟡 Cadré, prêt à découper                                                        | §3-H                                                                                  |
 | **J**     | **Capacité live forte charge + J-ENTREES** — réservations et entrées physiques live + **pic combiné** insc/check-in                       | 🔴 Haute (**event/CDC**)       | 🟡 Socle inscription live ; dashboard présence/export partiels                   | [J](./J-capacite-live/README.md)                                                       |
 | **BIL**   | **Plateforme billetterie LFD** — landing pages + **backoffice client RBAC et dashboard entrées**                                        | 🔴 Haute (**produit**)         | 🟡 **~35 %, 7–11 j-dev** — Corentin ; dépend de H+J+C2.1/B                      | §3-BIL                                                                                |
@@ -258,71 +260,82 @@ levier dans son propre commit, diff minimal, mesure avant/après.
 ### Chantier B — Chaîne email → billet PDF 🔴 Haute
 
 > **📎 Fichiers liés :** [diagnostic email/billet/wallet §2.2 / §3](./B-email-billet-pdf/email-billet-wallet.md) ·
-> [décision lib PDF/badge (choix moteur)](./B-email-billet-pdf/lib-pdf-badge.md)
+> [décision lib PDF/badge](./B-email-billet-pdf/lib-pdf-badge.md) ·
+> [B2 fallback Puppeteer résilient](./B-email-billet-pdf/B2-fallback-puppeteer-resilient.md)
 
 Aujourd'hui le PDF du billet est généré (Puppeteer→R2) **mais n'est pas joint à l'email**.
 
-**Décision moteur PDF : 🟢 Option D — rendu déporté sur un service externe (Gotenberg sur Cloud Run).**
-On sort **totalement** le rendu PDF du VPS (le goulot CPU mesuré) → charge jour-J neutralisée, fidélité
-préservée (même moteur Chromium), **faisable sans attendre la migration GCP**.
+**Décision moteur PDF : Gotenberg privé sur Cloud Run en primaire, Puppeteer local conservé en
+secours contrôlé.** Le rendu nominal sort du VPS, mais le fallback ne doit pas pouvoir saturer le
+processus API pendant une panne Gotenberg.
 
 > 🧩 **Harnais commun wallet (décision 2026-07-08) :** concevoir le service de génération Cloud Run avec
 > une **interface agnostique** `generate(format, data)` — **PDF = 1ʳᵉ implémentation**, wallet Apple/Google
 > = formats **pluggables** plus tard (cf. **G-harnais**). Le coût du harnais est payé **une fois** ici → pas
 > de refacto quand on ajoutera les wallets. Le check-in lit le **même token QR** quel que soit le format.
 
-> ✂️ **Découpé en B0 (POC, faisable cet aprem) + B1 (durcissement)** — le Cloud Run est **déjà déployé**
-> (à reviewer au call de demain), donc l'item infra ci-dessous est **déjà fait**.
+> ✂️ **Découpage actuel :** B0 = client OIDC isolé ; B1 = branchement compatible + retries ;
+> B2 = exécution asynchrone et protection du fallback. L'orchestration PDF→R2→email reste partagée
+> avec C2.1 pour ne pas créer deux files PDF.
 
-#### B0 — POC (chemin heureux) · **~½ j** (Cloud Run déjà fait)
+#### B0 — Client Gotenberg privé · **~½–1 j**
 
-| Action                                                                                      | Temps estimé |
-| ------------------------------------------------------------------------------------------- | ------------ |
-| ~~Déployer Gotenberg sur Cloud Run~~ — **✅ déjà fait** (review demain)                     | —            |
-| Brancher le back sur le service de rendu (remplacer l'appel Puppeteer local pour le billet) | ~½ – 1 j     |
-| Générer (ou réutiliser le cache R2) le PDF à la confirmation + brancher dans le flux        | ~1 h 30      |
-| Joindre le PDF à l'email (chemin nominal)                                                   | ~1 h         |
+| Action | Statut |
+| --- | --- |
+| Cloud Run Gotenberg privé, invoker OIDC | ✅ Déployé/validé côté GCP |
+| Client Nest OIDC, timeout, validation `%PDF`, erreurs typées | ✅ Mergé `staging` — B0 `f37df97` |
+| Credential/config runtime et smoke réel depuis OVH | ⏳ Reste |
 
-#### B1 — Durcissement (prod 12 400 envois) · **~1,5 – 2 j**
+#### B1 — Branchement compatible · **~1,5–2 j**
 
-| Action                                                                                       | Temps estimé     |
-| -------------------------------------------------------------------------------------------- | ---------------- |
-| **Auth service-to-service** (IAM / clé) + egress VPS→GCP sécurisé (ne pas exposer Gotenberg) | ~½ j             |
-| **Lien de secours** (URL R2 signée) si le rendu échoue                                       | ~1 h             |
-| Séquencer : email envoyé **seulement quand le billet est prêt** (billet → email)             | ~1 h             |
-| Fidélité template (polices, accents, format badge) + edge cases                              | ~½ j             |
-| Tests (idempotence, échec génération, fallback lien, cold-start)                             | ~1 h             |
-| **Sous-total B (B0 + B1)**                                                                   | **~2 – 3 jours** |
+| Action | Statut |
+| --- | --- |
+| Brancher les 3 points de rendu sur Gotenberg | ✅ Branche `feat/pdf-generation-hardening` |
+| Retry transitoire borné + fallback Puppeteer | ✅ Code/tests `9ed7321` |
+| Fidélité JS/polices/dimensions | ✅ Couvert dans B1, smoke réel restant |
+| CI, PR/merge explicite et smoke staging | ⏳ Reste |
 
-**Effort : ~moyen-élevé** (nouveau service managé à exploiter, mais charge VPS éliminée).
+#### B2 — Fallback Puppeteer résilient · **~2–4 j bruts, ~1–2 j nets après C2.1**
+
+- queue `pdf.generate` et worker séparé de l'API ;
+- concurrence Puppeteer basse, timeout, fermeture `finally` et récupération browser ;
+- circuit breaker Gotenberg, cooldown/canari et budgets de fallback ;
+- publication R2 atomique puis `email.send` ;
+- idempotence par `registration_id`, sans `ticket_id` ni `ticket_version` métier.
+
+**Effort : moyen-élevé**, avec recouvrement explicite entre B2 et le worker PDF de C2.1.
 
 > 💰 **Coût Cloud Run :** Gotenberg = 0 € de licence (open source). Compute pay-per-use ≈ **< 1 €**
 > en scale-to-zero, **~5-12 €** si on garde 1-2 instances chaudes sur les 2 jours d'event (anti
 > cold-start). Chiffrage détaillé : comparatif §6.
 >
-> ⚠️ **Garde-fou conservé :** le Puppeteer local **reste en place** comme fallback tant que le rendu
-> Cloud Run n'est pas validé. Comparaison visuelle **pixel-à-pixel** avant de basculer en prod.
-> Le **load test S4** doit inclure un scénario badge (le ~1,5 s/badge est encore une hypothèse).
+> ⚠️ **Gate :** test de charge Gotenberg forcé KO. La latence d'inscription doit rester stable et
+> la lane Puppeteer ne doit pas dépasser son budget CPU/RAM.
 
-### Chantier C — Migration ESP (délivrabilité) 🔴 Haute · ⏳ choix à trancher
+### Chantier C — Mailgun, délivrabilité et fallback SMTP 🔴 Haute
 
 > **📎 Fichiers liés :** [diagnostic email/billet/wallet §1](./B-email-billet-pdf/email-billet-wallet.md) ·
-> [décision ESP — Mailgun](./C-migration-esp/esp-choix-mailgun.md)
+> [décision ESP — Mailgun](./C-migration-esp/esp-choix-mailgun.md) ·
+> [C3 warm-up](./C-migration-esp/c3-warmup-delivrabilite.md) ·
+> [C4 fallback SMTP résilient](./C-migration-esp/c4-fallback-smtp-resilient.md)
 
-Email actuel = **nodemailer SMTP direct** (pas un ESP) → risque de délivrabilité sur ~12 400 envois.
+Mailgun API EU est maintenant le transport primaire en staging/prod. Le SMTP OVH historique reste
+configuré en production, mais il n'existe aujourd'hui aucun failover automatique.
 
-| Action                                                               | Temps estimé                           |
-| -------------------------------------------------------------------- | -------------------------------------- |
-| **Trancher l'ESP** (Brevo / Scaleway)                                | décision (non-dev)                     |
-| Créer le compte + configurer le domaine d'envoi (SPF / DKIM / DMARC) | ~2 h _(+ propagation DNS, calendaire)_ |
-| Brancher l'ESP derrière nodemailer (transport)                       | ~1 h                                   |
-| Test d'envoi en masse représentatif + ajustements                    | ~1 h 30                                |
-| **Sous-total C (dev)**                                               | **~4 h 30**                            |
+| Lot | État / reste |
+| --- | --- |
+| **C1** — compte Mailgun EU + SPF/DKIM/DMARC/webhooks | ✅ Terminé |
+| **C2** — transport API, BullMQ, retries, throttle, idempotence, événements | ✅ Terminé sur `staging` |
+| **C2.1** — PDF puis email après inscription | 🟡 MVP email livré, PDF/page de suivi restants |
+| **C3** — warm-up et délivrabilité réelle | 🟡 En cours, calendaire |
+| **C4** — SMTP de secours borné | ⚪ ~2–3 j : handoff durable, anti-doublon, quota et circuit breaker |
 
-> ⚠️ **Temps calendaire en plus** (pas du dev) : propagation DNS (~qq h → 24 h) et **warm-up IP/domaine**
-> si gros volume (plusieurs jours d'envois progressifs). À anticiper **bien avant** l'ouverture des inscriptions.
+Le C4 ne remplace pas C3 et n'envoie jamais les lots warm-up/newsletter par SMTP. Il réserve le
+relais OVH aux messages transactionnels critiques, commence en mode manuel et ne passe en auto
+qu'après validation du quota, des timeouts ambigus et de la délivrabilité SMTP réelle.
 
-**Effort dev : ~moyen** ; **le vrai enjeu = délivrabilité + calendrier de warm-up.** Plus gros risque client.
+**Effort dev C4 : ~2–3 j** ; le vrai enjeu reste la prévention des doublons et la conservation d'un
+budget SMTP utile pendant un incident long.
 
 ### Chantier D — Sécurité QR 🔸 Moyenne
 
@@ -663,7 +676,7 @@ benchmark ; P ne recrée ni le format O ni l'outbox L.
 | Priorité | Chantier                                                                | Décision                                                                                                  |
 | -------- | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
 | 🔴 P0    | **A** — Refonte propre §7                                               | **Priorité n°1** — débloque le déploiement propre du reste                                                |
-| 🔴 P0    | **C** — ESP (Brevo/Scaleway)                                            | ⚠️ **lancer le warm-up tout de suite** (délai calendaire)                                                 |
+| 🔴 P0    | **C1–C3** — Mailgun + warm-up                                           | C1/C2 faits ; poursuivre C3 sans utiliser le fallback SMTP pour les lots                                  |
 | 🔴 P0/P1 | **I** — ⚡ Levier débit n°1 (compteur capacité dénormalisé + tx courte) | **Le seul levier qui lève le plafond ~30/s** — juste après A, avant le load test S4                       |
 | 🔴 P1    | **0-MON** — Monitoring minimal (uptime + alerte + Sentry)               | Gardé (réduit)                                                                                            |
 | 🔴 P1    | **0-CI** — CI/CD **minimaliste** (build+test PR + deploy staging)       | Gardé (réduit, **sans CD/rollback auto**)                                                                 |
@@ -672,7 +685,8 @@ benchmark ; P ne recrée ni le format O ni l'outbox L.
 | 🔸 P1    | **D** — Sécurité QR HMAC                                                | Gardé (simple, données MEAE)                                                                               |
 | 🔴 P1    | **J** — Capacité live + J-ENTREES                                  | finir L9.1, dashboard salle/créneau et export présent/absent avant répétition                              |
 | 🟠 P1/P2 | **BIL** — Plateforme billetterie LFD (landing + RBAC + entrées)      | ~35 % ; RBAC et vue client CDC à livrer avec H, J et C2.1/B                                               |
-| 🟠 P2    | **B** — Email → billet PDF                                              | Gardé si le client l'exige pour l'event, sinon V2                                                         |
+| 🟠 P1    | **B/B2** — Email → billet PDF + fallback Puppeteer borné                | Finir B1/C2.1 ; B2 partage le worker PDF et protège l'API en panne Gotenberg                              |
+| 🟠 P1    | **C4** — Fallback SMTP résilient                                        | Mode manuel d'abord, transactionnel critique uniquement, quota OVH à confirmer                           |
 | 🔴 P1    | **N** — Architecture event-ready                                        | **Coordonne les garanties sync/async, la charge et les runbooks sans doubler I/J/B/C2.1/T/K/O**           |
 | 🔴 P1    | **O** — Audit métier et sécurité LFD                                    | **Exigence CDC ; socle réutilisable, O-BIL partagé, à fermer avant le k6 final**                           |
 | 🔴 P1    | **M** — Scan mobile et recette terrain                                  | **Gate jour J : corrections offline/multi-scanner, parc réel et répétition GO/NO-GO**                      |

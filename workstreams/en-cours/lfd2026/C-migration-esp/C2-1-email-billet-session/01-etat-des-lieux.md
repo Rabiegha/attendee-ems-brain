@@ -1,5 +1,10 @@
 # C2.1 — Etat des lieux orchestration billet PDF + email session
 
+> **Note de mise à jour 20/07/2026 :** ce document décrivait l'état avant le MVP. L'email
+> d'approbation est maintenant déclenché après l'inscription session confirmée. Le PDF durable,
+> son statut et la page de suivi restent à faire. Le modèle `Badge`, unique par `registration_id`,
+> est réutilisé ; aucun nouveau `ticket_id`/`ticket_version` n'est requis pour le MVP.
+
 ## Resume
 
 C2 a pose une bonne base pour l'envoi email transactionnel : transport Mailgun, queue BullMQ,
@@ -7,9 +12,9 @@ retry, throttle dynamique, idempotence et webhooks de delivrabilite. B porte la 
 et BIL porte les decisions produit billet/QR/parcours. C2.1 doit orchestrer ces briques plutot
 que creer un deuxieme systeme email ou melanger PDF/email dans la requete d'inscription.
 
-En revanche, l'inscription publique a une session ne declenche aujourd'hui ni email, ni PDF,
-ni statut billet. Elle cree ou reutilise la registration event, ajoute le choix session, diffuse
-les compteurs live et retourne.
+Avant le MVP du 20/07, l'inscription publique a une session ne declenchait ni email ni PDF. Elle
+cree ou reutilise toujours la registration event, ajoute le choix session et diffuse les compteurs
+live ; l'email d'approbation est maintenant enfile apres commit, mais le PDF/statut reste absent.
 
 ## Ce que C2 permet deja
 
@@ -72,7 +77,7 @@ Point a noter : ce flux utilise encore `setImmediate(...)` pour declencher l'env
 creation. Avec BullMQ derriere, l'ESP ne bloque pas l'inscription, mais il reste une petite
 fenetre de perte possible si l'API crash apres le commit DB et avant l'enqueue.
 
-## Flux inscription session actuel
+## Flux inscription session audite avant le MVP
 
 Aujourd'hui, `registerToSession` :
 
@@ -89,16 +94,14 @@ Reference code :
 
 - [public.service.ts](/Users/apple/Projects/ems-app/attendee-ems-back/src/modules/public/public.service.ts:357)
 
-Ce qui manque aujourd'hui :
+Ce qui manque après le MVP du 20/07 :
 
-- pas de declenchement email billet session
 - pas de generation PDF apres inscription session
-- pas de record ticket/billet
-- pas de `ticket_status`
+- pas encore d'usage coherent de `Badge.status/pdf_url/error_message` pour ce flux asynchrone
 - pas de `email_status` lie au billet
 - pas de page de suivi persistante
 - pas de resend/correction email
-- pas de mapping direct Mailgun event -> registration/ticket
+- pas de mapping direct Mailgun event -> registration/badge
 
 ## Email verification
 

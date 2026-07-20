@@ -5,7 +5,8 @@
 > billet via l'infra Mailgun/BullMQ existante.
 
 - **Parent :** [C — Migration Mailgun](../README.md)
-- **Depend de :** [B — Email -> billet PDF](../../B-email-billet-pdf/README.md)
+- **Depend de :** [B — Email -> billet PDF](../../B-email-billet-pdf/README.md), dont
+  [B2 — fallback Puppeteer resilient](../../B-email-billet-pdf/B2-fallback-puppeteer-resilient.md)
 - **Depend aussi de :** [BIL — Plateforme billetterie](../../BIL-billetterie/README.md) pour les decisions produit billet/QR/parcours
 - **Suivi transversal :** [03-suivi-chantiers.md](../../03-suivi-chantiers.md) ligne **C2.1**
 - **Inclus V1 :** page confirmation persistante, reload safe, polling leger, statut billet/email,
@@ -47,7 +48,7 @@ Inscription confirmee
 Decision worker :
 
 ```txt
-worker-ticket/pdf separe : requis pour C2.1
+worker-pdf separe : requis pour C2.1 et partage avec B2
 worker-email separe : requis cible, a faire avant gros volume si possible
 api-web : garde les inscriptions synchrones et transactionnelles
 ```
