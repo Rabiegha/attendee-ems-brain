@@ -1,9 +1,10 @@
 # Chantier M — Scan mobile et recette terrain LFD 2026
 
-> **Statut au 21/07 (fin de journée) : M1 + H/L9.1 livrés — M2 désormais complet end-to-end.**
+> **Statut au 21/07 (soir) : M1 + H/L9.1 + M2 livrés — refonte UX scan/check-in session livrée (typecheck vert, test device en cours, non commitée).**
 > M1 : timeout 12s sur scanParticipant, résilience réseau dans la queue (pas d'incrément retry sur erreur réseau), OTA app.json nettoyé (`checkAutomatically ON_LOAD`, suppression `fallbackToCacheTimeout`).
 > H/L9.1 (back) : `sessions.service.ts` lève désormais `ConflictException` 409 `ALREADY_SESSION_SCANNED` au lieu de retourner 201 avec `duplicate:true`. Contrat : `{ code, message, duplicate, session_scan, registration }`. Filtre HTTP mis à jour (409 → "Conflict").
 > M2 complet : mobile lit `responseData.session_scan.scanned_at` et `mutationQueue` lit `effData.session_scan` — alignés sur le contrat H/L9.1. Heuristique `scanned_at` + détection 409 toutes deux actives.
+> **21/07 : refonte UX complète des écrans session/scan** (§ ci-dessous).
 > Reste M4 (cold start offline), M5 build RC natif, M6 recette terrain.
 
 - **But :** livrer une version mobile stable et prouvée sur les parcours de scan réellement utilisés
@@ -16,6 +17,37 @@
 - **Source backlog :** [appli-mobile-lfd2026.md](../../../../backlog/en-cours/appli-mobile-lfd2026.md).
 - **Impression :** aucune impression n'est prévue pour LFD ; PrintNode/print-client ne fait pas partie
   de la recette scan event.
+
+## Refonte UX scan & check-in session (21/07, validée sur maquettes avant code)
+
+Décision produit : **plus d'historique de scan affiché sur mobile**. L'écran session est
+« session-oriented » : une seule liste de personnes avec leur statut de présence, dans les deux cas
+d'usage, discriminés par `session.restrict_by_choice` (chantier H) :
+
+- **cas roster** (`restrict_by_choice = true`, ex. LFD) : liste = inscrits préalables
+  (`GET /events/:id/sessions/:id/registrations`), check-in manuel au tap ;
+- **cas scan libre** (défaut) : liste = participants déjà scannés, dérivée des scans
+  (1 ligne/personne, dernière action retenue), nouveaux via scan QR uniquement.
+
+**Écran session (`SessionDetailsScreen`)** : hero card bleue (compteur `X / Y présents`, % et barre,
+CTA « Scanner un badge » intégré), recherche debouncée, avatars initiales + pastille de présence,
+badge « Présent », actions par ligne check-in / check-out / annuler (undo désactivé sur scan offline
+non sync), tap ligne → profil. Compteur « N présents » (plus de wording « scannés »).
+Progression : `présents / inscrits confirmés` en roster, `présents / capacité` en scan libre
+(`GET /events/:id/sessions/:id/stats`, rafraîchie après chaque action).
+L'historique reste fetché pour la présence locale offline/optimiste mais n'est plus rendu.
+
+**Écran scan (`ScanScreen`)** : les deux gros boutons de mode check-in/check-out sont conservés
+(demande explicite) ; le reste est regroupé dans un bottom sheet (nom session, mode + type de
+session, compteur `X / Y présents` + barre, zone de statut : idle / vérification / carte colorée du
+dernier scan / « Scanner à nouveau »). Supprimés : texte flottant sur la caméra, feedback overlay
+centré, bandeau « En attente... ».
+
+Autres : titre de session centré dans le header (Android), bottom bar masquée sur le dashboard
+event. Slice Redux étendu (`registrationsBySession`, `statsBySession`, patch optimiste du roster).
+Aucune modification back nécessaire (endpoints H existants). Données de démo staging : session
+« Conférence d'ouverture » sur l'event « event test » (3 participants, scans seedés en SQL).
+Typecheck vert. Reste : test device complet puis commit/push.
 
 ## Verdict de l'audit statique du 19/07
 
@@ -79,9 +111,9 @@
 | Lot | Contenu | Estimation M |
 | --- | --- | ---: |
 | M0 — audit | audit statique, matrice CDC, protocole terrain | 0,5 j — fait |
-| M1 — stabilité existante | éjection 499, réseau dégradé, sync/pagination 20k, recherche entreprise, OTA | 2–3 j |
-| M2 — correction scan session | conserver erreurs structurées, dédupliquer queue/store, reconciliation et feedback doublon | 1–2 j |
-| M3 — feedback scan | sons distincts succès/refus/doublon, légende et mode silencieux explicite | 0,25–0,5 j |
+| M1 — stabilité existante | éjection 499, réseau dégradé, sync/pagination 20k, recherche entreprise, OTA | 2–3 j — fait (21/07) |
+| M2 — correction scan session | conserver erreurs structurées, dédupliquer queue/store, reconciliation et feedback doublon | 1–2 j — fait (21/07, contrat 409 end-to-end) |
+| M3 — feedback scan | sons distincts succès/refus/doublon, légende et mode silencieux explicite | 0,25–0,5 j — fait (20/07) |
 | M4 — données offline | indicateur de synchronisation complète, manifeste sessions/participants, stratégie cold start | 1–1,5 j |
 | M5 — release | typecheck vert, build RC, permissions/caméra/background/OTA | 0,25–0,5 j |
 | M6 — recette terrain | répétition, corrections courtes, contre-recette et PV signé | 0,5–1 j |
