@@ -1,11 +1,10 @@
 # Chantier M — Scan mobile et recette terrain LFD 2026
 
-> **Statut au 20/07 (fin de journée) : 🟡 M2 partiel + M3 + M5(typecheck) livrés et validés sur staging.**
-> M2 : erreurs Axios préservées, dédup queue, heuristique doublon `scanned_at` confirmée sur staging (affiche "déjà scannée à HH:mm" + son warning). Prêt pour contrat 409 H/L9.1.
-> M3 : sons confirmes fonctionnels sur Expo Go / staging (succès 880 Hz, erreur 220 Hz, warning 440 Hz).
-> M5 : typecheck vert (0 erreur TS).
-> Bonus : WebSocket staging fixé (ajout `location /socket.io/` dans nginx) — `[Socket] Connected` confirmé dans les logs.
-> Reste M1 (stabilité réseau), M2 back (H/L9.1 409), M4 (cold start offline), M5 build RC natif, M6 recette terrain.
+> **Statut au 21/07 (fin de journée) : M1 + H/L9.1 livrés — M2 désormais complet end-to-end.**
+> M1 : timeout 12s sur scanParticipant, résilience réseau dans la queue (pas d'incrément retry sur erreur réseau), OTA app.json nettoyé (`checkAutomatically ON_LOAD`, suppression `fallbackToCacheTimeout`).
+> H/L9.1 (back) : `sessions.service.ts` lève désormais `ConflictException` 409 `ALREADY_SESSION_SCANNED` au lieu de retourner 201 avec `duplicate:true`. Contrat : `{ code, message, duplicate, session_scan, registration }`. Filtre HTTP mis à jour (409 → "Conflict").
+> M2 complet : mobile lit `responseData.session_scan.scanned_at` et `mutationQueue` lit `effData.session_scan` — alignés sur le contrat H/L9.1. Heuristique `scanned_at` + détection 409 toutes deux actives.
+> Reste M4 (cold start offline), M5 build RC natif, M6 recette terrain.
 
 - **But :** livrer une version mobile stable et prouvée sur les parcours de scan réellement utilisés
   pendant LFD.
