@@ -1,318 +1,283 @@
-# Stratégie warm-up Mailgun — `mail.attendee.fr`
+# Stratégie de réputation Mailgun jusqu'à LFD 2026
 
-> Date : 15/07/2026
-> Domaine : `mail.attendee.fr`
-> ESP : Mailgun EU, IP partagée
-> Source warm-up disponible : base newsletter du magasin Channel Scope
+> **Source de vérité unique — dernière mise à jour : 22/07/2026**
+>
+> Domaine : `mail.attendee.fr` · Mailgun EU · IP partagée
+> Événement : **LFD 2026, les 4 et 5 septembre 2026**
+> Palier de réputation à valider avant l'événement : **3 000 emails réels sur une journée**
+> Détail historique des lots : [suivi-envois-channelscope.md](./suivi-envois-channelscope.md)
 
-## Principe
+Ce fichier fait foi pour les volumes réellement envoyés, les décisions `GO / HOLD / STOP`, les
+critères de délivrabilité et la trajectoire de réputation jusqu'au jour J. Il doit être mis à jour
+après chaque lot.
 
-Le but n'est pas seulement d'envoyer du volume. Le but est de créer de bons signaux :
+Le périmètre est strictement limité à la réputation d'envoi et à la délivrabilité du domaine.
 
-- peu ou pas de hard bounces ;
-- pas de plaintes spam ;
-- ouvertures/clics naturels ;
-- contenu attendu par les destinataires ;
-- montée progressive par fournisseur destinataire.
+## 1. Décision actuelle
 
-## Contrainte cible LFD : pics autour de 3 000 emails
+**Statut au 22/07 : journée d'audit, HOLD jusqu'au résultat. Reprise prévue le 23/07 à 600 emails si
+l'audit est VERT.**
 
-⚠️ Point à ne pas oublier : le warm-up ne vise pas seulement quelques centaines d'emails. Pour LFD,
-on anticipe des **pics autour de 3 000 emails** à absorber proprement (ex. vague d'inscriptions,
-relances, billets/QR, notifications).
+Ce HOLD n'est pas un constat d'incident. Il sert à terminer le bilan Mailgun spécifique à la
+newsletter avant de reprendre la montée. Le tableau de bord global affiche `Sent = 1 458`, mais ce
+compteur inclut la newsletter, les tests et les emails transactionnels du domaine.
 
-Conséquence :
+Conditions obligatoires pour lever le HOLD :
 
-- le domaine `mail.attendee.fr` doit progressivement être exposé à des volumes journaliers proches
-  ou supérieurs à 3 000 emails avant l'event ;
-- le système Attendee doit tenir le chemin `queue -> Mailgun -> webhooks` pendant ces volumes ;
-- la montée J1-J7 est un démarrage, pas la cible finale ;
-- après J7, continuer sur 2-4 semaines avec des paliers vers 3 000/jour puis des tests ponctuels
-  proches du pic attendu.
+- calculer pour les **1 312 newsletters acceptées** les nombres `delivered`, `permanent failure`,
+  `temporary failure`, `complained` et `unsubscribed`, globalement et par fournisseur ;
+- vérifier qu'aucun échec d'authentification, de réputation ou de blocklist n'est présent ;
+- vérifier le one-click unsubscribe réel sur un email reçu ;
+- confirmer que les suppressions Mailgun sont appliquées à la prochaine liste ;
+- inscrire ou vérifier `mail.attendee.fr` dans Google Postmaster Tools ;
+- enregistrer le résultat et la décision dans ce fichier.
 
-Important : **volume** et **débit** sont deux réglages différents.
+Tant que ce bilan n'est pas renseigné, **aucun nouveau lot ne part**. Si le bilan est VERT, le HOLD
+est levé et le premier lot de reprise part le jeudi 23/07, plafonné à 600 emails.
 
-- Volume = nombre d'emails envoyés dans la journée.
-- Débit = vitesse d'envoi (`email:rate_limit_per_second`).
+## 2. Ce qui a réellement été fait
 
-On peut envoyer 3 000 emails à `1 email/s` en environ 50 minutes. Il n'est donc pas nécessaire de
-monter brutalement le débit si la fenêtre d'envoi le permet. La priorité est d'abord la réputation
-provider, puis la stabilité queue/webhooks, puis seulement le débit.
+### Volumes confirmés
 
-## Base Channel Scope
+| Date | Lot de masse | Tests/smokes NL | Newsletter acceptée | Autre warm-up documenté |
+| ---- | ------------: | ---------------: | ---------------------: | -----------------------: |
+| 16/07 | 0 | 0 | 0 | 30 emails internes J1 |
+| 17/07 | 100 | 7 | 107 | 0 |
+| 18/07 | 250 | 1 | 251 | 0 |
+| 19/07 | 0 | 0 | 0 | 0 |
+| 20/07 | 350 | 1 | 351 | 0 |
+| 21/07 | 600 | 1 | **601** | 0 |
+| 22/07 | 0 | 2 | **2** | 0 |
+| **Total** | **1 300** | **12** | **1 312** | **30** |
 
-Bonne nouvelle : la base newsletter Channel Scope peut servir au warm-up si elle est utilisée
-proprement.
+État canonique :
 
-Conditions avant envoi :
+- **1 312 newsletters acceptées par Mailgun** ;
+- **1 303 destinataires uniques** ;
+- **1 342 messages de warm-up documentés** en ajoutant les 30 emails internes J1 ;
+- aucun lot de masse le 22/07 : J6a s'est arrêté faute de `GO`, J6b n'a pas été lancé ;
+- les lignes 701–750 de l'ancienne base ont été volontairement sautées ;
+- le dernier palier de masse réellement validé est donc **600 messages**.
 
-- les destinataires doivent avoir accepté de recevoir des emails de Channel Scope ou d'un contexte
-  explicitement relié ;
-- l'email doit être cohérent avec cette relation, pas un email Attendee/LFD sorti de nulle part ;
-- inclure un lien ou une procédure de désinscription claire ;
-- éviter les adresses anciennes, inconnues, génériques ou suspectes ;
-- commencer par les contacts les plus engagés si cette information existe.
+Listes de preuve :
 
-⚠️ Point de vigilance : warm-up de `mail.attendee.fr` avec une base Channel Scope peut être utile
-techniquement, mais il faut éviter de provoquer des plaintes parce que le destinataire ne reconnaît
-pas l'expéditeur. Le contenu doit donc expliquer clairement le contexte Channel Scope et rester attendu.
+- [CSV — un enregistrement par envoi](./destinataires-nl-warmup-au-2026-07-22.csv) ;
+- [TXT — 1 303 adresses uniques](./destinataires-nl-warmup-uniques-au-2026-07-22.txt).
 
-## Qu'est-ce qui fait le warm-up ?
+### Hiérarchie des preuves
 
-Le warm-up n'est pas un bouton Mailgun. Ce qui chauffe le domaine, ce sont des **vrais envois**
-vers des destinataires réels, avec de bons signaux : livraison, peu de bounces, peu de plaintes,
-ouvertures/clics naturels.
+1. Événements Mailgun filtrés sur l'objet exact et le `messageId`.
+2. Journaux d'exécution VPS.
+3. CSV quotidien local.
+4. Tableau de bord Mailgun global uniquement pour la santé générale du domaine.
 
-Le mécanisme recommandé côté Attendee :
+Le compteur global `Sent` ne doit jamais être additionné aux lots.
 
-```txt
-CSV/liste Channel Scope nettoyée
--> script/commande interne de warm-up
--> queue BullMQ email-send
--> EmailService Attendee
--> Mailgun API EU
--> destinataires réels
--> webhooks Mailgun
--> email_events + stats par domaine destinataire
-```
+## 3. Ce que l'on chauffe réellement
 
-Le script ne "chauffe" pas magiquement le domaine : il sert seulement à **déclencher proprement**
-les envois, par lots, en respectant le throttle et l'idempotence. La réputation vient ensuite des
-réactions mailbox providers et destinataires.
+L'IP Mailgun est **partagée** : elle ne nécessite pas un warm-up d'IP dédié. Le travail porte sur :
 
-À éviter :
+- la réputation de `mail.attendee.fr` ;
+- la régularité des volumes ;
+- la qualité des destinataires et de leurs réactions ;
+- la réputation observée séparément chez Gmail, Outlook, Yahoo et les domaines professionnels.
 
-- boucle `curl` directe vers Mailgun pour toute la base ;
-- envoi depuis un outil externe qui contourne la queue Attendee ;
-- gros import sans idempotence ;
-- envoi sans pouvoir pauser / reprendre / tracer.
+La base Channel Scope est considérée comme **engagée et autorisée**, décision confirmée par le
+propriétaire du projet. On ne réouvre pas ce point à chaque palier. En revanche, on retire toujours
+les bounces, plaintes et désinscriptions avant chaque nouvel envoi. Seuls des emails réels et attendus
+comptent dans cette stratégie de réputation.
+
+## 4. Prérequis permanents de réputation
+
+État constaté au 22/07 :
+
+- SPF présent pour `mail.attendee.fr` ;
+- DKIM `s1._domainkey.mail.attendee.fr` présent, clé 1024 bits ;
+- DMARC `p=none` présent sur `attendee.fr` et hérité par le sous-domaine ;
+- MX Mailgun EU et CNAME de tracking présents ;
+- tracking Mailgun et suppressions activés.
 
-Option acceptable pour les 5 premiers tests : envoi manuel Mailgun ou commande ponctuelle.
-Pour J1 réel et la suite, utiliser un **petit script contrôlé** qui passe par le chemin applicatif.
+Actions :
 
-## Plan J1
-
-Objectif : 20 à 50 emails maximum.
-
-Débit :
-
-```txt
-email:rate_limit_per_second = 1
-email:paused = false
-```
-
-Séquence :
-
-1. Lot 1 : 5 emails internes / adresses sûres.
-2. Attendre 10-15 min, vérifier inbox/spam et Mailgun events.
-3. Lot 2 : 10-15 emails Channel Scope très sûrs.
-4. Attendre 30 min, vérifier Gmail/Outlook/domaines pro séparément.
-5. Lot 3 : compléter jusqu'à 25-40 emails si tout est propre.
-
-Stopper J1 si :
-
-- `spam complaints` > 0 ;
-- plusieurs `permanent failure` ;
-- beaucoup de `temporary failure` chez un provider ;
-- placement spam évident chez Gmail/Outlook.
-
-## Plan J2-J7 indicatif
-
-À ajuster selon les métriques réelles. Ce tableau est une **rampe de démarrage**, pas l'objectif final :
-le besoin LFD impose ensuite de monter vers des journées autour de 3 000 emails si les signaux restent
-propres.
-
-> 📌 **Exécution réelle (mise à jour 18/07)** : J1 = 30 internes (16/07), J2 = 100 (17/07), J3 = 250 (18/07).
-> La suite est **glissée d'un jour** (dimanche 19/07 = repos, base B2B → ouvertures faibles le week-end) :
-> Rampe atténuée validée le 18/07 : J4 = 400 (lun 20/07), J5 = 600 (mar 21/07),
-> J6 = 900 + 600 maximum (mer 22/07, second lot sous `GO` humain explicite).
-> Le palier "J7 progressif" est reporté sur la **nouvelle base à partir du jeudi 23/07**.
-> Programmation et état au jour le jour → [suivi-envois-channelscope.md](./suivi-envois-channelscope.md).
-
-| Jour | Volume cible | Condition                     |
-| ---- | ------------ | ----------------------------- |
-| J1   | 20-50        | setup + premiers signaux      |
-| J2   | ~100         | pas de plainte, bounce faible |
-| J3   | ~250         | inbox OK Gmail/Outlook        |
-| J4   | ~400         | deferred faible               |
-| J5   | ~600         | queue et webhooks stables     |
-| J6   | ~900 + 600 max | pas de blocage provider + GO humain avant le second lot |
-| J7+  | progressif   | montée vers besoin event      |
-
-## Après J7 — montée vers le besoin event
-
-Si aucun signal rouge n'apparaît, continuer la montée sur 2-4 semaines :
-
-- viser progressivement 1 500 -> 2 000 -> 3 000 emails/jour ;
-- garder `1 email/s` au début, puis passer à `2 email/s` uniquement si Gmail/Outlook/Yahoo restent OK ;
-- ne pas augmenter volume et débit le même jour si les signaux sont ambigus ;
-- faire au moins un test contrôlé proche de 3 000 emails avant l'event ;
-- si 3 000 emails/jour passent proprement, tester ensuite la fenêtre opérationnelle réellement voulue
-  (ex. 3 000 emails en ~30-60 min selon throttle).
-
-Règle de montée :
-
-- signaux verts : +30-50 % de volume au prochain palier ;
-- signaux moyens : maintenir le même volume ;
-- `temporary failure` élevé, spam placement ou complaint : pause/réduction et analyse par provider ;
-- `spam complaints` > 0 : stop immédiat du lot et revue de la base/contenu.
-
-### Fenêtres de contrôle obligatoires avant chaque palier
-
-L'absence de doublons protège les destinataires contre la répétition, mais ne remplace pas le suivi
-de réputation : les bounces, plaintes et blocages sont attachés au domaine d'envoi, à l'IP et aux
-mailbox providers. Certains signaux arrivent avec plusieurs heures de retard.
-
-Pour chaque lot, effectuer trois contrôles :
-
-1. **une heure avant le départ** : smoke test interne, vérification visuelle, événements Mailgun et
-   décision humaine `GO / HOLD / STOP` ;
-2. **1 à 2 heures après le départ** : détection rapide d'un blocage ou de `temporary failure` ;
-3. **en fin de journée ou le lendemain matin** : bilan consolidé incluant les retours tardifs.
-
-Décision :
-
-- **VERT — GO** : 0 plainte, bounces permanents faibles, temporaires faibles et dispersés, aucune
-  concentration anormale chez Gmail/Outlook/Yahoo ou un domaine professionnel ;
-- **ORANGE — HOLD/RÉDUCTION** : hausse des temporaires, ralentissement de livraison, blocage concentré
-  chez un provider ou signaux encore incomplets ; maintenir ou réduire le volume, sans accélérer ;
-- **ROUGE — STOP** : plainte spam, blocage provider, hausse nette des bounces permanents ou placement
-  spam évident ; annuler le lot suivant et analyser la base, le contenu et le provider concerné.
-
-Un smoke test valide seulement le chemin technique. Il ne vaut jamais validation de réputation et
-ne peut pas, à lui seul, autoriser le palier suivant.
-
-### Comment donner le `GO`
-
-Après avoir reçu et contrôlé le smoke test, le `GO` doit être donné avant 09h heure de Paris. Deux
-méthodes sont possibles :
-
-1. écrire à Codex `GO J4`, `GO J5` ou `GO J6a` ; Codex vérifie d'abord les événements Mailgun puis
-   crée l'autorisation sur le VPS ;
-2. créer directement le fichier d'autorisation depuis un terminal :
-
-```bash
-# Lundi — J4, lot de 400
-ssh ems-vps 'printf "GO 2026-07-20 350\n" > /tmp/warmup-go-2026-07-20-350'
-
-# Mardi — J5, lot de 600
-ssh ems-vps 'printf "GO 2026-07-21 750\n" > /tmp/warmup-go-2026-07-21-750'
-
-# Mercredi matin — J6a, lot de 900
-ssh ems-vps 'printf "GO 2026-07-22 1350\n" > /tmp/warmup-go-2026-07-22-1350'
-```
-
-Le contenu doit correspondre exactement à la date et à l'offset attendus. Sans fichier valide au
-moment du timer de 09h, le lot est annulé avant tout envoi. Ajouter le fichier après 09h ne relance
-pas automatiquement le lot : il faudra alors décider d'un lancement manuel ou d'un report.
-
-### Plan indicatif semaine 2
-
-Hypothèse : J1-J7 propres, aucune plainte spam, bounce faible, pas de blocage Gmail/Outlook/Yahoo.
-
-| Jour  | Volume cible            | Débit conseillé | Condition                             |
-| ----- | ----------------------- | --------------- | ------------------------------------- |
-| S2-J1 | ~1 000-1 500            | 1 email/s       | reprendre sans saut brutal après J7   |
-| S2-J2 | ~1 500                  | 1 email/s       | delivered OK, pas de deferred anormal |
-| S2-J3 | ~2 000                  | 1-2 emails/s    | Gmail/Outlook toujours OK             |
-| S2-J4 | ~2 000                  | 1-2 emails/s    | maintenir si signaux moyens           |
-| S2-J5 | ~2 500                  | 2 emails/s max  | seulement si signaux verts            |
-| S2-J6 | pause ou petit lot ~500 | 1 email/s       | respiration + analyse provider        |
-| S2-J7 | ~2 500-3 000            | 2 emails/s max  | premier palier proche du besoin event |
-
-### Plan indicatif semaine 3
-
-Objectif : valider que `mail.attendee.fr` et le chemin Attendee/Mailgun tiennent des volumes proches
-du besoin LFD, puis tester la fenêtre opérationnelle.
-
-| Jour  | Volume cible                       | Débit conseillé            | Condition                         |
-| ----- | ---------------------------------- | -------------------------- | --------------------------------- |
-| S3-J1 | ~2 000                             | 1-2 emails/s               | reprise prudente                  |
-| S3-J2 | ~3 000                             | 2 emails/s max             | test volume cible                 |
-| S3-J3 | ~3 000                             | 2 emails/s max             | confirmer stabilité providers     |
-| S3-J4 | pause ou petit lot ~500-1 000      | 1 email/s                  | analyse + nettoyage base          |
-| S3-J5 | ~3 000                             | 2-3 emails/s max           | test de répétabilité              |
-| S3-J6 | test fenêtre : ~3 000 en 30-60 min | 1-2 emails/s selon fenêtre | vérifier queue/webhooks/backlog   |
-| S3-J7 | ajustement                         | selon signaux              | réduire, maintenir ou préparer S4 |
-
-Ces volumes sont des **plafonds conditionnels**. Si la base disponible n'est pas assez propre, il vaut
-mieux rester sous ces volumes que créer de mauvais signaux de réputation.
-
-## Contenu recommandé
-
-Utiliser un vrai contenu, pas un email technique vide.
-
-Exemples acceptables :
-
-- newsletter courte Channel Scope ;
-- annonce ou information utile attendue par les inscrits ;
-- email sobre avec branding clair, adresse de contact, désinscription.
-
-À éviter :
-
-- sujet trompeur ;
-- contenu LFD envoyé à une base qui ne connaît pas LFD ;
-- pièces jointes lourdes au début ;
-- répétition du même email à la même personne ;
-- gros volume sur des adresses non engagées.
-
-## Monitoring
-
-À suivre après chaque lot :
-
-- accepted ;
-- delivered ;
-- temporary failure ;
-- permanent failure ;
-- spam complaints ;
-- open/click si tracking activé ;
-- Gmail vs Outlook vs Yahoo vs domaines pro ;
-- délai inscription/enqueue -> accepted -> delivered.
-- capacité à absorber une vague proche de 3 000 emails sans backlog durable, sans explosion webhook
-  et sans blocage provider.
-
-Pour le calendrier opérationnel du 19 au 22 juillet 2026 :
-
-| Moment (heure de Paris)               | Contrôle / décision                                                      |
-| ------------------------------------- | ------------------------------------------------------------------------ |
-| Dim. 19/07, 10h-12h                  | bilan consolidé J1-J3 ; autoriser ou non les 400 du lundi                |
-| Lun. 20/07, 08h30 / 11h / 17h-18h   | pré-GO J4, contrôle rapide, puis bilan consolidé                         |
-| Mar. 21/07, 08h30 / 11h-12h / 17h-18h | pré-GO J5, contrôle rapide, puis bilan consolidé                       |
-| Mer. 22/07, avant 08h30              | autoriser ou non les 900 de J6a                                          |
-| Mer. 22/07, 11h-14h                  | analyser J6a et décider manuellement `GO / HOLD / STOP` pour J6b         |
-
-**J6b ne doit jamais partir sur le seul critère « 900 lignes journalisées ».** Sa validation doit
-inclure les événements Mailgun (`delivered`, `failed`, `complained`, `unsubscribed`, `deferred`) et
-la répartition par provider. En l'absence de validation humaine explicite avant 15h heure de Paris,
-le lot est reporté.
-
-## Faut-il warmer deux domaines ?
-
-Réponse courte : **non, pas pour le jour de l'event sauf besoin très clair**.
-
-Pour LFD 2026, garder un domaine principal warmé est préférable :
-
-```txt
-mail.attendee.fr
-```
-
-Raisons :
-
-- la réputation se construit par domaine/sous-domaine ;
-- diviser le volume entre plusieurs domaines fragmente les signaux ;
-- chaque domaine doit avoir SPF/DKIM/DMARC, tracking, webhooks, monitoring ;
-- un domaine secondaire non suffisamment warmé n'est pas un vrai secours ;
-- le jour J, la simplicité opérationnelle vaut cher.
-
-Un deuxième domaine peut avoir du sens seulement si :
-
-- il sépare clairement deux flux avec audiences différentes ;
-- il est warmé plusieurs semaines avant ;
-- il a ses propres DNS, webhooks, monitoring et runbook ;
-- on accepte la complexité supplémentaire.
-
-Décision recommandée :
-
-- **Primary event** : `mail.attendee.fr`.
-- **Pas de deuxième domaine pour LFD 2026** sauf incident ou contrainte nouvelle.
-- Reconsidérer post-event si Attendee veut séparer transactionnel, marketing, clients white-label.
+- [ ] demander/générer une clé DKIM **2048 bits** si Mailgun et le DNS le permettent ; 1024 bits
+      fonctionne, mais 2048 bits est la cible ;
+- [ ] vérifier SPF, DKIM et DMARC sur un email Gmail et un email Outlook reçus ;
+- [ ] activer et vérifier Google Postmaster Tools ;
+- [ ] conserver une adresse `From` stable par type de flux : newsletter d'un côté, transactionnel de
+      l'autre, tout en restant sur `mail.attendee.fr` ;
+- [ ] vérifier que les événements `delivered`, `temporary failure`, `permanent failure`, `complained`
+      et `unsubscribed` sont consultables et consolidables dans Mailgun ;
+- [ ] vérifier les suppressions avant chaque lot.
+
+### Désinscription obligatoire pour les newsletters
+
+Chaque newsletter doit contenir :
+
+- un lien visible dans le corps ;
+- `List-Unsubscribe: <https://…>` ;
+- `List-Unsubscribe-Post: List-Unsubscribe=One-Click` ;
+- un traitement effectif de la désinscription sous 48 heures maximum ;
+- l'exclusion des suppressions Mailgun et Attendee avant le lot suivant.
+
+Le one-click unsubscribe concerne les newsletters et messages marketing, pas les confirmations,
+billets, mots de passe ou autres emails strictement transactionnels.
+
+## 5. Critères chiffrés GO / HOLD / STOP
+
+Les métriques sont calculées sur le lot concerné et sur le cumul glissant des 7 derniers jours.
+Les ouvertures et clics restent informatifs : ils ne peuvent jamais autoriser seuls un palier.
+
+### VERT — GO vers le palier suivant
+
+- plainte : **0 sur le lot** et taux glissant inférieur à **0,1 %** ;
+- permanent failures / hard bounces : inférieur à **2 %** ;
+- temporary failures : inférieur à **2 %**, sans concentration chez un fournisseur ;
+- livraison finale : au moins **95 %** ;
+- aucun blocage d'authentification, de réputation ou de blocklist ;
+- suppressions et désinscriptions intégrées ;
+- Google Postmaster : spam inférieur à **0,1 %** lorsqu'une donnée est disponible.
+
+### ORANGE — HOLD, même volume ou réduction
+
+- une plainte isolée, même si le taux reste inférieur à 0,1 % ;
+- hard bounces ou temporaires entre **2 % et 5 %** ;
+- livraison entre **90 % et 95 %** ;
+- ralentissement ou erreurs concentrées chez Gmail, Outlook, Yahoo ou un domaine professionnel ;
+- données trop récentes ou incomplètes.
+
+Action : ne pas augmenter, attendre le bilan final, nettoyer et reprendre au même volume ou plus bas.
+
+### ROUGE — STOP
+
+- taux de plainte supérieur ou égal à **0,1 %** ; le seuil absolu à ne jamais approcher est 0,3 % ;
+- hard bounces ou temporaires supérieurs ou égaux à **5 %** ;
+- livraison inférieure à **90 %** ;
+- blocage provider, erreur SPF/DKIM/DMARC, réputation dégradée ou blocklist ;
+- dysfonctionnement du lien de désinscription ou ré-envoi à des suppressions.
+
+Action : arrêter les lots, identifier la cause, nettoyer la liste et obtenir un nouveau GO humain.
+
+## 6. Audit du 22 juillet et rampe réelle jusqu'au 14 août
+
+Les volumes ci-dessous sont des **plafonds**, jamais des quotas à remplir. Un lot ne part que s'il
+existe un contenu attendu et assez de destinataires engagés. Aucun destinataire ne reçoit le même
+message une seconde fois uniquement pour remplir un palier.
+
+Chaque augmentation est limitée à environ **20 %**. La reprise conserve la cadence du dernier lot
+validé, soit environ **1 email toutes les 15 secondes**. La cadence reste stable pendant cette rampe :
+ce document cherche à construire la réputation, pas à tester la vitesse maximale.
+
+| Date cible | Plafond réel | Décision attendue |
+| ---------- | -----------: | ----------------- |
+| Mer. 22/07 | **0 masse** | audit complet des 1 312 NL, Postmaster, one-click, suppressions |
+| Jeu. 23/07 | **600** | reprise au dernier palier validé, uniquement si audit VERT |
+| Ven. 24/07 | **720** | GO après premier bilan du 23/07 ; sinon maintien ou HOLD |
+| Lun. 27/07 | **850** | GO après bilan consolidé du 24/07 |
+| Mar. 28/07 | **1 000** | GO si VERT ; sinon maintien 720–850 |
+| Mer. 29/07 | **1 200** | GO si VERT |
+| Jeu. 30/07 | **0 augmentation** | consolidation, nettoyage, rapport par provider |
+| Ven. 31/07 | **1 400** | GO si tous les signaux de la semaine sont VERTS |
+| Lun. 03/08 | **1 650** | GO après bilan consolidé du 31/07 |
+| Mar. 04/08 | **0 augmentation** | consolidation intermédiaire |
+| Mer. 05/08 | **1 900** | GO si VERT |
+| Jeu. 06/08 | **2 200** | GO si VERT |
+| Ven. 07/08 | **0 augmentation** | bilan provider et Postmaster |
+| Lun. 10/08 | **2 500** | GO si VERT |
+| Mar. 11/08 | **0 augmentation** | bilan provider et Postmaster |
+| Mer. 12/08 | **3 000** | premier palier cible, contenu réel et attendu uniquement |
+| Jeu. 13/08 | **0 augmentation** | bilan complet du premier 3 000 |
+| Ven. 14/08 | **3 000 max** | répétabilité uniquement si le 12/08 est entièrement VERT |
+
+Un jour sans lot ou un HOLD n'est pas rattrapé en doublant le volume du lendemain. Après une pause
+de plus de 3 jours, reprendre au dernier palier vert ou un palier en dessous.
+
+## 7. Du 17 août au 3 septembre
+
+### Semaine du 17 au 23 août — stabiliser
+
+- deux ou trois envois réels maximum dans la semaine, entre **2 000 et 3 000** chacun ;
+- tous les emails réels envoyés par `mail.attendee.fr` comptent dans le volume quotidien total ;
+- ne pas dépasser 3 000 sur une journée sans nouvelle décision ;
+- vérifier le lendemain de chaque envoi les bounces, plaintes, désinscriptions et la répartition par
+  fournisseur ;
+- maintenir le palier au lieu de l'augmenter au moindre signal orange.
+
+### Semaine du 24 au 30 août — confirmer la réputation
+
+- un ou deux envois réels contrôlés proches de **3 000** si tous les signaux sont verts ;
+- ne pas augmenter au-delà de 3 000 : l'objectif est la répétabilité, pas un nouveau record ;
+- contrôler Google Postmaster Tools et les erreurs Mailgun par fournisseur ;
+- confirmer que le taux de plainte reste inférieur à 0,1 % et que les suppressions sont à jour ;
+- nommer la personne qui décide `GO / HOLD / STOP` pour la dernière semaine.
+
+### Du 31 août au 3 septembre — protéger la réputation
+
+- aucune campagne artificielle destinée uniquement au warm-up ;
+- communications réellement nécessaires seulement ;
+- gel des changements DNS, Mailgun, `From`, DKIM et DMARC à partir du **2 septembre au soir** ;
+- le 3 septembre : smoke Gmail + Outlook + domaine professionnel, contrôle Mailgun, Postmaster,
+  authentification et suppressions ;
+- aucune hausse de volume de dernière minute.
+
+## 8. Protection de la réputation les 4 et 5 septembre
+
+Cette section porte uniquement sur les décisions susceptibles de protéger ou dégrader la réputation.
+
+- vérifier avant le premier envoi : Mailgun EU, SPF, DKIM, DMARC, Postmaster et suppressions ;
+- envoyer un smoke vers Gmail, Outlook et un domaine professionnel ;
+- utiliser les mêmes domaines, adresses `From` et formats déjà validés ;
+- compter ensemble tous les messages provenant de `mail.attendee.fr` dans le volume du jour ;
+- conserver un débit régulier et éviter les rafales soudaines ;
+- surveiller en continu `delivered`, temporaires, permanents, plaintes et erreurs par fournisseur ;
+- ne jamais retenter vers une adresse bounced, complained ou unsubscribed ;
+- suspendre les communications non indispensables en cas de signal orange ou rouge.
+
+### Circuit breaker de réputation
+
+Passage immédiat en HOLD si :
+
+- temporary failures ≥ 2 % sur 10 minutes ;
+- livraison qui tombe sous 95 % sur une fenêtre suffisamment consolidée ;
+- erreur d'authentification ou blocage provider ;
+- toute plainte, avec STOP si le taux atteint 0,1 % ;
+- hard bounces ≥ 2 % sur la vague en cours.
+
+En HOLD : arrêter l'augmentation, réduire ou suspendre les envois non indispensables, analyser les
+codes Mailgun par fournisseur et ne reprendre qu'après une décision humaine explicite.
+
+## 9. Règle de mise à jour après chaque lot
+
+Dans les 2 heures, puis le lendemain matin, ajouter ici :
+
+| Champ obligatoire | Valeur |
+| ----------------- | ------ |
+| Date, objet et audience | — |
+| Volume ciblé / accepted | — |
+| Delivered et taux | — |
+| Permanent failures et taux | — |
+| Temporary failures et taux | — |
+| Complaints et taux | — |
+| Unsubscribes et taux | — |
+| Répartition Gmail / Outlook / Yahoo / pro | — |
+| Google Postmaster | — |
+| Décision `GO / HOLD / STOP` et auteur | — |
+| Prochain plafond autorisé | — |
+
+Les événements Mailgun et `messageId` font foi. Les ouvertures/clics servent au diagnostic mais ne
+remplacent jamais les métriques de livraison et de réputation.
+
+## 10. Références de décision
+
+- [Mailgun — IP warm-up](https://help.mailgun.com/hc/en-us/articles/1260803448249-Can-you-describe-the-IP-warm-up-process)
+- [Mailgun — suppressions](https://help.mailgun.com/hc/en-us/articles/360012287493-Suppressions-Bounces-Complaints-Unsubscribes-Allowlists)
+- [Google — règles expéditeurs](https://support.google.com/mail/answer/81126?hl=fr)
+- [Yahoo — bonnes pratiques expéditeurs](https://senders.yahooinc.com/best-practices/)
+
+## 11. Décisions maintenues
+
+- domaine principal LFD : `mail.attendee.fr` ;
+- pas de deuxième domaine avant LFD 2026 ;
+- IP partagée Mailgun conservée ;
+- la montée est conditionnée par les signaux, jamais par le calendrier seul ;
+- la réputation est travaillée uniquement avec du trafic réel et attendu ;
+- aucun double envoi pour rattraper un jour manqué.

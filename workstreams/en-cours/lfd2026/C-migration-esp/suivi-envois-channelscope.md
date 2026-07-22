@@ -1,12 +1,53 @@
 # Suivi des envois warm-up — base Channel Scope
 
-> **À QUOI SERT CE FICHIER :** source de vérité unique pour savoir **exactement quelles lignes de la
+> **À QUOI SERT CE FICHIER :** historique détaillé pour savoir **exactement quelles lignes de la
 > base ont été envoyées quel jour**. Avant ce fichier, on ne pouvait retrouver l'historique qu'en
 > fouillant les journaux CSV sur le VPS — ce qui a créé une confusion (J2 vs J3) le 18/07.
-> **Toujours mettre à jour ce tableau après chaque lot envoyé.**
+> La **source de vérité unique** pour la stratégie, l'état réel et les cumuls est désormais
+> [warm-up-strategie.md](./warm-up-strategie.md). La mettre à jour en premier après chaque envoi,
+> puis reporter ici le détail du lot.
 >
 > Stratégie / paliers cibles → [warm-up-strategie.md](./warm-up-strategie.md)
 > Détails techniques / risques → [c3-warmup-delivrabilite.md](./c3-warmup-delivrabilite.md)
+
+## État vérifié — 22/07/2026 à 16h38 Paris
+
+Réponse courte pour l'exploitation :
+
+- **Hier, mardi 21/07 : OUI, le warm-up a été fait.** Le lot J5 a envoyé **600/600 newsletters**
+  entre **10h52 et 13h23 Paris** (08h52→11h23 UTC). Le log d'exécution contient 600 succès avec
+  leurs `messageId` Mailgun et se termine avec `exit 0`. Ici, « envoyé » signifie **accepté par
+  l'API Mailgun avec un messageId** ; le bilan final delivered/failed/complained reste à consolider.
+- **Aujourd'hui, mercredi 22/07 : aucun lot de masse n'a été envoyé.** J6a (900 prévus) s'est arrêté
+  à 09h Paris avant envoi, faute du fichier `GO 2026-07-22 1350`. J6b n'a pas été lancé. Aucun
+  processus warm-up et aucun timer warm-up ne sont encore actifs à 16h38.
+- **Deux smoke tests seulement ont été envoyés aujourd'hui**, à `rgharghar@choyou.fr`, à **08h00**
+  et **14h00 Paris**. Ce sont donc 2 messages, mais une seule adresse interne, pas un lot Channel Scope.
+- **Cumul newsletter au 22/07 16h38 : 1 300 envois de lots + 12 tests/smokes = 1 312 messages vers
+  1 303 adresses uniques.** Les 30 emails internes de J1 ne sont pas comptés ici car ils utilisaient
+  le contenu warm-up interne, pas la newsletter Channel Scope.
+- **Réconciliation Mailgun :** le compteur **Sent = 1 458** affiché dans le tableau de bord porte sur
+  tous les emails du domaine et pas uniquement sur cette newsletter. Le filtrage des événements
+  Mailgun `accepted` sur l'objet exact `L'actualité channel de la semaine` retourne **1 312
+  newsletters**. Les compteurs globaux `Delivered = 1 408`, `Failed = 94` et `Opened = 826` ne doivent
+  donc pas être attribués tels quels à la newsletter.
+
+Listes consolidées :
+
+- [CSV détaillé — un enregistrement par envoi](./destinataires-nl-warmup-au-2026-07-22.csv)
+- [TXT — adresses uniques](./destinataires-nl-warmup-uniques-au-2026-07-22.txt)
+
+### Fiabilité des preuves
+
+- **Source principale du cumul : événements Mailgun `accepted` filtrés par objet exact.** Cet audit a
+  retrouvé **7 tests du 17/07** qui n'étaient pas consignés dans les journaux locaux, ce qui explique
+  pourquoi le précédent total de 1 305 était faux.
+- J2 à J4 : plages de la base source confirmées par les suivis d'exécution, tous les envois marqués OK.
+- J5 : les **600 adresses du log d'exécution correspondent exactement** aux lignes 751–1350 de la
+  base normalisée. Le CSV actuellement présent sur le VPS ne contient que les succès 16 à 600
+  (585 lignes, sans en-tête) ; le log complet fait foi pour les 15 premiers et expose leurs
+  `messageId`. Cette anomalie de journal doit être corrigée avant un prochain lot.
+- 22/07 : les deux smoke tests sont présents dans le journal VPS avec horodatage et `messageId`.
 
 ## Décisions opérationnelles (18/07/2026)
 
@@ -37,7 +78,19 @@
   `offset=750, limit=600` tel que programmé initialement. Les 50 adresses lignes 701–750 restent
   définitivement non envoyées sur cette base (acceptable : le plan ne vise pas l'épuisement de la
   base, cf. [warm-up-strategie.md](./warm-up-strategie.md)). `GO 2026-07-21 750` créé manuellement et
-  lot relancé à **08:52 UTC** (smoke du matin 06:00 UTC déjà OK, non répété).
+  lot relancé à **08:52 UTC** (smoke du matin 06:00 UTC déjà OK, non répété). **Résultat final :
+  600/600 envoyés, fin à 11:23 UTC, exit 0.**
+
+## Décisions opérationnelles (22/07/2026)
+
+- **J6a non envoyé** : timer exécuté à 07:00 UTC, arrêt immédiat aux pré-contrôles car le fichier
+  `/tmp/warmup-go-2026-07-22-1350` était absent. Volume du lot : **0/900**.
+- **J6b non envoyé** : aucun lancement manuel effectué. Volume du lot : **0/600**.
+- Les smoke tests de 06:00 UTC et 12:00 UTC sont partis malgré l'absence de lots ; ils sont tous deux
+  journalisés sur `rgharghar@choyou.fr`.
+- **Ne pas lancer rétroactivement J6a/J6b sans une nouvelle décision explicite**, une vérification
+  Mailgun consolidée et une base validée : l'ancienne base et cette newsletter arrivent en fin de
+  fenêtre d'utilisation le 22/07.
 
 ## Il n'y a qu'un seul script d'envoi — pas un script par jour
 
@@ -78,7 +131,7 @@ node -r dotenv/config scripts/ops/send-warmup-wave2-channelscope.js dotenv_confi
 **Règle d'or avant de lancer un lot :** `--offset` = ligne juste après la dernière ligne du tableau
 ci-dessous (colonne "Jusqu'à ligne"). Ne jamais deviner — toujours lire ce tableau d'abord.
 
-## Tableau de suivi (source de vérité)
+## Tableau de suivi détaillé
 
 | Date       | Jour | Lot | Lignes CSV (offset→+limit)              | Jusqu'à ligne | Ciblé | Envoyés OK                                                                                | Échecs       | Statut      | Signaux observés                                                                     |
 | ---------- | ---- | --- | --------------------------------------- | ------------- | ----- | ----------------------------------------------------------------------------------------- | ------------ | ----------- | ------------------------------------------------------------------------------------ |
@@ -87,13 +140,18 @@ ci-dessous (colonne "Jusqu'à ligne"). Ne jamais deviner — toujours lire ce ta
 | 2026-07-18 | J3   | 2   | 101–200 (offset=100, limit=100)         | **200**       | 100   | 100/100 (journal `warmup-wave2-sent-2026-07-18.csv`, +1 smoke test `rgharghar@choyou.fr`) | 0            | ✅ Terminé  | Smoke test 18/07 : accepted→delivered→opened en ~5s, propre. Aucun doublon (vérifié) |
 | 2026-07-18 | J3   | 3   | 201–350 (offset=200, limit=150)         | **350**       | 150   | 150/150 (journal `warmup-wave2-sent-2026-07-18.csv`)                                       | 0            | ✅ Terminé  | Rythme ~1 email/30s. Aucun doublon vérifié                                            |
 | 2026-07-20 | J4   | 4   | 351–700 (offset=350, **limit=350 réel** — 400 prévu) | **700** (750 prévu) | 400 prévu / 350 réel | 350/350 (journal `warmup-wave2-sent-2026-07-20.csv`, +1 smoke `rgharghar@choyou.fr` 06:00 UTC) | 8 permanents + 5 temporaires (13, cumul J4+smoke J5) | ✅ Terminé (hors mécanisme `GO`) | Timer auto 07:00 UTC **annulé** (fichier `GO` absent). Lot relancé **manuellement** 07:53→10:47 UTC avec `limit` réduit à 350 → écart lignes 701–750 (50 adresses) jamais envoyées. 0 plainte spam, ~55 % d'ouverture |
-| 2026-07-21 | J5   | 5   | 751–1350 (offset=750, limit=600)        | **1350**      | 600   | 🟡 en cours (lot lancé 08:52 UTC, GO créé a posteriori)                                     | 0 à ce stade | 🟡 En cours | Timer auto 07:00 UTC **annulé** (fichier `GO` absent, deadline 09h Paris ratée). Smoke 06:00 UTC OK. `GO 2026-07-21 750` créé manuellement, lot relancé avec `skip_smoke=1`. Écart J4 (701–750) **non rattrapé** (décision : option B) |
+| 2026-07-21 | J5   | 5   | 751–1350 (offset=750, limit=600)        | **1350**      | 600   | **600/600** (log complet 08:52→11:23 UTC, exit 0)                                           | 0 à l'envoi  | ✅ Terminé | Timer auto 07:00 UTC annulé faute de GO, puis relance manuelle à 08:52 UTC avec `skip_smoke=1`. Smoke 06:00 UTC OK. Les 600 destinataires du log correspondent exactement aux lignes 751–1350. Écart J4 (701–750) non rattrapé. |
+| 2026-07-22 | J6a  | —   | 1351–2250 (offset=1350, limit=900)      | **1350 inchangé** | 900 | **0/900**                                                                                  | —            | ⛔ Non lancé | Timer 07:00 UTC arrêté aux pré-contrôles : fichier GO absent. Smoke 06:00 UTC envoyé à l'adresse interne. |
+| 2026-07-22 | J6b  | —   | 2251–2850 (offset=2250, limit=600)      | **1350 inchangé** | 600 max | **0/600**                                                                              | —            | ⛔ Non lancé | Pas de lancement manuel. Smoke 12:00 UTC envoyé à l'adresse interne. |
 
-> Cumul confirmé à ce stade (21/07 ~08:55 UTC) :
+> Cumul confirmé au 22/07 à 16h38 Paris :
 >
-> - **Channel Scope : 700 envoyés** (100 le 17/07 + 250 le 18/07 + 350 le 20/07, hors smoke tests) + J5 en cours (751–1350, 600 visés).
-> - **Total warm-up (interne + Channel Scope) : 730 envoyés** (30 + 700) + J5 en cours.
-> - **Doublons : AUCUN** connu à ce stade (dédup interne au journal du jour).
+> - **Lots Channel Scope : 1 300 envoyés** (100 le 17/07 + 250 le 18/07 + 350 le 20/07 + 600 le 21/07).
+> - **Newsletter Channel Scope, tests/smokes inclus : 1 312 messages vers 1 303 adresses uniques.**
+> - **Total warm-up documenté incluant J1 interne : 1 342 messages** (30 internes + 1 300 lots + 12 tests/smokes).
+> - **Aujourd'hui : 2 smokes, 0 envoi de masse.**
+> - **Doublons dans les lots de la base : AUCUN** connu. L'adresse interne de smoke est répétée
+>   volontairement plusieurs fois et n'est pas un doublon accidentel de campagne.
 > - **Écart connu et accepté** : lignes 701–750 (50 adresses) ne seront jamais envoyées sur cette base (cf. décision 21/07 ci-dessus).
 
 ## Programmation jusqu'au mercredi 22/07 (fin de cette base)
@@ -107,21 +165,22 @@ d'engagement pour Gmail. La rampe a été atténuée le 18/07 : progression de 4
 | ---------- | ---- | ----------------------------------- | ---------------------- | ------ | ------------------- | ------------- | --------------------------------------------------------------- |
 | 2026-07-19 | —    | **REPOS** (dimanche, base B2B)      | 350 (inchangé)         | 0      | —                   | —             | — (smoke test `rgharghar@choyou.fr` seulement si besoin)        |
 | 2026-07-20 | J4   | ✅ **réel : 351–700** (limit réduit à 350, GO manquant → envoi manuel) | **700** (750 visé) | 400 | 20s | ~2h15 | signaux J3 propres (bounce faible, 0 plainte)          |
-| 2026-07-21 | J5   | 🟡 **en cours : 751–1350** (offset=750, limit=600, GO créé a posteriori) | **1350** | 600 | 15s | ~2h30 | deferred faible, inbox OK Gmail/Outlook                |
-| 2026-07-22 | J6a  | 1351–2250 (offset=1350, limit=900)  | **2250** | 900 | 10s | ~2h30 | queue/webhooks stables, pas de blocage                 |
-| 2026-07-22 | J6b  | 2251–2850 (offset=2250, limit=600)  | **2850** | 600 max | 10s | ~1h40 | **GO humain obligatoire** après analyse Mailgun de J6a |
+| 2026-07-21 | J5   | ✅ **réel : 751–1350**, 600/600 envoyés | **1350** | 600 | 15s | 2h31 réel | terminé à 13h23 Paris, exit 0                            |
+| 2026-07-22 | J6a  | ⛔ **non envoyé** (GO absent)       | **1350 inchangé** | 0/900 | — | — | arrêt avant envoi au pré-contrôle de 09h Paris          |
+| 2026-07-22 | J6b  | ⛔ **non envoyé**                   | **1350 inchangé** | 0/600 | — | — | aucun lancement manuel ; smoke de 14h seulement         |
 
 > ⚠️ **J6a démarre bien à l'offset=1350 tel que planifié** : la fin de J5 (ligne 1350) n'est pas
 > affectée par le raccourci de J4 (lignes 701–750 définitivement sautées, cf. décision 21/07 plus haut).
 > Seul ce petit trou de 50 adresses est concerné, pas la suite de la rampe.
 
-> **Total maximal mercredi soir : 2 880 emails de warm-up** (30 internes + 2850 Channel Scope), hors
-> smoke tests. Il restera 2370 adresses Channel Scope non envoyées. Elles ne sont pas un objectif à
-> épuiser : jeudi 23/07, aucun nouvel envoi sans validation de la base et des signaux consolidés.
+> **Réel mercredi soir à 16h38 : 1 342 messages de warm-up documentés** (30 internes + 1 300 lots
+> Channel Scope + 12 tests/smokes). Sur les 5 220 adresses de la base, **3 920 n'ont reçu aucun lot** : les 50 lignes
+> 701–750 volontairement sautées et les 3 870 lignes 1351–5220 non lancées. Jeudi 23/07, aucun nouvel
+> envoi sans validation de la nouvelle base et des signaux consolidés.
 
-### ✅ Programmation EFFECTIVE (timers systemd posés le 18/07)
+### Historique de la programmation (timers posés le 18/07, désormais terminés)
 
-Les 4 lots sont programmés sur le VPS via `systemd-run` (timers one-shot, heures **UTC**) et passent
+Les lots avaient été programmés sur le VPS via `systemd-run` (timers one-shot, heures **UTC**) et passaient
 par `scripts/ops/run-warmup-lot.sh` qui, pour chaque lot :
 
 1. un timer séparé envoie le **smoke test à `rgharghar@choyou.fr` une heure avant** ;
@@ -131,8 +190,8 @@ par `scripts/ops/run-warmup-lot.sh` qui, pour chaque lot :
 5. (J6b uniquement) vérifier aussi ≥900 envois au journal du jour ;
 6. lancer le lot et écrire `scripts/ops/warmup-run-<date>-offset<N>.log`.
 
-Le timer J6b est supprimé. Après validation des signaux J6a, créer le fichier d'autorisation puis
-lancer manuellement le runner. Sans validation avant 15h heure de Paris, J6b est reporté.
+Le timer du lot J6b avait été supprimé ; son smoke séparé est néanmoins parti à 12h00 UTC. J6b n'a
+pas été lancé manuellement. Au 22/07 à 16h38, il ne reste **aucun timer warm-up actif**.
 
 | Action       | Heure Paris | Heure VPS (UTC) | Paramètres / condition                         |
 | ------------ | ----------- | --------------- | ---------------------------------------------- |
