@@ -1,389 +1,259 @@
-# Suivi operationnel — Gotenberg Cloud Run + Auth
+# Suivi opérationnel — Gotenberg Cloud Run + Auth OIDC
 
-> Chantier B0/B1 — LFD 2026  
-> Derniere mise a jour : 2026-07-17  
-> Objectif du creneau : valider le meme flux depuis Nest/OVH maintenant que Cloud Run prive est deploye et teste cote GCP.
+> Chantier B0/B1 — LFD 2026
+> Dernière vérification réelle : **23/07/2026 à 10h47 Paris**
+> Objet du call : confirmer l'exploitation GCP, puis organiser les derniers tests métier et de charge.
 
----
+## Résumé à donner pendant le call
 
-## Etat express
+Le chemin technique **OVH staging → OIDC → Cloud Run privé → Gotenberg → PDF** fonctionne.
 
-| Sujet | Statut | Note |
+- B0 et B1 sont mergés dans `main` et `staging`, avec CI verte.
+- Le staging OVH exécute l'image immutable `ac5b01a072251a4e6c64934747ce92faae7eae73`.
+- `GOTENBERG_ENABLED=true` sur staging ; Gotenberg n'est pas activé en production.
+- Le credential est hors Git, mode `600`, monté en lecture seule dans le conteneur API.
+- Le service Cloud Run refuse toujours les appels anonymes en `403`.
+- Le smoke lancé le 23/07 depuis le conteneur staging réellement déployé est vert :
+  - health authentifié : OK ;
+  - conversion HTML : OK ;
+  - durée : **271 ms** ;
+  - PDF : **8 117 octets**, signature `%PDF`.
+- Le client Gotenberg est branché sur les trois chemins PDF et Puppeteer reste le fallback
+  automatique.
+- Le flux métier « inscription session → vrai badge PDF → pièce jointe email » est codé, mergé et
+  déployé en staging, mais son smoke bout en bout avec un vrai événement LFD reste à exécuter.
+
+## État réel vérifié
+
+| Sujet | État au 23/07 | Preuve |
 | --- | --- | --- |
-| POC local Gotenberg | Fait | PDF genere, rendu global OK, ecart surtout anti-aliasing texte. |
-| Architecture cible | Fait | Nest/OVH appelle Cloud Run en HTTPS, Cloud Run retourne les bytes PDF, pas de rappel vers OVH. |
-| Cloud Run Gotenberg | Fait cote GCP | Service deploye en `europe-west9`, URL fournie, smoke tests GCP OK. |
-| Auth Cloud Run | Fait cote GCP | Service prive : anonyme refuse en 403, OIDC requis. |
-| Integration Nest/OVH | A faire cote Rabie | Generer le token OIDC via service account, appeler Gotenberg, garder fallback Puppeteer. |
-| Smoke test Nest/OVH | Prochaine etape | Rejouer depuis Nest/OVH : health tokenise, refus anonyme, PDF 1 page, logs Cloud Run. |
+| Cloud Run Gotenberg | ✅ Accessible | URL réelle répond ; endpoint privé |
+| Auth anonyme | ✅ Refusée | `GET /health` et endpoint conversion → `403` sans token |
+| Auth OIDC depuis OVH | ✅ Validée | health OIDC OK depuis `ems-staging-api` |
+| Binding IAM | ✅ Validé fonctionnellement | token du credential accepté par Cloud Run |
+| Conversion PDF minimale | ✅ Validée | 8 117 octets, `%PDF`, 271 ms |
+| Client Nest B0 | ✅ Mergé/déployé | PR #51 + correctif multipart PR #54 |
+| Branchement B1 | ✅ Mergé/déployé | trois points PDF, retries, fallback, logs/métriques |
+| Credential staging API | ✅ Présent | fichier mode `600`, montage `/run/secrets:ro` |
+| Gotenberg staging | ✅ Activé | `GOTENBERG_ENABLED=true` |
+| Gotenberg production | ⏸️ Désactivé/non configuré | Puppeteer reste le chemin actif |
+| Vrai badge LFD sur staging | 🟠 À valider | smoke minimal vert, pas encore de preuve métier récente |
+| Email avec PDF joint | 🟠 Codé, smoke réel restant | service et tests présents, aucun run métier observé |
+| Fallback réel provoqué | 🟠 À valider | couvert par tests, pas encore provoqué sur staging |
+| Charge 3 000 PDF | 🔴 Non exécutée | runner sur branche dédiée, aucun rapport de résultat |
+| Credential dans le worker | 🔴 Absent | volume secrets monté sur l'API seulement |
 
----
+## Configuration confirmée
 
-## Retour equipe GCP — 2026-07-17
+| Paramètre | Valeur |
+| --- | --- |
+| Projet GCP | `attendee-494112` |
+| Région | `europe-west9` (Paris) |
+| URL Cloud Run | `https://badge-generator-service-ipn4gzbe6a-od.a.run.app` |
+| Audience OIDC | même URL, sans chemin ni slash final |
+| Compte de service | `gotenberg-invoker@attendee-494112.iam.gserviceaccount.com` |
+| Endpoint santé | `GET /health` |
+| Endpoint PDF | `POST /forms/chromium/convert/html` |
+| Timeout applicatif | `60 s` |
+| Limite annoncée | `32 MB` par requête |
 
-Infos recues :
+L'ancienne adresse sans tiret dans le project ID était erronée. Le smoke authentifié prouve que
+l'identité avec `attendee-494112` est bien autorisée.
 
-```txt
-Cloud Run URL / audience OIDC:
-https://badge-generator-service-ipn4gzbe6a-od.a.run.app
+## Smoke réel du 23 juillet
 
-Endpoint conversion HTML:
-POST https://badge-generator-service-ipn4gzbe6a-od.a.run.app/forms/chromium/convert/html
-
-Health check:
-GET https://badge-generator-service-ipn4gzbe6a-od.a.run.app/health
-
-GCP project:
-attendee-494112
-
-Region:
-europe-west9 (Paris)
-
-Calling service account:
-gotenberg-invoker@attendee494112.iam.gserviceaccount.com
-
-Timeout:
-60 s
-
-Payload hard limit:
-32 MB/request
-```
-
-Validations deja faites cote GCP :
-
-- [x] service Cloud Run deploye ;
-- [x] `--no-allow-unauthenticated` actif ;
-- [x] requete anonyme refusee avec `403` par le frontend Google avant Gotenberg ;
-- [x] `roles/run.invoker` donne au service account ci-dessus, scope service uniquement ;
-- [x] requete avec token OIDC valide acceptee ;
-- [x] generation PDF OK, 1 page confirmee ;
-- [x] requetes visibles dans Cloud Run Logs Explorer ;
-- [x] allowlist IP OVH non requise en plus d'OIDC avant event.
-
-Decision recommandee sur `min-instances` :
+Exécuté dans `ems-staging-api`, et non depuis un poste local :
 
 ```txt
-Pendant event / fenetres de pic: min-instances=1
-Hors fenetres de pic: min-instances=0
+[1/2] GET .../health (token OIDC)
+Health check OK.
+
+[2/2] POST .../forms/chromium/convert/html
+Gotenberg PDF généré: durationMs=271 pdfBytes=8117
+signature=%PDF
+Smoke test B0: SUCCÈS
 ```
 
-Raison : eviter le cold start Chromium pendant les inscriptions, tout en reduisant le cout en
-periode calme. Pour l'instant, le service est laisse a `min-instances=1`.
-
-### Credentials cote OVH/Nest
-
-L'equipe GCP transmettra la cle JSON du service account via canal securise, pas par email.
-
-Options de stockage cote Nest/OVH :
+Contrôle anonyme effectué séparément le même jour :
 
 ```txt
-GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json
+GET /health                              -> 403
+POST /forms/chromium/convert/html        -> 403 sans token
 ```
 
-ou variable d'environnement contenant le JSON, selon ce qui est le plus simple sur le VPS.
+Ce test valide le réseau sortant OVH, le credential, l'audience, IAM, le multipart et le retour PDF.
+Il ne valide pas encore un template LFD complet, les polices, R2 ni l'email final.
 
-Implementation recommandee :
+## Ce qui est maintenant dans le code
 
-```ts
-google-auth-library.getIdTokenClient(
-  "https://badge-generator-service-ipn4gzbe6a-od.a.run.app",
-)
-```
+### B0 — client OIDC privé
 
-Le client gere le cache et le refresh du token OIDC. L'audience doit etre exactement l'URL Cloud
-Run ci-dessus, sans chemin et sans slash final ajoute.
+- `google-auth-library.getIdTokenClient(audience)` ;
+- cache et renouvellement du token gérés par la bibliothèque ;
+- `GET /health` authentifié ;
+- envoi multipart avec fichier principal nommé `index.html` ;
+- validation d'une réponse non vide commençant par `%PDF` ;
+- erreurs structurées : timeout, indisponibilité, 401/403, configuration désactivée ;
+- aucun token, credential ou HTML métier dans les logs.
 
-### Details Gotenberg importants
+Un défaut réel de boundary multipart a été découvert pendant le premier smoke. Le correctif fige
+le formulaire en `Buffer`, conserve la boundary et fixe `content-length`. Le smoke du 23/07 valide
+ce correctif depuis l'image déployée.
 
-- `index.html` doit etre le nom du fichier HTML principal dans le multipart.
-- Les images/CSS/fonts sont envoyes comme fichiers additionnels et references par chemins relatifs.
-- Header requis :
+### B1 — moteur principal + fallback
 
-```http
-Authorization: Bearer <OIDC token>
-```
+Les trois chemins PDF utilisent Gotenberg lorsque le flag est actif :
 
-- Audience OIDC :
+1. export PDF de test depuis l'éditeur ;
+2. PDF multi-pages d'un événement ;
+3. PDF d'un badge individuel.
 
-```txt
-https://badge-generator-service-ipn4gzbe6a-od.a.run.app
-```
+Politique actuelle :
 
-- Surveiller la taille HTML + assets + fonts : limite dure 32 MB.
+- 1 essai initial + 2 retries sur timeout/indisponibilité ;
+- backoff `500 ms`, puis `1 500 ms` ;
+- aucun retry sur 401/403 ou mauvaise configuration ;
+- fallback Puppeteer automatique après échec ;
+- Puppeteer direct si `GOTENBERG_ENABLED=false` ;
+- logs structurés `pdf_render` et compteurs en mémoire.
 
----
+Il existe **27 tests ciblés** sur le client, les erreurs, les métriques, le retry/fallback et le
+câblage des trois points de rendu.
 
-## Prochaine validation cote Rabie / Nest
+### Email avec badge PDF
 
-1. Recuperer le credential service account par canal securise.
-2. Configurer l'environnement Nest/OVH :
+Le service `SessionRegistrationEmailService` :
+
+1. génère ou récupère le badge ;
+2. demande le PDF au moteur Gotenberg/Puppeteer ;
+3. ajoute `badge-<registrationId>.pdf` comme pièce jointe ;
+4. passe le message à l'infrastructure email avec clé d'idempotence.
+
+Ce code est présent dans le SHA staging actuel. Il manque encore un smoke métier complet avec un
+vrai événement, un vrai template et une boîte de réception de test.
+
+## PR et déploiements
+
+| PR | Contenu | État |
+| --- | --- | --- |
+| #51 | Client OIDC Gotenberg B0 | ✅ mergée, CI verte |
+| #53 | B1 : branchement, retries et fallback Puppeteer | ✅ mergée, CI verte |
+| #54 | Correctif boundary multipart | ✅ mergée, CI verte |
+| #56 | Montage du secret Gotenberg sur l'API staging | ✅ mergée, CI verte |
+| #57 | Scripts de diagnostic Gotenberg/Puppeteer | ✅ mergée, CI verte |
+
+Le SHA staging `ac5b01a` a lui aussi une CI complète verte et correspond au SHA déployé.
+
+## Environnements
+
+### Staging
 
 ```txt
 GOTENBERG_ENABLED=true
-GOTENBERG_AUTH_MODE=oidc
 GOTENBERG_BASE_URL=https://badge-generator-service-ipn4gzbe6a-od.a.run.app
-GOTENBERG_URL=https://badge-generator-service-ipn4gzbe6a-od.a.run.app/forms/chromium/convert/html
-GOTENBERG_AUDIENCE=https://badge-generator-service-ipn4gzbe6a-od.a.run.app
-GOTENBERG_TIMEOUT_MS=60000
-GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json
+GOOGLE_APPLICATION_CREDENTIALS=/run/secrets/gotenberg-invoker-key.json
 ```
 
-3. Verifier `GET /health` avec token.
-4. Verifier `POST /forms/chromium/convert/html` avec un `index.html` minimal.
-5. Verifier que l'appel sans token retourne `403`.
-6. Verifier le PDF genere depuis Nest/OVH : non vide, ouvrable, 1 page.
-7. Verifier les logs Cloud Run.
-8. Brancher ensuite le client Gotenberg dans le worker PDF avec fallback Puppeteer.
+- API healthy ;
+- credential présent dans l'API ;
+- secret monté en lecture seule ;
+- Gotenberg réellement joignable et authentifié.
 
----
+### Production
 
-## Historique — preparation avant retour GCP
+- code B0/B1 présent ;
+- variables Gotenberg absentes/non activées ;
+- comportement actuel : Puppeteer ;
+- aucune activation prod avant le smoke métier staging, le test de fallback et une décision GO.
 
-> Cette section est conservee pour trace. Elle date d'avant la reception des infos GCP du
-> 2026-07-17. Le service Cloud Run est maintenant deploye ; les points "bloques jusqu'a reception
-> des infos GCP" sont donc leves cote GCP et deviennent des actions de validation cote Nest/OVH.
+## Point découvert : worker sans credential
 
-Le call etait reporte a mardi prochain ; l'objectif cote Rabie etait de ne pas attendre et de
-preparer tout ce qui ne dependait pas encore de l'URL Cloud Run reelle.
+Le conteneur `ems-staging-worker` reçoit les variables Gotenberg, mais le volume
+`/opt/ems-attendee/staging/secrets:/run/secrets:ro` n'est monté que dans `ems-staging-api`.
 
-### Ce que je peux faire sans URL Cloud Run
+Conséquence :
 
-| Action cote Rabie | Faisable sans URL ? | Pourquoi / livrable |
-| --- | --- | --- |
-| Definir les variables d'environnement | Oui | Preparer `GOTENBERG_URL`, `GOTENBERG_AUDIENCE`, `GOTENBERG_AUTH_MODE`, `GOTENBERG_TIMEOUT_MS`, `GOTENBERG_ENABLED`. Les valeurs reelles seront injectees mardi. |
-| Preparer le client HTTP Gotenberg | Oui | Code qui poste le HTML vers `/forms/chromium/convert/html`, avec timeout, erreurs lisibles, logs, et retour `Buffer`. |
-| Preparer l'interface de rendu PDF | Oui | Pouvoir choisir `puppeteer` ou `gotenberg` via config, sans casser le fallback local. |
-| Garder Puppeteer en fallback | Oui | Si Cloud Run echoue ou est desactive, le systeme continue avec le chemin actuel. |
-| Preparer la generation du token OIDC | Partiellement | On peut coder le provider et les tests mockes. Le token final depend de l'audience reelle Cloud Run. |
-| Preparer les tests unitaires/mock | Oui | Simuler `200 PDF`, `401/403`, timeout, 5xx, fallback Puppeteer. |
-| Preparer le script de smoke test | Oui | Script parametrable par env : des que l'URL et le token sont disponibles, on lance. |
-| Preparer le HTML minimal de test | Oui | Fichier `index.html` simple pour valider Gotenberg independamment du template final. |
-| Mesurer le payload template reel | Oui | Exporter/generer un HTML de badge, mesurer HTML + assets + fonts pour anticiper les limites Cloud Run. |
-| Rejouer le comparateur local | Oui | Continuer la validation rendu Puppeteer vs Gotenberg local sur template final. |
+- pas de blocage immédiat pour le rendu synchrone encore exécuté dans l'API ;
+- blocage futur dès que B2 déplace la génération PDF dans le worker ;
+- en l'état, le worker tenterait Gotenberg sans fichier de credential puis basculerait vers
+  Puppeteer, ce qui irait à l'encontre de l'architecture cible et pourrait charger le VPS.
 
-### Ce qui etait bloque jusqu'a reception des infos GCP
+Action avant B2 : monter le même secret read-only dans le worker, redéployer, puis refaire le smoke
+depuis le worker.
 
-| Point | Bloque par quoi ? | Pourquoi |
-| --- | --- | --- |
-| Generer un token OIDC valide final | URL/audience Cloud Run exacte | L'audience du token doit matcher le service Cloud Run. |
-| Tester `--no-allow-unauthenticated` | Service Cloud Run deploye | Il faut l'URL reelle pour verifier le refus anonyme `401/403`. |
-| Tester `roles/run.invoker` | IAM configure cote GCP | Sans role, le token peut etre genere mais l'appel sera refuse. |
-| Valider le PDF via Cloud Run | Service deploye + URL | Le rendu local ne prouve pas l'appel Cloud Run prive. |
-| Decider allowlist IP OVH | Reponse equipe GCP | C'est une policy infra/securite cote GCP. |
-| Mettre les env staging/prod definitives | URL + audience + credential final | On peut preparer les noms, pas les valeurs finales. |
+## Ce qui reste réellement à faire
 
-### Ordre conseille avant mardi
+### P0 avant activation production
 
-1. Preparer le client Gotenberg cote Nest avec config env et fallback Puppeteer.
-2. Preparer la couche auth OIDC derriere une interface, meme si l'audience reelle manque.
-3. Ajouter des tests mockes : success PDF, 401/403, timeout, fallback.
-4. Preparer un script de smoke test parametrable par `GOTENBERG_BASE_URL`.
-5. Demander a l'equipe GCP d'envoyer les infos des que le service est pret, idealement avant mardi.
-6. Mardi : injecter URL/audience/credential, lancer smoke test ensemble, puis brancher staging.
+- [ ] Générer un badge avec le template LFD réel depuis staging.
+- [ ] Vérifier visuellement dimensions, QR, accents, images et polices.
+- [ ] Tester le flux complet inscription session → PDF → email avec pièce jointe.
+- [ ] Provoquer une indisponibilité contrôlée et prouver le fallback Puppeteer.
+- [ ] Vérifier que les logs `pdf_render` permettent d'identifier moteur, durée, taille et fallback.
+- [ ] Décider explicitement du GO production.
 
-### Infos minimales a demander a l'equipe GCP
+### P1 capacité et exploitation
 
-- URL Cloud Run du service Gotenberg.
-- Region et projet GCP.
-- Nom/email du service account appelant.
-- Confirmation que `--no-allow-unauthenticated` est actif.
-- Confirmation que le service account appelant a `roles/run.invoker`.
-- Decision sur l'allowlist IP OVH : necessaire ou non en plus de l'OIDC.
-- Mode conseille pour le credential cote OVH/Nest : cle service account temporaire, impersonation, ou autre mecanisme prefere par leur policy.
+- [ ] Faire valider par l'équipe GCP la valeur actuelle de `min-instances`.
+- [ ] Confirmer l'image Gotenberg exacte et son digest, pas seulement `gotenberg:8`.
+- [ ] Confirmer les limites Cloud Run : concurrence, max instances, CPU, mémoire et timeout.
+- [ ] Exécuter une montée progressive avant les 3 000 PDF :
+  `10 → 100 → 500 → 1 000 → 3 000`.
+- [ ] Définir les seuils d'arrêt : erreurs, 429/5xx, p95, saturation et coût.
+- [ ] Vérifier Cloud Run Logs/Monitoring et prévoir les alertes.
 
-### Brouillon de reponse mail
+### P1 worker/B2
 
-Objet : Cloud Run Gotenberg - preparation avant le call de mardi
+- [ ] Monter le credential read-only dans `ems-staging-worker`.
+- [ ] Refaire health + PDF depuis ce conteneur.
+- [ ] Séparer la génération PDF de l'API avec concurrence Puppeteer bornée.
 
-Bonjour,
+### P2 secrets
 
-Merci pour l'information, bien note pour le report du call a mardi prochain.
+- [ ] Conserver la clé hors Git et restreinte à `roles/run.invoker` sur ce service.
+- [ ] Définir rotation/révocation.
+- [ ] Étudier Secret Manager ou Workload Identity Federation après l'événement pour éviter une clé
+  longue durée sur OVH.
 
-De mon cote, pour eviter d'attendre mardi et avancer en parallele, je vais preparer l'integration
-cote OVH/Nest avec des variables d'environnement et un smoke test parametrable.
+## Questions à poser à l'équipe GCP
 
-Pour que nous puissions faire un test complet ensemble mardi, pouvez-vous me transmettre des que
-possible, idealement avant le call :
+1. Quelle image/digest Gotenberg est actuellement déployée ?
+2. Quelle est la valeur actuelle de `min-instances` ? Peut-on confirmer `1` pendant les pics LFD ?
+3. Quelles sont les valeurs `concurrency`, `max-instances`, CPU et mémoire ?
+4. Pouvez-vous retrouver dans Cloud Run Logs le smoke du **23/07 à 08:47:11 UTC** ?
+5. Voyez-vous une latence ou un cold start anormal sur ce smoke de 271 ms ?
+6. Quels quotas ou protections risquent de limiter une journée à 3 000 PDF ?
+7. Quelles métriques et alertes devons-nous activer avant le test de charge ?
+8. Confirmez-vous que le rôle du service account reste limité à ce seul service Cloud Run ?
+9. Souhaitez-vous imposer une rotation de la clé avant l'événement ?
+10. Y a-t-il une contrainte d'egress pour les Google Fonts/images externes utilisées par Chromium ?
 
-- l'URL Cloud Run du service Gotenberg ;
-- la region et le projet GCP utilises ;
-- le nom/email du service account appelant ;
-- la confirmation que le service est bien configure en `--no-allow-unauthenticated` ;
-- la confirmation que le service account appelant a le role `roles/run.invoker` ;
-- votre decision sur l'allowlist IP OVH : necessaire ou non en plus de l'OIDC ;
-- le mode recommande pour le credential cote OVH/Nest afin de generer le token OIDC.
+Formulation courte en anglais :
 
-Des que j'ai l'URL Cloud Run, je pourrai la renseigner cote Nest comme audience OIDC et preparer le
-smoke test. L'objectif serait que mardi nous ayons uniquement a valider ensemble :
+```txt
+The private OIDC flow from our real OVH staging container is now working.
+Today at 08:47:11 UTC, health succeeded and Gotenberg returned an 8,117-byte PDF in 271 ms.
 
-1. appel sans token refuse (`401/403`) ;
-2. appel avec token OIDC accepte ;
-3. generation PDF OK via Gotenberg ;
-4. logs Cloud Run visibles.
-
-Merci,
-Rabie
-
----
-
-## Priorite des prochaines 15 minutes
-
-### T+0 a T+5 — verrouiller Cloud Run prive
-
-- [ ] Eux / GCP : confirmer l'URL Cloud Run du service Gotenberg.
-- [ ] Eux / GCP : confirmer la region et le projet GCP utilises.
-- [ ] Eux / GCP : appliquer ou confirmer `--no-allow-unauthenticated`.
-- [ ] Eux / GCP : creer/valider le service account appelant.
-- [ ] Eux / GCP : donner `roles/run.invoker` au service account appelant sur le service Cloud Run.
-
-Commande cible cote GCP :
-
-```bash
-gcloud run deploy badge-generator-service \
-  --image gotenberg/gotenberg:8 \
-  --region europe-west9 \
-  --no-allow-unauthenticated \
-  --timeout 60 \
-  --min-instances 1
+Could you please confirm the deployed image digest, min/max instances, concurrency,
+CPU/memory, and whether you can see this exact request in Cloud Run Logs?
+We also need your recommended monitoring and stop thresholds before ramping up to 3,000 PDFs.
 ```
 
-### T+5 a T+10 — generer le token OIDC cote OVH/Nest
+## Déroulé conseillé du call
 
-- [ ] Moi / Rabie : recuperer l'audience a utiliser, normalement l'URL Cloud Run exacte.
-- [ ] Moi / Rabie : configurer cote Nest/OVH les variables minimales :
-  - `GOTENBERG_URL=<cloud-run-url>/forms/chromium/convert/html`
-  - `GOTENBERG_AUDIENCE=<cloud-run-url>`
-  - credential du service account appelant, sans le commiter.
-- [ ] Moi / Rabie : generer un token OIDC avec audience Cloud Run.
-- [ ] Moi / Rabie : ajouter le header HTTP :
+1. **2 min — état** : montrer le smoke vert OVH → OIDC → Cloud Run.
+2. **5 min — exploitation** : image, scaling, concurrence, quotas, logs et alertes.
+3. **3 min — charge** : faire valider la rampe et les seuils d'arrêt.
+4. **3 min — sécurité** : scope IAM, rotation et cible Secret Manager/WIF.
+5. **2 min — décisions** : responsables et dates pour smoke métier, charge et GO production.
 
-```http
-Authorization: Bearer <OIDC_TOKEN>
-```
+## Critère de sortie du prochain jalon
 
-Point a confirmer avec eux : pour le smoke test immediat, est-ce qu'on utilise une cle service account temporaire cote OVH/Nest, ou une impersonation `gcloud` juste pour tester. Pour l'event, eviter tout secret committe et garder le stockage dans l'environnement serveur/secret.
+Le chantier est prêt pour une activation production lorsque :
 
-### T+10 a T+15 — smoke test conjoint
-
-- [ ] Test 1 : appel sans token vers Cloud Run => attendu `401` ou `403`.
-- [ ] Test 2 : appel avec token OIDC valide => attendu `200`.
-- [ ] Test 3 : reponse Gotenberg => `Content-Type: application/pdf`.
-- [ ] Test 4 : PDF non vide et ouvrable.
-- [ ] Test 5 : logs Cloud Run visibles avec statut, latence, erreur eventuelle.
-
-Critere de sortie du creneau :
-
-- [ ] Cloud Run Gotenberg est prive.
-- [ ] OVH/Nest sait obtenir un token OIDC.
-- [ ] Un appel authentifie genere un PDF.
-- [ ] Un appel anonyme est refuse.
-- [ ] On peut passer ensuite au branchement propre dans le worker Nest avec fallback Puppeteer.
-
----
-
-## Repartition des responsabilites
-
-| Responsable | A faire | Statut |
-| --- | --- | --- |
-| Eux / GCP | Deployer ou confirmer le service Cloud Run Gotenberg. | En cours |
-| Eux / GCP | Configurer `--no-allow-unauthenticated`. | Priorite maintenant |
-| Eux / GCP | Configurer `roles/run.invoker` pour le service account appelant. | Priorite maintenant |
-| Eux / GCP | Fournir URL Cloud Run, region, projet, nom du service account. | Priorite maintenant |
-| Eux / GCP | Confirmer ou non le besoin d'allowlist IP OVH en plus de l'OIDC. | A trancher |
-| Moi / Rabie | Generer le token OIDC cote OVH/Nest avec la bonne audience. | Priorite maintenant |
-| Moi / Rabie | Appeler `/forms/chromium/convert/html` avec le header `Authorization`. | Priorite maintenant |
-| Moi / Rabie | Lancer le smoke test sans token puis avec token. | Dans 15 min |
-| Moi / Rabie | Garder Puppeteer local en fallback jusqu'a validation template reel. | A faire apres smoke |
-| Moi / Rabie | Documenter resultat du smoke test dans ce fichier. | A faire pendant/apres call |
-
----
-
-## Fait
-
-- [x] POC local Gotenberg realise.
-- [x] Comparaison Puppeteer vs Gotenberg faite.
-- [x] Architecture cible clarifiee : Cloud Run stateless, aucun flux entrant vers OVH.
-- [x] Decision de principe : Cloud Run prive + OIDC.
-- [x] Decision de principe : Nest/OVH construit le HTML et stocke ensuite le PDF dans R2.
-- [x] Decision de principe : conserver Puppeteer local en fallback.
-
----
-
-## Smoke test — commandes a adapter
-
-Variables a renseigner pendant le call :
-
-```bash
-export GOTENBERG_BASE_URL="https://<service-cloud-run>"
-export GOTENBERG_URL="$GOTENBERG_BASE_URL/forms/chromium/convert/html"
-export GOTENBERG_AUDIENCE="$GOTENBERG_BASE_URL"
-```
-
-Test attendu en refus anonyme :
-
-```bash
-curl -i "$GOTENBERG_URL"
-```
-
-Attendu : `401` ou `403`.
-
-Test attendu avec token :
-
-Preparer un HTML minimal pour le smoke test :
-
-```html
-<!doctype html>
-<html>
-  <body>
-    <h1>Smoke Gotenberg OK</h1>
-  </body>
-</html>
-```
-
-```bash
-TOKEN="<OIDC_TOKEN>"
-curl \
-  -H "Authorization: Bearer $TOKEN" \
-  -F 'files=@index.html' \
-  "$GOTENBERG_URL" \
-  --dump-header smoke-headers.txt \
-  --output smoke-gotenberg.pdf
-```
-
-Attendu :
-
-- statut HTTP `200`;
-- fichier `smoke-gotenberg.pdf` non vide;
-- PDF ouvrable;
-- log Cloud Run correspondant visible.
-
----
-
-## Resultat du smoke test
-
-Date/heure :
-
-| Test | Resultat | Note |
-| --- | --- | --- |
-| Appel sans token refuse | A remplir |  |
-| Token OIDC genere cote OVH/Nest | A remplir |  |
-| Appel avec token accepte | A remplir |  |
-| PDF genere | A remplir |  |
-| Logs Cloud Run visibles | A remplir |  |
-
-Decision apres test :
-
-- [ ] Go pour brancher le worker Nest sur Cloud Run en staging.
-- [ ] Garder fallback Puppeteer actif.
-- [ ] Creer les tickets restants : logs metier, template reel, mesure payload/fonts, alerte monitoring.
-
----
-
-## Points de vigilance apres ce creneau
-
-- Ne jamais commiter de cle service account.
-- Verifier que l'audience du token correspond exactement a l'URL Cloud Run attendue.
-- Confirmer si `europe-west9` est valide cote organisation GCP, sinon noter la region retenue.
-- Rejouer le comparateur sur le template final de l'event.
-- Mesurer payload HTML + assets + fonts avant bascule prod.
-- Garder le fallback Puppeteer jusqu'a validation pixel/template reel.
+- un badge LFD réel est conforme ;
+- l'email réel contient le bon PDF ;
+- le fallback Puppeteer est prouvé ;
+- la capacité et les seuils Cloud Run sont validés ;
+- le secret est disponible dans le futur worker ;
+- une décision humaine explicite autorise l'activation.

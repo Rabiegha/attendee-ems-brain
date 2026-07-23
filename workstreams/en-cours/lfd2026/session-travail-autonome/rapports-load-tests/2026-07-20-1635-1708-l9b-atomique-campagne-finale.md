@@ -1,107 +1,113 @@
-# Campagne k6 LFD — L9.b atomique et limite mesurée
+# LFD k6 Campaign — Atomic L9.b and Measured Limit
 
-## Verdict exécutif
+## Executive Verdict
 
-- Environnement : **staging uniquement**, production surveillée en lecture seule.
-- Correction applicative : PR backend #50, réservation de la place et création du choix dans une
-  instruction PostgreSQL atomique.
-- SHA principal testé : `4bd938d55f11576d1a25291952fe725f636d535c`, puis
-  `f37df976dcbb18b1e8a67d5de92e9ed990ff8f71` après ajout du client Gotenberg B0 désactivé et non
-  branché au flux d'inscription.
-- **Débit soutenu prouvé : 70 inscriptions/s pendant 2 minutes.**
-- **Choc simultané prouvé : 250 inscriptions**, démarrées dans une fenêtre de 10 ms.
-- 75/s soutenues, 350 simultanées et 500 simultanées ne sont pas validées.
-- Le besoin contractuel de 3 000 simultanées **n'est pas prouvé** par cette campagne mono-générateur
-  et ne doit pas être extrapolé à partir de 250.
+- Environment: **staging only**, with production monitored in read-only mode.
+- Application fix: backend PR #50, reserving the seat and creating the choice in a single atomic
+  PostgreSQL statement.
+- Main SHA tested: `4bd938d55f11576d1a25291952fe725f636d535c`, followed by
+  `f37df976dcbb18b1e8a67d5de92e9ed990ff8f71` after the disabled Gotenberg B0 client was added,
+  without being connected to the registration flow.
+- **Proven sustained throughput: 70 registrations/s for two minutes.**
+- **Proven simultaneous burst: 250 registrations**, started within a 10 ms window.
+- Sustained 75/s, 350 simultaneous registrations, and 500 simultaneous registrations have not been
+  validated.
+- The contractual requirement of 3,000 simultaneous registrations **was not proven** by this
+  single-generator campaign and must not be extrapolated from the 250-registration result.
 
-## Résultats soutenus
+## Sustained-Load Results
 
-| Palier | Durée utile | Confirmations | Débit | p95 | p99 | Max | Erreurs/pertes | Verdict |
+| Stage | Effective duration | Confirmations | Throughput | p95 | p99 | Max | Errors/losses | Verdict |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| smoke | 1 requête | 1/1 | — | 157 ms | 157 ms | 157 ms | 0 | vert |
-| 25/s | 120 s | 3 001/3 001 | 24,99/s | 113,96 ms | 156,45 ms | 296,51 ms | 0 | vert |
-| 50/s | 120 s | 6 001/6 001 | 49,99/s | 164,68 ms | 237,76 ms | 392,79 ms | 0 | vert |
-| 60/s | 120 s | 7 201/7 201 | 59,97/s | 149,62 ms | 247,70 ms | 438,57 ms | 0 | vert |
-| 65/s | 120 s | 7 801/7 801 | 64,98/s | 205,88 ms | 530,91 ms | 1,84 s | 0 | vert avec réconciliation manuelle |
-| 70/s | 120 s | 8 400/8 400 | 69,97/s | 222,98 ms | 405,37 ms | 1,00 s | 0 | vert |
-| 75/s | arrêt vers 4 s | 107 reçues | 26,89/s | 2,39 s | 2,67 s | 3,10 s | 49 dropped | rouge |
+| smoke | 1 request | 1/1 | — | 157 ms | 157 ms | 157 ms | 0 | green |
+| 25/s | 120 s | 3,001/3,001 | 24.99/s | 113.96 ms | 156.45 ms | 296.51 ms | 0 | green |
+| 50/s | 120 s | 6,001/6,001 | 49.99/s | 164.68 ms | 237.76 ms | 392.79 ms | 0 | green |
+| 60/s | 120 s | 7,201/7,201 | 59.97/s | 149.62 ms | 247.70 ms | 438.57 ms | 0 | green |
+| 65/s | 120 s | 7,801/7,801 | 64.98/s | 205.88 ms | 530.91 ms | 1.84 s | 0 | green after manual reconciliation |
+| 70/s | 120 s | 8,400/8,400 | 69.97/s | 222.98 ms | 405.37 ms | 1.00 s | 0 | green |
+| 75/s | stopped at ~4 s | 107 received | 26.89/s | 2.39 s | 2.67 s | 3.10 s | 49 dropped | red |
 
-Le palier 75/s a créé 248 inscriptions en base après l'arrêt pour seulement 107 confirmations reçues.
-Il illustre le risque UX d'un client interrompu pendant que les transactions déjà engagées finissent
-par committer. Les compteurs sont restés exacts et aucune capacité n'a été dépassée.
+The 75/s stage created 248 registrations in the database after the test was stopped, while only 107
+confirmations were received. This illustrates the UX risk when a client is interrupted while
+transactions already in progress eventually commit. The counters remained accurate and capacity
+was never exceeded.
 
-## Résultats des chocs simultanés
+## Simultaneous-Burst Results
 
-| Choc | Dispersion de départ | Réponses confirmed | p95 | p99 | Max | Résultat DB après cooldown | Verdict |
+| Burst | Start spread | Confirmed responses | p95 | p99 | Max | DB result after cooldown | Verdict |
 | --- | ---: | ---: | ---: | ---: | ---: | --- | --- |
-| 100 | 4 ms | 100/100 | 2,15 s | 2,28 s | 2,37 s | 100 exactes | vert |
-| 250 | 10 ms | 250/250 | 497,73 ms | 637,49 ms | 792,34 ms | 250 exactes | vert |
-| 350 | 11 ms | 321 reçues, 2 timeouts | 1,02 s* | 1,36 s* | 1,64 s* | 327, dont 6 sans confirmation reçue | rouge |
-| 500 | 15 ms | 448 reçues, 12 timeouts | 3,90 s* | 5,08 s* | 5,54 s* | 448 exactes | rouge |
+| 100 | 4 ms | 100/100 | 2.15 s | 2.28 s | 2.37 s | exactly 100 | green |
+| 250 | 10 ms | 250/250 | 497.73 ms | 637.49 ms | 792.34 ms | exactly 250 | green |
+| 350 | 11 ms | 321 received, 2 timeouts | 1.02 s* | 1.36 s* | 1.64 s* | 327, including 6 with no confirmation received | red |
+| 500 | 15 ms | 448 received, 12 timeouts | 3.90 s* | 5.08 s* | 5.54 s* | exactly 448 | red |
 
-`*` Les percentiles des runs interrompus ne portent que sur les réponses observées avant l'arrêt ; ils
-ne résument pas les utilisateurs encore bloqués ou interrompus et ne doivent pas être lus comme un
-succès UX.
+`*` Percentiles from interrupted runs cover only the responses observed before the test was stopped.
+They do not represent users who were still blocked or interrupted and must not be interpreted as a
+successful UX result.
 
-Le fait que le choc 250 ait une latence meilleure que le choc 100 montre aussi la variabilité d'un
-échantillon unique (cache, checkpoint, ordonnancement). La conclusion robuste est le succès ou
-l'échec complet avec invariants, pas une comparaison fine entre ces deux percentiles isolés.
+The fact that the 250-registration burst had better latency than the 100-registration burst also
+shows the variability of a single sample due to caching, checkpoints, and scheduling. The robust
+conclusion is complete success or failure with invariants, rather than a fine-grained comparison
+between these two isolated percentile results.
 
-## Invariants métier et audit
+## Business Invariants and Audit
 
-- Tous les runs terminés conservent `Session.registered_count` égal au nombre réel de choix
-  confirmed et ne dépassent jamais la capacité.
-- Les runs verts ont exactement un participant, un email, une inscription, un choix confirmed et un
-  audit HTTP 2xx par succès.
-- Le run 350 révèle six commits sans réponse reçue : 327 inscriptions/choix en DB contre 321 audits
-  2xx observés. Cela confirme qu'idempotence et réconciliation UX restent indispensables au-delà de
-  la zone sûre.
-- Aucun restart, OOM ou état incohérent final n'est attribuable à la charge. Un run 65/s distinct a
-  été volontairement invalidé lorsque le watchdog a détecté le redéploiement concurrent de B0 ; les
-  trois 502 de ce run ne sont pas une limite de capacité.
+- Every completed run kept `Session.registered_count` equal to the actual number of confirmed
+  choices and never exceeded capacity.
+- Green runs had exactly one attendee, one email, one registration, one confirmed choice, and one
+  HTTP 2xx audit entry per successful operation.
+- The 350-registration run revealed six commits for which no response was received: 327
+  registrations/choices in the database versus 321 observed 2xx audit entries. This confirms that
+  idempotency and UX reconciliation remain essential beyond the safe operating zone.
+- No restart, OOM event, or inconsistent final state was attributable to the load. A separate 65/s
+  run was deliberately invalidated when the watchdog detected the concurrent B0 deployment; the
+  three 502 responses in that run do not represent a capacity limit.
 
-## Ressources observées
+## Observed Resources
 
-| Palier | Pic CPU API | Pic CPU PostgreSQL | Pic CPU PgBouncer | Mémoire hôte disponible minimale |
-| --- | ---: | ---: | ---: | ---: |
-| 25/s | 176,47 % | 49,74 % | 17,52 % | 20 083 Mo |
-| 50/s | 266,23 % | 81,09 % | 25,44 % | 20 004 Mo |
-| 60/s | 275,88 % | 100,90 % | 28,46 % | 19 740 Mo |
-| 70/s | 363,88 % | 155,63 % | 29,93 % | 19 734 Mo |
+| Stage | API peak CPU | PostgreSQL peak CPU | Minimum available host memory |
+| --- | ---: | ---: | ---: |
+| 25/s | 176.47% | 49.74% | 20,083 MB |
+| 50/s | 266.23% | 81.09% | 20,004 MB |
+| 60/s | 275.88% | 100.90% | 19,740 MB |
+| 70/s | 363.88% | 155.63% | 19,734 MB |
 
-Les pourcentages Docker peuvent dépasser 100 % lorsque plusieurs cœurs sont utilisés. L'hôte dispose
-de huit cœurs. Le générateur est resté loin de ses seuils mémoire/CPU ; il n'est pas la limite pour
-ces paliers. La santé de la production partagée est restée verte pendant les contrôles read-only.
+Docker CPU percentages can exceed 100% when multiple cores are used. The host has eight cores. The
+load generator remained well below its memory and CPU thresholds and was not the limiting factor
+for these stages. The health of the shared production environment remained green during read-only
+checks.
 
-## Incident de preuve et correction du harnais
+## Evidence Incident and Test-Harness Fix
 
-Après le run 65/s, la requête finale de réconciliation a dépassé son timeout de 30 s. Elle filtrait
-`audit_logs` par `target_id` sans fixer `target_type`, alors que l'index existant est composite
-`(target_type, target_id)`. La PR backend #52 ajoute
-`target_type = 'session_registration'` : la même vérification est ensuite devenue immédiate et a
-confirmé 7 801/7 801 éléments exacts. Le run k6 est valide ; l'échec initial concernait uniquement le
-transport de la preuve postflight.
+After the 65/s run, the final reconciliation query exceeded its 30-second timeout. It filtered
+`audit_logs` by `target_id` without specifying `target_type`, while the existing index is the
+composite index `(target_type, target_id)`. Backend PR #52 adds
+`target_type = 'session_registration'`: the same verification then completed immediately and
+confirmed exactly 7,801/7,801 items. The k6 run is valid; the initial failure affected only the
+transport of the post-flight evidence.
 
-## Avis pour LFD
+## Recommendation for LFD
 
-- **GO technique mesuré** pour 70 inscriptions/s soutenues pendant deux minutes sur cette instance
-  et pour un choc de 250 inscriptions réellement quasi simultanées.
-- **NO-GO pour annoncer 75/s soutenues, 350 simultanées, 500 simultanées ou 3 000 simultanées.**
-- 70/s représente environ 4 200 inscriptions par minute si la demande est lissée ; ce chiffre ne
-  remplace pas un test de choc.
-- La preuve 3 000 nécessite plusieurs générateurs synchronisés, une barrière commune, une mesure de
-  dispersion de départ et une réconciliation globale. Le harnais actuel refuse volontairement plus
-  de 500 VUs sur un générateur et refuse le multi-générateur tant que l'orchestrateur n'est pas livré.
-- Rejouer au minimum 70/s et 250 simultanées après tout changement qui touche réellement le chemin
-  d'inscription, les audits synchrones, les triggers ou le pool DB. Le client Gotenberg B0 isolé ne
-  touche pas ce chemin.
+- **Measured technical GO** for 70 sustained registrations/s for two minutes on this instance and
+  for a burst of 250 genuinely near-simultaneous registrations.
+- **NO-GO for claiming sustained 75/s, 350 simultaneous, 500 simultaneous, or 3,000 simultaneous
+  registrations.**
+- 70/s represents approximately 4,200 registrations per minute if demand is evenly distributed;
+  this figure does not replace a burst test.
+- Proving 3,000 requires multiple synchronized generators, a shared barrier, measurement of the
+  start spread, and global reconciliation. The current harness deliberately rejects more than 500
+  VUs on one generator and rejects multi-generator runs until the orchestrator is delivered.
+- At a minimum, rerun sustained 70/s and 250 simultaneous registrations after any change that
+  actually affects the registration path, synchronous audits, triggers, or the database pool. The
+  isolated Gotenberg B0 client does not affect this path.
 
-## Traçabilité
+## Traceability
 
-- PR #50 : `perf(registration): atomically claim session choice`.
-- PR #51 : client Gotenberg OIDC B0, isolé et désactivé par défaut.
-- PR #52 : utilisation de l'index audit dans la réconciliation k6.
-- Artefacts bruts locaux :
+- PR #50: `perf(registration): atomically claim session choice`.
+- PR #51: Gotenberg OIDC B0 client, isolated and disabled by default.
+- PR #52: use of the audit index in k6 reconciliation.
+- Local raw artifacts:
   `attendee-ems-back-wt-k6-final/tmp/k6/lfd-l9b-{atomic,b0}-*/gen-01/`.
-- Chaque dossier contient métadonnées, configuration de charge, résumé k6, ressources, watchdog,
-  sondes live et résultat de réconciliation. Aucun token ni credential n'est inclus dans ce rapport.
+- Each directory contains metadata, load configuration, the k6 summary, resource measurements,
+  watchdog data, live probes, and the reconciliation result. No token or credential is included in
+  this report.
