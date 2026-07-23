@@ -23,7 +23,7 @@ et dans le chantier coordinateur [N](../N-architecture-event-ready/README.md).
 
 - **Plan maître :** [../00-plan-action.md](../00-plan-action.md) (ligne J du tableau)
 - **Avancement (%) :** [../03-suivi-chantiers.md](../03-suivi-chantiers.md) (ligne **J**)
-- **Statut :** 🟡 en cours — recoupe H/I, ne pas double-compter (S30–S31) · implémentation livrée côté attendee (PR #27)
+- **Statut :** 🟢 implémentation J-ENTREES livrée (back + front, PRs ouvertes) ; campagne k6 check-in/combinée reportée
 
 ## J-ENTREES — tableau de bord des entrées LFD
 
@@ -41,7 +41,7 @@ Le tableau de bord ne doit jamais utiliser `registered_count` comme preuve d'ent
 Un participant qui entre puis sort vaut donc `present_count = 0` mais reste compté dans
 `unique_entered_count`. Dans l'export post-event, il est **présent**, car il a participé.
 
-### Audit du code actuel
+### Audit du code actuel (constat 19/07, avant implémentation)
 
 | Exigence CDC | État constaté | Verdict |
 | --- | --- | --- |
