@@ -1,6 +1,6 @@
 # Stratégie de réputation Mailgun jusqu'à LFD 2026
 
-> **Source de vérité unique — dernière mise à jour : 22/07/2026**
+> **Source de vérité unique — dernière mise à jour : 23/07/2026 à 10h30 Paris**
 >
 > Domaine : `mail.attendee.fr` · Mailgun EU · IP partagée
 > Événement : **LFD 2026, les 4 et 5 septembre 2026**
@@ -15,8 +15,8 @@ Le périmètre est strictement limité à la réputation d'envoi et à la déliv
 
 ## 1. Décision actuelle
 
-**Statut au 22/07 : journée d'audit, HOLD jusqu'au résultat. Reprise prévue le 23/07 à 600 emails si
-l'audit est VERT.**
+**Statut au 23/07 à 10h30 Paris : `GO` humain reçu. Lot de 600 démarré à 10h29 Paris, en cours à
+la cadence prévue de 15 secondes.**
 
 Ce HOLD n'est pas un constat d'incident. Il sert à terminer le bilan Mailgun spécifique à la
 newsletter avant de reprendre la montée. Le tableau de bord global affiche `Sent = 1 458`, mais ce
@@ -35,6 +35,25 @@ Conditions obligatoires pour lever le HOLD :
 Tant que ce bilan n'est pas renseigné, **aucun nouveau lot ne part**. Si le bilan est VERT, le HOLD
 est levé et le premier lot de reprise part le jeudi 23/07, plafonné à 600 emails.
 
+Préparation vérifiée le 23/07 :
+
+- nouvelle newsletter : `/tmp/NL-23-24.html` sur le VPS ;
+- nouvelle liste : 1 320 adresses valides, 1 320 uniques, aucune adresse de smoke dans la base ;
+- découpe : lignes 1–600 le 23/07, puis lignes 601–1 320, soit 720 adresses, le 24/07 ;
+- dry-runs validés à 600 et 720, lien `%unsubscribe_url%` injecté ;
+- le script d'envoi de masse exige lui-même un fichier au contenu exact
+  `GO <date> <offset>` ; le runner effectue la même vérification avant de l'appeler ;
+- smoke initial demandé le 23/07 : un message livré et ouvert sur `rgharghar@choyou.fr`, deux
+  messages livrés sur `brais@choyou.fr`. Le second message vers `brais` est un doublon de smoke
+  accidentel lors de la reprise d'une session distante encore active ; aucun destinataire de masse
+  n'a été touché. Un verrou de processus a été ajouté immédiatement pour empêcher deux exécutions
+  réelles simultanées ;
+- lot de masse du 23/07 : `GO 2026-07-23 0` reçu, lancement à 10h29 Paris. Les trois premiers
+  messages sont acceptés, le premier est déjà livré, aucune erreur observée au contrôle de 10h30.
+- le 24/07, le smoke est programmé à **08h00 Paris** vers `rgharghar@choyou.fr` et le lot de 720 à
+  **09h00 Paris**. Le fichier `/tmp/warmup-go-2026-07-24-600` est absent : sans décision humaine
+  créant exactement `GO 2026-07-24 600`, le timer du lot s'arrêtera avant tout envoi.
+
 ## 2. Ce qui a réellement été fait
 
 ### Volumes confirmés
@@ -48,13 +67,15 @@ est levé et le premier lot de reprise part le jeudi 23/07, plafonné à 600 ema
 | 20/07 | 350 | 1 | 351 | 0 |
 | 21/07 | 600 | 1 | **601** | 0 |
 | 22/07 | 0 | 2 | **2** | 0 |
-| **Total** | **1 300** | **12** | **1 312** | **30** |
+| 23/07 avant lot | 0 | 3 | **3** | 0 |
+| **Total** | **1 300** | **15** | **1 315** | **30** |
 
 État canonique :
 
-- **1 312 newsletters acceptées par Mailgun** ;
+- **1 315 newsletters acceptées par Mailgun** ;
 - **1 303 destinataires uniques** ;
-- **1 342 messages de warm-up documentés** en ajoutant les 30 emails internes J1 ;
+- **1 345 messages de warm-up documentés** en ajoutant les 30 emails internes J1 ;
+- le lot de 600 du 23/07 est en cours et n'est pas encore ajouté à ces totaux confirmés ;
 - aucun lot de masse le 22/07 : J6a s'est arrêté faute de `GO`, J6b n'a pas été lancé ;
 - les lignes 701–750 de l'ancienne base ont été volontairement sautées ;
 - le dernier palier de masse réellement validé est donc **600 messages**.

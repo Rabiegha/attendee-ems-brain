@@ -10,6 +10,28 @@
 > Stratégie / paliers cibles → [warm-up-strategie.md](./warm-up-strategie.md)
 > Détails techniques / risques → [c3-warmup-delivrabilite.md](./c3-warmup-delivrabilite.md)
 
+## Préparation de la campagne des 23 et 24 juillet
+
+État au 23/07/2026 à 10h30 Paris :
+
+- nouvelle newsletter : `local-files/warm-up/NL-23-24.html`, copiée sur le VPS dans
+  `/tmp/NL-23-24.html` ;
+- nouvelle liste : 1 320 adresses valides et uniques, copiée dans
+  `/tmp/list-attendees-test-pour-envoi-23-et-24-juillet-2026.csv` ;
+- lot du 23/07 : offset `0`, limite `600`, délai de base `15s` ;
+- lot du 24/07 : offset `600`, limite `720`, délai de base `15s` ;
+- les dry-runs vérifient exactement 600 puis 720 destinataires ;
+- le runner et le script d'envoi exigent tous deux le GO exact. Pour le 24/07 :
+  `GO 2026-07-24 600` dans `/tmp/warmup-go-2026-07-24-600` ;
+- sans ce fichier exact au déclenchement, le lot s'annule avant le premier destinataire ;
+- timers VPS actifs pour le 24/07 : smoke à 06h00 UTC / 08h00 Paris, lot à 07h00 UTC / 09h00
+  Paris. Le fichier de GO est absent au moment de la programmation ;
+- smoke du 23/07 : livré et ouvert sur `rgharghar@choyou.fr`; livré sur `brais@choyou.fr`.
+  `brais` a reçu deux smokes au lieu d'un, car une session distante supposée interrompue a repris
+  trois secondes après la relance ciblée. Un verrou inter-processus est désormais actif ;
+- `GO 2026-07-23 0` reçu ; lot de 600 lancé à 10h29 Paris. Contrôle initial : trois messages
+  acceptés, premier message livré, aucune erreur. Le bilan final sera inscrit à la fin du lot.
+
 ## État vérifié — 22/07/2026 à 16h38 Paris
 
 Réponse courte pour l'exploitation :
