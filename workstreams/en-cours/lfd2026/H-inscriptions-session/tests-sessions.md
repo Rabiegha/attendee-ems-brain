@@ -1,6 +1,8 @@
 # Chantier H — Tests sessions/inscriptions (à livrer AVEC le chantier)
 
-> **Statut au 19/07 : 🟠 socle H-T1→H-T14 livré et exécuté ; nouveaux gaps CDC à coder.**
+> **Statut au 24/07 : 🟢 H-T1→H-T19 livrés ; 24/24 E2E H verts localement.**
+> H-T20→H-T25 sont couverts par les suites de cohérence L9.1 et la contre-recette M/K ; la preuve
+> d'audit détaillée appartient au chantier O.
 > **Owner : Corentin** (les tests suivent le code H).
 > Déplacé depuis le [chantier T — tests event-critical](../T-tests-event/README.md) le 13/07 :
 > ces tests dépendent des **règles métier écrites pendant H** (déjà scanné, event vs session,
@@ -57,7 +59,7 @@ Les tests §2 ne peuvent pas être verts sans ces devs. Chaque test référence 
 | H-D5 | **Droits scanner par session/event** | Définir et implémenter qui peut scanner quoi (event, session, les deux) | H-T6, H-T14 |
 | H-D6 | **CRUD sessions + mode d'inscription** | Création/modification session avec mode privé/public, ouverture/fermeture d'inscription respectée par le endpoint public | H-T7 → H-T14 |
 | H-D7 | **Capacité / waitlist session** | Refus ou waitlist à capacité atteinte selon config | H-T9 |
-| H-D8 | **Maximum deux activités confirmées/jour** | Verrouiller la registration, calculer le jour en `Europe/Paris`, compter uniquement les choix `confirmed` et refuser le troisième sans toucher la jauge | H-T15 → H-T19 |
+| H-D8 | ✅ **Maximum deux activités confirmées/jour** | Verrou registration, jour `Europe/Paris`, seuls les `confirmed` comptés ; troisième refusé sans toucher la jauge | H-T15 → H-T19 ✅ |
 | H-D9 | 🔴 **Capacité atomique au scan** | Déplacer la décision de capacité dans une transaction/verrou commun à la session ou utiliser le compteur atomique L9.1 ; ne pas verrouiller seulement le participant | H-T21 |
 | H-D10 | **Contrat de replay idempotent** | La même mutation rejouée doit retrouver son résultat sans créer une deuxième admission et doit permettre au mobile d'afficher le doublon | H-T20, H-T22 |
 
