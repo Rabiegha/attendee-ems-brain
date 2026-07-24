@@ -23,7 +23,23 @@ et dans le chantier coordinateur [N](../N-architecture-event-ready/README.md).
 
 - **Plan maître :** [../00-plan-action.md](../00-plan-action.md) (ligne J du tableau)
 - **Avancement (%) :** [../03-suivi-chantiers.md](../03-suivi-chantiers.md) (ligne **J**)
-- **Statut :** 🟢 implémentation J-ENTREES livrée (back + front, PRs ouvertes) ; campagne k6 check-in/combinée reportée
+- **Statut :** 🟠 implémentation J-ENTREES livrée ; première campagne k6 check-in/dashboard exécutée
+  le 24/07, cohérence verte mais SLO dashboard encore rouge
+
+## Mise à jour du 24/07 — première campagne combinée
+
+- harnais corrigé : une inscription distincte par itération globale, au lieu de rescanner le même
+  participant par VU ;
+- fixtures create-only via API, événements `J-RECETTE-*`, aucune suppression ni donnée existante
+  modifiée ;
+- 15 VU : 197/197 scans admis, 0 erreur, p95 522 ms (seuil 500 ms dépassé) ;
+- 10 VU : 123/123 admis, 0 erreur, p95 603 ms ;
+- 5 VU : 67/67 admis, 0 erreur, p95 307 ms — scan vert ;
+- cinq pollers dashboard en parallèle : 50/50 HTTP 200, 0 erreur, p95 432 ms pour un seuil de
+  300 ms ;
+- compteurs exacts après chaque run : `present_count == unique_entered_count`, aucune surcapacité.
+
+Rapport : [2026-07-24-j-entrees-checkin-combine.md](../session-travail-autonome/rapports-load-tests/2026-07-24-j-entrees-checkin-combine.md).
 
 ## J-ENTREES — tableau de bord des entrées LFD
 
@@ -118,4 +134,5 @@ double-compter H/L9.1 :
 1. terminer L9.1 et ses E2E ;
 2. livrer le snapshot + rafraîchissement live J-ENTREES ;
 3. brancher le dashboard et corriger l'export dans BIL ;
-4. valider en répétition K, puis dans le k6 combiné final.
+4. diagnostiquer le p95 dashboard observé le 24/07, puis rejouer les paliers supérieurs ;
+5. valider en répétition K, puis dans le k6 inscription + check-in + dashboard final.
