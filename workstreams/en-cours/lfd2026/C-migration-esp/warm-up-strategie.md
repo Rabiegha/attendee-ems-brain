@@ -1,6 +1,6 @@
 # Stratégie de réputation Mailgun jusqu'à LFD 2026
 
-> **Source de vérité unique — dernière mise à jour : 23/07/2026 à 10h30 Paris**
+> **Source de vérité unique — dernière mise à jour : 24/07/2026 à 11h30 Paris**
 >
 > Domaine : `mail.attendee.fr` · Mailgun EU · IP partagée
 > Événement : **LFD 2026, les 4 et 5 septembre 2026**
@@ -15,25 +15,27 @@ Le périmètre est strictement limité à la réputation d'envoi et à la déliv
 
 ## 1. Décision actuelle
 
-**Statut au 23/07 à 10h30 Paris : `GO` humain reçu. Lot de 600 démarré à 10h29 Paris, en cours à
-la cadence prévue de 15 secondes.**
+**Statut au 24/07 à 10h50 Paris : `GO`. Le lot a été suspendu proprement après 61/600 accepted,
+puis la règle de nettoyage a été clarifiée : une ancienne livraison réussie reste éligible pour
+cette nouvelle édition ; seuls les échecs permanents, plaintes et désinscriptions sont exclus. Après
+audit de 5 329 événements Mailgun, 12 adresses supplémentaires en échec permanent ont été retirées.
+La reprise de 527 adresses propres a démarré à 10h40 Paris. À sa fin, un pré-nettoyage automatique
+sélectionnera jusqu'à 12 adresses propres supplémentaires pour atteindre **600 aujourd'hui**.**
 
-Ce HOLD n'est pas un constat d'incident. Il sert à terminer le bilan Mailgun spécifique à la
-newsletter avant de reprendre la montée. Le tableau de bord global affiche `Sent = 1 458`, mais ce
-compteur inclut la newsletter, les tests et les emails transactionnels du domaine.
+Bilan Mailgun du lot de 600 du 23/07, consolidé le 24/07 au matin sur les 600 `messageId` :
 
-Conditions obligatoires pour lever le HOLD :
-
-- calculer pour les **1 312 newsletters acceptées** les nombres `delivered`, `permanent failure`,
-  `temporary failure`, `complained` et `unsubscribed`, globalement et par fournisseur ;
-- vérifier qu'aucun échec d'authentification, de réputation ou de blocklist n'est présent ;
-- vérifier le one-click unsubscribe réel sur un email reçu ;
-- confirmer que les suppressions Mailgun sont appliquées à la prochaine liste ;
-- inscrire ou vérifier `mail.attendee.fr` dans Google Postmaster Tools ;
-- enregistrer le résultat et la décision dans ce fichier.
-
-Tant que ce bilan n'est pas renseigné, **aucun nouveau lot ne part**. Si le bilan est VERT, le HOLD
-est levé et le premier lot de reprise part le jeudi 23/07, plafonné à 600 emails.
+- **600 accepted**, **582 delivered** (97,0 %) ;
+- **26 événements permanent failure** (4,33 %), concernant 18 messages jamais livrés et 8 messages
+  d'abord livrés puis revenus en échec définitif ;
+- parmi ces échecs, 10 adresses étaient déjà en `suppress-bounce` Mailgun ;
+- 12 événements temporary failure sur 5 messages ; aucun temporaire encore en attente au bilan ;
+- **0 complained**, **0 unsubscribed** ;
+- Gmail : 76/76 livrés ; Outlook/Hotmail grand public : 21/21 livrés ; pro/autres :
+  477 livrés, 26 permanent failures ;
+- aucun signal d'échec SPF, DKIM, DMARC, de réputation ou de blocklist. Un greylisting 451 isolé
+  s'est terminé en échec « too old » ;
+- verdict : livraison globale verte, mais permanent failures entre 2 % et 5 % : **ORANGE** selon
+  les critères §5. Décision : nettoyer et rester au palier de 600, sans monter à 720.
 
 Préparation vérifiée le 23/07 :
 
@@ -48,11 +50,33 @@ Préparation vérifiée le 23/07 :
   accidentel lors de la reprise d'une session distante encore active ; aucun destinataire de masse
   n'a été touché. Un verrou de processus a été ajouté immédiatement pour empêcher deux exécutions
   réelles simultanées ;
-- lot de masse du 23/07 : `GO 2026-07-23 0` reçu, lancement à 10h29 Paris. Les trois premiers
-  messages sont acceptés, le premier est déjà livré, aucune erreur observée au contrôle de 10h30.
-- le 24/07, le smoke est programmé à **08h00 Paris** vers `rgharghar@choyou.fr` et le lot de 720 à
-  **09h00 Paris**. Le fichier `/tmp/warmup-go-2026-07-24-600` est absent : sans décision humaine
-  créant exactement `GO 2026-07-24 600`, le timer du lot s'arrêtera avant tout envoi.
+- lot de masse du 23/07 : `GO 2026-07-23 0` reçu ; **600/600 acceptés**, exécution terminée à
+  12h59 Paris avec `exit 0` ;
+- le 24/07, le smoke de **08h00 Paris** vers `rgharghar@choyou.fr` est
+  `accepted → delivered → opened` ;
+- le timer de 09h00 s'est arrêté avant tout envoi faute de GO, comme prévu ;
+- la liste restante de 720 contenait 7 bounces et 1 désinscription dans les suppressions Mailgun.
+  Une liste nettoyée de 712 adresses éligibles a été produite ; les 600 premières, sans doublon avec
+  le 23/07, constituent le lot maintenu du jour ;
+- `GO 2026-07-24 600` reçu ; lot réduit à **600** lancé manuellement à 10h21 Paris. Le premier
+  message est accepté ;
+- audit historique déclenché à 10h35 Paris : sur les 720 adresses initialement restantes, 581
+  avaient déjà été contactées avant le 23/07 et 139 ne l'avaient jamais été. Le lot a été suspendu
+  à 61 accepted, sans verrou résiduel. Parmi les 139 nouvelles, 8 ont été envoyées aujourd'hui et
+  une suppression concerne une adresse déjà partie ; **131 adresses nouvelles, non encore envoyées
+  et non supprimées restent disponibles** ;
+- règle métier clarifiée : les anciennes adresses livrées peuvent recevoir cette nouvelle
+  newsletter. Sur les 539 adresses non encore envoyées, l'audit de l'historique Mailgun a trouvé
+  12 échecs permanents supplémentaires et aucun complaint/unsubscribe. Ils ont été exclus ; les
+  527 adresses restantes ont passé le dry-run et la reprise a démarré à 10h40 Paris ;
+- complément du 24/07 : à la fin des 527, le service `warmup-topup-20260724` vérifie que le journal
+  contient exactement 588 accepted, relance le nettoyage, puis envoie au maximum 12 adresses propres
+  pour atteindre 600 ;
+- solde de cette newsletter : smoke programmé le samedi 25/07 à 08h00 Paris, puis nettoyage à chaud
+  et envoi du solde à 09h00 Paris. La simulation du 24/07 trouve 98 adresses propres ; le plafond
+  technique est fixé à 120 pour envoyer tout le solde recalculé sans forcer un quota ;
+- le lundi 27/07 repart sur un **nouveau contenu** et une nouvelle campagne, après le même
+  pré-nettoyage obligatoire.
 
 ## 2. Ce qui a réellement été fait
 
@@ -67,15 +91,16 @@ Préparation vérifiée le 23/07 :
 | 20/07 | 350 | 1 | 351 | 0 |
 | 21/07 | 600 | 1 | **601** | 0 |
 | 22/07 | 0 | 2 | **2** | 0 |
-| 23/07 avant lot | 0 | 3 | **3** | 0 |
-| **Total** | **1 300** | **15** | **1 315** | **30** |
+| 23/07 | 600 | 3 | **603** | 0 |
+| 24/07 à 10h36 | 61 | 1 | **62** | 0 |
+| **Total confirmé** | **1 961** | **16** | **1 977** | **30** |
 
 État canonique :
 
-- **1 315 newsletters acceptées par Mailgun** ;
-- **1 303 destinataires uniques** ;
-- **1 345 messages de warm-up documentés** en ajoutant les 30 emails internes J1 ;
-- le lot de 600 du 23/07 est en cours et n'est pas encore ajouté à ces totaux confirmés ;
+- **1 977 newsletters acceptées par Mailgun** ;
+- **2 007 messages de warm-up documentés** en ajoutant les 30 emails internes J1 ;
+- **61 messages du lot du 24/07 sont confirmés avant reprise** ; 527 adresses propres sont en cours
+  d'envoi et ne sont pas encore ajoutées au total confirmé ;
 - aucun lot de masse le 22/07 : J6a s'est arrêté faute de `GO`, J6b n'a pas été lancé ;
 - les lignes 701–750 de l'ancienne base ont été volontairement sautées ;
 - le dernier palier de masse réellement validé est donc **600 messages**.
@@ -120,6 +145,9 @@ comptent dans cette stratégie de réputation.
 
 Actions :
 
+- [x] mettre en place le pré-nettoyage automatique
+      `scripts/ops/prepare-warmup-clean-list.js` +
+      `scripts/ops/run-warmup-clean-lot.sh` avant les lots ;
 - [ ] demander/générer une clé DKIM **2048 bits** si Mailgun et le DNS le permettent ; 1024 bits
       fonctionne, mais 2048 bits est la cible ;
 - [ ] vérifier SPF, DKIM et DMARC sur un email Gmail et un email Outlook reçus ;
@@ -129,6 +157,40 @@ Actions :
 - [ ] vérifier que les événements `delivered`, `temporary failure`, `permanent failure`, `complained`
       et `unsubscribed` sont consultables et consolidables dans Mailgun ;
 - [ ] vérifier les suppressions avant chaque lot.
+
+### Nettoyage obligatoire avant chaque campagne
+
+Avant chaque lot, y compris une reprise ou un complément :
+
+1. normaliser et dédupliquer la liste source ;
+2. contrôler la syntaxe et la routabilité DNS de chaque domaine : MX valide ou repli SMTP A/AAAA ;
+3. pour toute nouvelle liste, exiger une validation de boîte externe datant de moins de 72 heures.
+   Par défaut, seuls les résultats `deliverable` sont autorisés ; `undeliverable`, `risky`, `unknown`
+   et toute adresse absente du rapport restent en quarantaine ;
+4. exclure les adresses déjà envoyées dans **la campagne courante** pour garantir l'idempotence ;
+5. exclure les suppressions Mailgun : bounces, complaints et unsubscribes ;
+6. parcourir l'historique Mailgun disponible et exclure tout `failed:permanent`, même si l'adresse
+   n'apparaît plus dans la suppression courante ;
+7. exclure également les événements `rejected` et alimenter la denylist persistante, protégée en
+   lecture/écriture, pour ne pas perdre un échec lorsque les événements Mailgun expirent ;
+8. conserver les adresses dont les anciennes campagnes ont été livrées avec succès : un destinataire
+   peut recevoir plusieurs contenus légitimes ;
+9. ne pas exclure un simple `failed:temporary` s'il a ensuite été livré ;
+10. recalculer le volume propre réel, faire un dry-run, puis seulement appliquer le GO humain ;
+11. écrire un rapport horodaté avec les volumes, motifs d'exclusion et empreintes SHA-256 des listes.
+
+Le script d'envoi ne doit jamais recevoir directement une liste brute. Le wrapper
+`run-warmup-clean-lot.sh` produit d'abord une liste propre atomique, puis transmet uniquement cette
+sortie au script d'envoi avec le volume exact recalculé. Tous les appels Mailgun, la pagination et
+les contrôles finaux sont **fail-closed** : à la moindre donnée incomplète ou incohérence, aucun
+fichier propre n'est publié et aucun envoi ne part.
+
+Le wrapper exige la preuve de validation externe par défaut. La campagne des 23–25/07 constitue une
+exception explicitement configurée car sa base avait déjà été nettoyée dans Emailable avant import,
+mais l'export de preuve détaillé n'est pas disponible sur le VPS. Le contrôle DNS renforcé a malgré
+tout trouvé le 24/07 un domaine supplémentaire non routable et l'a ajouté à la denylist. À partir
+du nouveau contenu du 27/07, aucun lot de nouvelles adresses ne part sans export Emailable récent
+ou intégration API équivalente.
 
 ### Désinscription obligatoire pour les newsletters
 
@@ -188,26 +250,27 @@ Chaque augmentation est limitée à environ **20 %**. La reprise conserve la cad
 validé, soit environ **1 email toutes les 15 secondes**. La cadence reste stable pendant cette rampe :
 ce document cherche à construire la réputation, pas à tester la vitesse maximale.
 
-| Date cible | Plafond réel | Décision attendue |
-| ---------- | -----------: | ----------------- |
-| Mer. 22/07 | **0 masse** | audit complet des 1 312 NL, Postmaster, one-click, suppressions |
-| Jeu. 23/07 | **600** | reprise au dernier palier validé, uniquement si audit VERT |
-| Ven. 24/07 | **720** | GO après premier bilan du 23/07 ; sinon maintien ou HOLD |
-| Lun. 27/07 | **850** | GO après bilan consolidé du 24/07 |
-| Mar. 28/07 | **1 000** | GO si VERT ; sinon maintien 720–850 |
-| Mer. 29/07 | **1 200** | GO si VERT |
-| Jeu. 30/07 | **0 augmentation** | consolidation, nettoyage, rapport par provider |
-| Ven. 31/07 | **1 400** | GO si tous les signaux de la semaine sont VERTS |
-| Lun. 03/08 | **1 650** | GO après bilan consolidé du 31/07 |
-| Mar. 04/08 | **0 augmentation** | consolidation intermédiaire |
-| Mer. 05/08 | **1 900** | GO si VERT |
-| Jeu. 06/08 | **2 200** | GO si VERT |
-| Ven. 07/08 | **0 augmentation** | bilan provider et Postmaster |
-| Lun. 10/08 | **2 500** | GO si VERT |
-| Mar. 11/08 | **0 augmentation** | bilan provider et Postmaster |
-| Mer. 12/08 | **3 000** | premier palier cible, contenu réel et attendu uniquement |
-| Jeu. 13/08 | **0 augmentation** | bilan complet du premier 3 000 |
-| Ven. 14/08 | **3 000 max** | répétabilité uniquement si le 12/08 est entièrement VERT |
+| Date cible | Plafond réel | Statut | Décision attendue |
+| ---------- | -----------: | ------ | ----------------- |
+| Mer. 22/07 | **0 masse** | ✅ Terminé | audit complet des 1 312 NL, Postmaster, one-click, suppressions |
+| Jeu. 23/07 | **600** | 🟠 Terminé — ORANGE | 600/600 accepted ; permanent failures au-dessus de 2 % |
+| Ven. 24/07 | **720** | 🔄 En cours — cible 600 propre | 61 + 527 en cours, puis complément automatique de 12 après nouveau nettoyage |
+| Sam. 25/07 | **120 max** | 🕘 Programmé à 09h00 — 98 estimées | smoke à 08h00, nettoyage à chaud, puis tout le solde réel propre de la campagne |
+| Lun. 27/07 | **850** | ⏳ À venir | GO après bilan consolidé du 24/07 |
+| Mar. 28/07 | **1 000** | ⏳ À venir | GO si VERT ; sinon maintien 720–850 |
+| Mer. 29/07 | **1 200** | ⏳ À venir | GO si VERT |
+| Jeu. 30/07 | **0 augmentation** | ⏳ À venir | consolidation, nettoyage, rapport par provider |
+| Ven. 31/07 | **1 400** | ⏳ À venir | GO si tous les signaux de la semaine sont VERTS |
+| Lun. 03/08 | **1 650** | ⏳ À venir | GO après bilan consolidé du 31/07 |
+| Mar. 04/08 | **0 augmentation** | ⏳ À venir | consolidation intermédiaire |
+| Mer. 05/08 | **1 900** | ⏳ À venir | GO si VERT |
+| Jeu. 06/08 | **2 200** | ⏳ À venir | GO si VERT |
+| Ven. 07/08 | **0 augmentation** | ⏳ À venir | bilan provider et Postmaster |
+| Lun. 10/08 | **2 500** | ⏳ À venir | GO si VERT |
+| Mar. 11/08 | **0 augmentation** | ⏳ À venir | bilan provider et Postmaster |
+| Mer. 12/08 | **3 000** | ⏳ À venir | premier palier cible, contenu réel et attendu uniquement |
+| Jeu. 13/08 | **0 augmentation** | ⏳ À venir | bilan complet du premier 3 000 |
+| Ven. 14/08 | **3 000 max** | ⏳ À venir | répétabilité uniquement si le 12/08 est entièrement VERT |
 
 Un jour sans lot ou un HOLD n'est pas rattrapé en doublant le volume du lendemain. Après une pause
 de plus de 3 jours, reprendre au dernier palier vert ou un palier en dessous.
