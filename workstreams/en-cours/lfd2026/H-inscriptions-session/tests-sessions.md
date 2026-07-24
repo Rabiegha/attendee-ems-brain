@@ -1,6 +1,6 @@
 # Chantier H — Tests sessions/inscriptions (à livrer AVEC le chantier)
 
-> **Statut au 24/07 : 🟢 H-T1→H-T19 livrés ; 24/24 E2E H verts localement.**
+> **Statut au 24/07 : ✅ H terminé ; 24/24 E2E locaux et 52/52 contrôles API staging verts.**
 > H-T20→H-T25 sont couverts par les suites de cohérence L9.1 et la contre-recette M/K ; la preuve
 > d'audit détaillée appartient au chantier O.
 > **Owner : Corentin** (les tests suivent le code H).
@@ -137,6 +137,20 @@ Le calcul du taux, la propagation live, l'export nominatif et ses droits sont pr
   supertest + Postgres/Redis réels) — ils tournent à chaque PR comme le reste
   (voir [stratégie CI, chantier T §4bis](../T-tests-event/README.md)).
 - Deviennent **bloquants** (required check) à la livraison de H.
+
+## 3bis. Recette staging du 24/07
+
+- événement final : `H-RECETTE-20260724122829`
+  (`dda8c24f-6b79-4156-b985-f73db2d47aab`) ;
+- résultat : **52 contrôles réussis, 0 échec** ;
+- périmètre prouvé : H-T1, H-T2, H-T4, H-T5, H-T7→H-T11, H-T14→H-T19 et H-T21 ;
+- concurrence quota : réponses `201/201/409`, compteurs `1/1/0` ;
+- dernière place de scan : une réponse admise, une refusée, `present = 1` ;
+- garde-fous : créations via API uniquement, participants `@test.invalid`, aucun `DELETE`, aucun
+  seeder/reset/truncate et aucune écriture SQL directe ;
+- les événements de diagnostic `H-RECETTE-20260724122739` et
+  `H-RECETTE-20260724122808` ont volontairement été conservés pour respecter l'interdiction de
+  suppression sur staging.
 
 ## 4. Definition of done
 

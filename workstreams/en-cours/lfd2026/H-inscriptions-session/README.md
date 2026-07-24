@@ -3,7 +3,7 @@
 > Lien public par session + capacité/waitlist + refonte front. **Plus gros morceau restant.**
 > Cadré dans un [workstream dédié](../../../a-faire/sessions-inscriptions-lfd2026/README.md).
 
-## Mise à jour du 24/07 — code H terminé
+## Mise à jour du 24/07 — H terminé et recetté staging
 
 - ✅ Socle session public/admin, capacité, waitlist, compteurs et ouverture programmée.
 - ✅ Contrat de doublon `409 ALREADY_SESSION_SCANNED`, concurrence même QR et dernière place.
@@ -14,13 +14,17 @@
 - ✅ Front V1 mode-aware : le mode walk-in masque toute donnée d'inscription et affiche uniquement
   les présences ; le mode avec inscription expose inscrits, capacité, waitlist et contrôles.
 - ✅ Builds back/front et typecheck front verts.
-- ⏳ Gate de livraison externe au code : merge/CI, migration et smoke production, puis
-  contre-recette appareils M/K. Les événements d'audit détaillés restent possédés par O.
+- ✅ PR back #68 et front #27 mergées, CI/CD staging verts ; backend servi au SHA
+  `245427cdf678ba4879ecfa6b0c523c05c2ec18f9`.
+- ✅ Recette API staging create-only : **52/52 contrôles verts** sur l'événement isolé
+  `H-RECETTE-20260724122829` (`dda8c24f-6b79-4156-b985-f73db2d47aab`).
+- ✅ Aucun `DELETE`, seeder, reset, truncate ni écriture SQL ; aucun événement existant modifié.
+- ℹ️ La contre-recette appareils appartient à M/K, l'audit détaillé à O et la promotion production
+  au run de livraison : ces opérations ne rouvrent pas le développement H.
 
 - **Plan maître :** [../00-plan-action.md](../00-plan-action.md) (§3-H)
 - **Avancement (%) :** [../03-suivi-chantiers.md](../03-suivi-chantiers.md) (ligne **H**)
-- **Statut :** 🟢 code V1 terminé ; merge/CI, production et contre-recette M/K restent les gates de
-  livraison.
+- **Statut :** ✅ 100 % — code, merge, CI/CD et recette staging terminés.
 - **Détail avancement :** [workstream dédié — §Avancement](../../../a-faire/sessions-inscriptions-lfd2026/README.md)
 - **Tests à livrer avec le chantier :** [tests-sessions.md](./tests-sessions.md) — socle H-T1→H-T14,
   quota H-T15→H-T19, concurrence/replay H-T20→H-T23 et cohérence compteur H-T24→H-T25.
