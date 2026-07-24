@@ -55,18 +55,19 @@
 ## Vue d'ensemble — avancement global
 
 ```
-Avancement global périmètre event : ▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░ ~65 %
+Avancement global périmètre event : ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░ ~70 %
 Semaines écoulées :                 2 / 4  (S28–S29 faites · S30 en cours · reste S31)
 ```
 
 > **Méthode (honnête) :** moyenne conservatrice des avancements pondérée par l'effort estimé
 > (mi-fourchette, hors C1/C3 calendaire / F-G-L-P reportés et sans recompter N ;
-> **BIL ~7–11 j, C2.1 ~5–7 j**). La hausse à ~65 % vient surtout de J-ENTREES, du worker L8,
-> du pipeline badge→email C2.1, du retour de la CI/CD et de la livraison du dashboard entrées.
-> H reste solide, A/I ont livré les leviers structurants et borné le débit d'inscription,
+> **BIL ~7–11 j, C2.1 ~5–7 j**). Recalcul du 24/07 : **69,1 %**, arrondi
+> conservatoirement à **~70 %**. La hausse depuis ~65 % vient surtout de H désormais terminé,
+> de J-ENTREES mesuré à 85 % et de T1–T6 terminé ; le seul passage de T de 65 à 100 %
+> représente environ 1 point global. A/I ont livré les leviers structurants et borné le débit d'inscription,
 > 0-MON/0-CI sont opérationnels et BIL dispose désormais de son socle RBAC + entrées live.
 > Le risque se concentre sur les preuves encore absentes : smoke métier/fallback/charge PDF,
-> k6 check-in/combiné, finitions H, cold start et recette mobile, **O audit CDC**, K/runbooks
+> montée en charge combinée complète, cold start et recette mobile, **O audit CDC**, K/runbooks
 > et les métriques de délivrabilité consolidées de C3.
 
 | # | Chantier | Owner | Importance — pourquoi | Estimé | Consommé | Avancement | Statut | Échéance visée |
