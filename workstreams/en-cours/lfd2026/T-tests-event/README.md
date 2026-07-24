@@ -1,13 +1,13 @@
 # Chantier T — Tests event-critical (LFD 2026)
 
-> **Statut : 🟢 P0 LIVRÉ — P1/P2 en backlog.**
+> **Statut au 24/07 : ✅ T1 à T6 livrés et vérifiés.**
 > Ce chantier découle de l'audit Codex sur le chantier 0-CI ([coordination Codex/Claude](../../../../workspace-rabie/codex-claude/ci-cd-coordination.md)) :
 > les tests actuels suffisent pour faire tourner la CI, mais **ne couvrent pas les chemins qui
 > casseraient l'exploitation pendant l'event** (scan QR, permissions, inscription, health réel).
 
 - **Plan maître :** [../00-plan-action.md](../00-plan-action.md)
 - **Avancement (%) :** [../03-suivi-chantiers.md](../03-suivi-chantiers.md) (ligne **T**)
-- **Owner :** réparti (Rabie + Corentin selon périmètre) — **Statut :** 🟢 P0 fait (T1/T2/T3), P1/P2 à prioriser
+- **Owner :** réparti (Rabie + Corentin selon périmètre) — **Statut :** ✅ T1 à T6 faits
 - **Lié à :** 0-CI (les tests deviennent le filet de la CI) · D-securite-qr (E2E HMAC) ·
   H (inscriptions) · [O](../O-audit-lfd/README.md) (audit métier/sécurité)
 
@@ -105,6 +105,22 @@ E2E API = intégration (supertest + Postgres/Redis réels) → smoke front Playw
 | T5  | Auth critique (compléter `auth-refresh`)            | login KO (mauvais mdp, compte inconnu) · session expirée refusée proprement                                                                                          | ~¼ j   |
 | T6  | `test/email-queue.e2e-spec.ts` (intégration BullMQ) | job billet/email enqueued · échec → retry · queue visible dans `/health/queues`                                                                                      | ~½ j   |
 
+### Mise à jour P1 du 24/07
+
+- ✅ **T5 terminé** : la suite `auth-refresh.e2e-spec.ts` couvre maintenant explicitement le compte
+  inconnu sans fuite d'existence et un access token réellement expiré, en complément du mauvais mot
+  de passe, refresh absent/invalide, rotation et logout. Résultat ciblé : **10/10 E2E verts**.
+- ✅ **T6 terminé** : cinq tests unitaires prouvent le payload sérialisable, la pièce jointe
+  PDF en base64, le `jobId` déterministe d'idempotence, le throttle, l'acceptation provider, le
+  rethrow d'une erreur transitoire pour retry BullMQ et `api_error` uniquement au dernier essai.
+  Un E2E sur **Redis réel** complète la preuve : job `waiting`, passage `active` puis `completed`,
+  et échec après **3 tentatives** avec un seul `api_error` terminal. Résultat : **3/3 E2E verts**.
+- ✅ **T4 terminé** : les suites
+  `render-pdf-with-fallback.spec.ts` et `badge-generation.gotenberg-wiring.spec.ts` prouvent
+  Gotenberg prioritaire, retries et fallback Puppeteer. Elles ont été rejouées avec T6 :
+  **15/15 tests ciblés verts**. Un smoke supplémentaire signe un jeton HMAC, génère son QR réel,
+  le charge dans Chromium et rend un PDF A6 vérifié : **1/1 vert**.
+
 ### P2 — si le temps le permet / selon avancement des chantiers
 
 | #   | Fichier proposé                                  | Cas couverts                                                              | Condition                               |
@@ -169,6 +185,6 @@ O-TEST réutilise le harnais E2E de T, mais son effort reste compté dans le cha
 
 - P0 (T1–T3) verts en local **et** dans la CI GitHub Actions.
 - P0 requis dans la branch protection de `main`/`staging`.
-- P1 verts ou explicitement descopés avec trace ici.
+- P1 T4–T6 verts : auth critique, PDF avec QR signé réel et cycle BullMQ sur Redis réel.
 - O-TEST vert avant recette CDC, sans double-compter son effort dans T.
 - Ce README mis à jour : liste validée, owners, cases cochées.
