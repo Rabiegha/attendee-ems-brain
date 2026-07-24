@@ -15,6 +15,8 @@ Chantiers de travail, toutes apps confondues. Un workstream = 1 dossier avec un 
 
 | Workstream | App | Priority | Dossier |
 |---|---|---|---|
+| Fiabilisation des refresh tokens | back + web + mobile + print | High | [en-cours/auth-refresh-token-hardening/](en-cours/auth-refresh-token-hardening/README.md) |
+| Performance applicative du staging — après refresh tokens | front + back | High | [en-cours/staging-performance-hardening/](en-cours/staging-performance-hardening/README.md) |
 | LFD 2026 — chaîne de livraison (email/billet/PDF/sessions) | back + front | High | [en-cours/lfd2026/](en-cours/lfd2026/README.md) |
 | API scaling — clustering multi-worker (Redis présence + adapter) | back | High | [en-cours/api-scaling-clustering/](en-cours/api-scaling-clustering/README.md) |
 | Infra Scaling & Plan de Continuité (LFD 2026) | back | High | [en-cours/infra-scaling-pca/](en-cours/infra-scaling-pca/README.md) |
