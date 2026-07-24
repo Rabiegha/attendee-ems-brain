@@ -3,10 +3,24 @@
 > Lien public par session + capacité/waitlist + refonte front. **Plus gros morceau restant.**
 > Cadré dans un [workstream dédié](../../../a-faire/sessions-inscriptions-lfd2026/README.md).
 
+## Mise à jour du 24/07 — code H terminé
+
+- ✅ Socle session public/admin, capacité, waitlist, compteurs et ouverture programmée.
+- ✅ Contrat de doublon `409 ALREADY_SESSION_SCANNED`, concurrence même QR et dernière place.
+- ✅ Maximum deux sessions `confirmed` par jour `Europe/Paris`, appliqué dans la frontière
+  transactionnelle commune à toutes les routes.
+- ✅ H-T1→H-T19 : **24/24 E2E verts** sur PostgreSQL/Redis locaux, dont trois inscriptions
+  concurrentes et waitlist hors quota.
+- ✅ Front V1 mode-aware : le mode walk-in masque toute donnée d'inscription et affiche uniquement
+  les présences ; le mode avec inscription expose inscrits, capacité, waitlist et contrôles.
+- ✅ Builds back/front et typecheck front verts.
+- ⏳ Gate de livraison externe au code : merge/CI, migration et smoke production, puis
+  contre-recette appareils M/K. Les événements d'audit détaillés restent possédés par O.
+
 - **Plan maître :** [../00-plan-action.md](../00-plan-action.md) (§3-H)
 - **Avancement (%) :** [../03-suivi-chantiers.md](../03-suivi-chantiers.md) (ligne **H**)
-- **Statut :** 🟡 socle sessions/check-in livré ; restent la finition front, H-D8 et les garanties
-  serveur nécessaires à la recette mobile M.
+- **Statut :** 🟢 code V1 terminé ; merge/CI, production et contre-recette M/K restent les gates de
+  livraison.
 - **Détail avancement :** [workstream dédié — §Avancement](../../../a-faire/sessions-inscriptions-lfd2026/README.md)
 - **Tests à livrer avec le chantier :** [tests-sessions.md](./tests-sessions.md) — socle H-T1→H-T14,
   quota H-T15→H-T19, concurrence/replay H-T20→H-T23 et cohérence compteur H-T24→H-T25.
